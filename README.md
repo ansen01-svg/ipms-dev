@@ -57,8 +57,6 @@ git checkout -b feature/your-feature-name
 Work on your feature in the appropriate directory (backend or frontend). Make sure to:
 - Write clean, readable code
 - Follow project coding standards
-- Test your changes thoroughly
-- Document any new functionality
 
 ### Step 3: Commit Your Changes
 Make frequent, logical commits with descriptive messages:
@@ -103,6 +101,34 @@ git pull origin main
 git checkout feature/your-feature-name
 git rebase main
 ```
+
+### Step 4.1: Frontend Testing Requirements
+**For Frontend Contributors Only**: After merging the latest main branch code, you must build your application in both scenarios:
+
+```bash
+# Navigate to frontend directory
+cd frontend
+
+# Install dependencies (if package.json changed)
+npm install
+
+# Test 1: Build and run with your feature code
+npm run build
+npm run start
+# Verify your feature works correctly
+
+# Test 2: After merging main, build and run again
+npm run build
+npm run start
+# Verify your feature still works with merged main code
+# Ensure no conflicts or breaking changes occurred
+```
+
+**Important**: Both builds must be successful and the application must run without errors before proceeding to create a pull request. This ensures:
+- Your feature code works in isolation
+- Your feature integrates properly with the latest main branch
+- No dependencies or configuration conflicts exist
+- The application remains stable after integration
 
 ### Step 5: Push Your Branch
 ```bash
@@ -195,6 +221,8 @@ git commit -m "docs: update installation instructions"
 - Keep commits small and focused
 - Write descriptive commit messages
 - Pull latest changes before starting work
+- **Frontend contributors**: Build and run application before creating PR (both with feature code and after merging main)
+- Update documentation when needed
 - Use meaningful branch names
 - Resolve conflicts promptly
 
