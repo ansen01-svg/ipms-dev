@@ -16,7 +16,7 @@ iPMS/
 ### 1. Clone the Repository
 ```bash
 git clone <repository-url>
-cd iPMS
+cd ipms-dev
 ```
 
 ### 2. Choose Your Working Directory
