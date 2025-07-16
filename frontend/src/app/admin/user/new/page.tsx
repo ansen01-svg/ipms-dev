@@ -1,205 +1,3 @@
-# iPMS Frontend
-
-This is the frontend application for the iPMS (Integrated Project Management System) built with [Next.js](https://nextjs.org) and bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
-
-## Getting Started
-
-### 1. Clone the Repository
-
-```bash
-git clone <repository-url>
-cd ipms-dev
-```
-
-### 2. Navigate to Frontend Directory
-
-```bash
-cd frontend
-```
-
-### 3. Install Dependencies
-
-Install all required packages:
-
-```bash
-npm install
-# or
-yarn install
-# or
-pnpm install
-# or
-bun install
-```
-
-### 4. Run the Development Server
-
-Start the development server:
-
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
-
-### 5. Access the Application
-
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the application.
-
-The page auto-updates as you edit the file - perfect for development!
-
-## Development Workflow
-
-### Making Changes
-
-You can start editing the application by modifying files in the `app/` directory:
-
-- `app/page.tsx` - Main page component
-- `app/layout.tsx` - Root layout component
-- `app/globals.css` - Global styles
-
-### Testing Your Changes
-
-Before creating a pull request, ensure your changes work properly:
-
-```bash
-# Build the application for production
-npm run build
-
-# Start the production server
-npm run start
-```
-
-Both commands should complete successfully without errors.
-
-### Project Structure
-
-```
-frontend/
-├── app/                 # Next.js app directory
-│   ├── page.tsx        # Home page
-│   ├── layout.tsx      # Root layout
-│   └── globals.css     # Global styles
-├── public/             # Static assets
-├── components/         # Reusable React components
-├── lib/               # Utility functions
-├── package.json       # Project dependencies
-└── README.md          # This file
-```
-
-## Available Scripts
-
-| Command         | Description                            |
-| --------------- | -------------------------------------- |
-| `npm run dev`   | Starts development server on port 3000 |
-| `npm run build` | Builds the app for production          |
-| `npm run start` | Starts production server               |
-| `npm run lint`  | Runs ESLint for code quality           |
-
-## Technology Stack
-
-- **Framework**: [Next.js 14+](https://nextjs.org)
-- **Language**: TypeScript
-- **Styling**: Tailwind CSS
-- **Font Optimization**: [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) with [Geist](https://vercel.com/font)
-
-## Contributing
-
-1. Follow the main project's [collaboration guidelines](../README.md)
-2. Create feature branches: `git checkout -b feature/your-feature-name`
-3. Make your changes in the frontend directory
-4. Test locally with `npm run dev`
-5. Build and test production version with `npm run build && npm run start`
-6. Commit and push your changes
-7. Create a pull request
-
-## Environment Setup
-
-### Node.js Version
-
-Ensure you have Node.js 18+ installed:
-
-```bash
-node --version  # Should be 18.0.0 or higher
-```
-
-### Package Manager
-
-This project uses npm by default, but you can use your preferred package manager:
-
-- **npm** (recommended)
-- **yarn**
-- **pnpm**
-- **bun**
-
-## Troubleshooting
-
-### Common Issues
-
-**Port 3000 already in use:**
-
-```bash
-# Kill process using port 3000
-lsof -ti:3000 | xargs kill -9
-
-# Or use a different port
-npm run dev -- -p 3001
-```
-
-**Module not found errors:**
-
-```bash
-# Clear npm cache and reinstall
-npm cache clean --force
-rm -rf node_modules package-lock.json
-npm install
-```
-
-**Build errors:**
-
-```bash
-# Check for TypeScript errors
-npm run build
-
-# Check for linting issues
-npm run lint
-```
-
-## Learn More
-
-To learn more about the technologies used:
-
-- [Next.js Documentation](https://nextjs.org/docs) - Learn about Next.js features and API
-- [Learn Next.js](https://nextjs.org/learn) - Interactive Next.js tutorial
-- [Next.js GitHub Repository](https://github.com/vercel/next.js) - Feedback and contributions welcome
-
-## Deployment
-
-The application can be deployed on various platforms:
-
-- **Vercel** (recommended): [Deploy with Vercel](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme)
-- **Netlify**: Supports Next.js deployments
-- **Docker**: Build and deploy with containers
-
-Check out the [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for detailed deployment guides.
-
-## Support
-
-For project-specific questions:
-
-- Check the main project [README](../README.md)
-- Create an issue in the repository
-- Contact the project maintainers
-
-For Next.js specific questions:
-
-- Visit [Next.js Documentation](https://nextjs.org/docs)
-- Join the [Next.js Discord Community](https://discord.gg/nextjs)
-
-<!-- code
 "use client";
 
 import { useState } from "react";
@@ -232,10 +30,9 @@ interface createuserFormSchema {
   username: string;
   email: string;
   mobileNumber: string;
-  password: string;
-  roleId: number;
+  roleId: string;
   departmentName: string;
-  departmentId: number;
+  departmentId: string;
   designation: string;
   officeLocation?: string;
   status: boolean;
@@ -306,24 +103,75 @@ const designation = ["Administrator", "JE", "AEE", "CE", "MD", "MLA"];
 const createuserFormSchema = z.object({
   fullName: z.string().min(3).max(100).transform(cleanAndFormat),
   username: z.string().min(3).max(100).transform(cleanAndFormat),
-  email: z.string().email(),
-  phoneNumber: z.string().length(10).regex(/^\d+$/),
-  password: z
-    .string()
-    .min(6)
-    .max(20)
-    .regex(/[A-Z]/)
-    .regex(/[0-9]/)
-    .regex(/[^A-Za-z0-9]/),
-  roleId: z.string().min(1),
-  departmentName: z.string().min(2).max(50),
-  departmentId: z.string().min(1),
-  designation: z.enum(designation as [string, ...string[]]),
-  officeLocation: z.string().min(8).max(100).transform(cleanAndFormat),
+  email: z.string().email("Invalid email address").toLowerCase(),
+  phoneNumber: z
+    .string({
+      error: "Phone number is required",
+    })
+    .min(10, "Phone number must be exactly 10 digits")
+    .max(10, "Phone number must be exactly 10 digits")
+    .regex(
+      /^[6-9]\d{9}$/,
+      "Please enter a valid Indian mobile number (must start with 6, 7, 8, or 9)"
+    )
+    .refine(
+      (val) => !/^(\d)\1{9}$/.test(val),
+      "Phone number cannot be all same digits"
+    ),
+  roleId: z
+    .string({
+      error: "Role selection is required",
+    })
+    .min(1, "Please select a role"),
+  departmentName: z
+    .string({
+      error: "Department name is required",
+    })
+    .min(2, "Department name must be at least 2 characters long")
+    .max(100, "Department name cannot exceed 100 characters")
+    .regex(
+      /^[a-zA-Z\s&.-]+$/,
+      "Department name can only contain letters, spaces, ampersands, dots, and hyphens"
+    )
+    .refine((val) => val.trim().length > 0, "Department name cannot be empty")
+    .transform(cleanAndFormat),
+  departmentId: z
+    .string({
+      error: "Department selection is required",
+    })
+    .min(1, "Please select a department"),
+  designation: z
+    .enum(designation as [string, ...string[]], {
+      error: "Designation is required",
+    })
+    .refine(
+      (val) => designation.includes(val as (typeof designation)[number]),
+      "Please select a valid designation from the list"
+    ),
+  officeLocation: z
+    .string({
+      error: "Office location is required",
+    })
+    .min(5, "Office location must be at least 5 characters long")
+    .max(200, "Office location cannot exceed 200 characters")
+    .regex(
+      /^[a-zA-Z0-9\s,.-]+$/,
+      "Office location can only contain letters, numbers, spaces, commas, dots, and hyphens"
+    )
+    .refine(
+      (val) => /[a-zA-Z]/.test(val),
+      "Office location must contain at least one letter"
+    )
+    .refine(
+      (val) => val.trim().length >= 5,
+      "Office location must be at least 5 characters after trimming spaces"
+    )
+    .transform(cleanAndFormat),
 });
 
 const CreateUserPage = () => {
   const [error, setError] = useState<string>("");
+  const [successMsg, setSuccessMsg] = useState<string>("");
   const [isSubmittingForm, setIsSubmittingForm] = useState<boolean>(false);
 
   const form = useForm<z.infer<typeof createuserFormSchema>>({
@@ -333,7 +181,6 @@ const CreateUserPage = () => {
       username: "",
       email: "",
       phoneNumber: "",
-      password: "",
       roleId: "",
       departmentName: "",
       departmentId: "",
@@ -341,11 +188,40 @@ const CreateUserPage = () => {
       officeLocation: "",
     },
   });
-
+  console.log("User created successfully", successMsg);
   const onSubmit = async (values: z.infer<typeof createuserFormSchema>) => {
     setIsSubmittingForm(true);
     setError("");
+    setSuccessMsg("");
+
     console.log("Form submitted with values:", values);
+    try {
+      const res = await fetch("http://localhost:5000/api/v1/users/create", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer token`,
+        },
+        body: JSON.stringify(values),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.message || "Failed to create user.");
+      }
+
+      setSuccessMsg("✅ User created successfully!");
+      form.reset(); // Clear the form
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(err.message || "❌ Something went wrong.");
+      } else {
+        setError("❌ Something went wrong.");
+      }
+    } finally {
+      setIsSubmittingForm(false);
+    }
   };
 
   return (
@@ -461,28 +337,6 @@ const CreateUserPage = () => {
                     <FormControl>
                       <Input
                         placeholder="Provide a phone number"
-                        className="text-sm"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {/* Password - need to update*/}
-
-              <FormField
-                control={form.control}
-                name="password"
-                render={({ field }) => (
-                  <FormItem className="w-full">
-                    <FormLabel>
-                      Password <span className="text-red-500">*</span>
-                    </FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="Enter your password"
                         className="text-sm"
                         {...field}
                       />
@@ -612,32 +466,35 @@ const CreateUserPage = () => {
               />
 
               {/* Error message */}
-
               <div className="w-full">
                 {error && (
                   <p className="text-red-500 text-sm text-center">{error}</p>
                 )}
               </div>
 
+              {/* Success message */}
+              {successMsg && (
+                <p className="text-green-600 text-center text-sm">
+                  {successMsg}
+                </p>
+              )}
+
               <Button
                 type="submit"
                 disabled={
-                  Object.keys(form.formState.dirtyFields).length < 10 ||
+                  Object.keys(form.formState.dirtyFields).length < 9 ||
                   isSubmittingForm
                 }
                 className="w-full bg-indigo-600 text-white py-2 rounded-lg hover:bg-indigo-700 transition disabled:bg-indigo-400"
               >
                 {isSubmittingForm ? (
                   <>
-                    <Loader2 className="animate-spin mr-2" /> Onboarding...
+                    <Loader2 className="animate-spin mr-2" /> Creating user...
                   </>
                 ) : (
-                  "Continue"
+                  "Create User"
                 )}
               </Button>
-              {error && (
-                <p className="text-red-500 text-center text-sm">{error}</p>
-              )}
             </form>
           </Form>
         </div>
@@ -647,7 +504,3 @@ const CreateUserPage = () => {
 };
 
 export default CreateUserPage;
-
-
-
- -->
