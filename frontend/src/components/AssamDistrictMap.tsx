@@ -1,5 +1,3 @@
-"use client";
-
 import React from "react";
 import {
   ComposableMap,
@@ -8,17 +6,25 @@ import {
 } from "react-simple-maps";
 import { Tooltip } from "react-tooltip";
 
-// GeoJSON path (place your file in `public/maps/`)
 const geoUrl = "/assets/maps/assam-districts.json";
 
-// Example user data
+// User data mapped by district
 const userByDistrict: Record<string, number> = {
   kamrup: 100,
   jorhat: 60,
   dibrugarh: 85,
   cachar: 45,
   barpeta: 25,
-  // Add more districts if needed
+};
+
+// Define a type for each geo feature
+type DistrictGeo = {
+  rsmKey: string;
+  properties: {
+    district?: string;
+    DISTRICT?: string;
+    NAME_2?: string;
+  };
 };
 
 const AssamDistrictMap = () => {
@@ -34,7 +40,7 @@ const AssamDistrictMap = () => {
         }}
       >
         <Geographies geography={geoUrl}>
-          {({ geographies }: { geographies: any[] }) =>
+          {({ geographies }: { geographies: DistrictGeo[] }) =>
             geographies.map((geo) => {
               const rawName =
                 geo.properties.district ||
@@ -60,12 +66,12 @@ const AssamDistrictMap = () => {
                   data-tooltip-content={`${rawName}: ${users} users`}
                   style={{
                     default: {
-                      fill: "#1f77b4", // base blue
+                      fill: "#1f77b4",
                       outline: "none",
                       transition: "fill 0.2s ease-in-out",
                     },
                     hover: {
-                      fill: "#FFD700", // yellow on hover
+                      fill: "#FFD700",
                       outline: "none",
                       transition: "fill 0.2s ease-in-out",
                     },
@@ -86,4 +92,3 @@ const AssamDistrictMap = () => {
 };
 
 export default AssamDistrictMap;
-

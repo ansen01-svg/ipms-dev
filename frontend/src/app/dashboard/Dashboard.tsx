@@ -1,7 +1,6 @@
 "use client";
 import { Badge } from "@/components/ui/badge";
 import UpdateDropdown from "@/components/UpdateDropdown";
-import StatsGrid from "@/components/StatsGrid";
 import TasksChart from "@/components/TasksChart"
 import UsersBarChart from "@/components/UsersBarChart"
 import ProjectsLineChart from "@/components/ProjectsLineChart"

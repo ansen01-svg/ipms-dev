@@ -4,16 +4,12 @@ import { Bell, MessageCircleMore, UserCircle, Menu } from 'lucide-react'
 import Image from 'next/image'
 
 interface NavbarProps {
-  sidebarCollapsed: boolean
-  setSidebarCollapsed: React.Dispatch<React.SetStateAction<boolean>>
   mobileOpen: boolean
   setMobileOpen: React.Dispatch<React.SetStateAction<boolean>>
   isMobile: boolean
 }
 
 export default function Navbar({
-  sidebarCollapsed,
-  setSidebarCollapsed,
   mobileOpen,
   setMobileOpen,
   isMobile,
