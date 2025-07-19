@@ -73,6 +73,11 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground;
-  }
+
+  background-image: url('/assets/images/bg-image.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+
+}
 }
