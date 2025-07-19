@@ -28,8 +28,6 @@ export default function DashboardLayout({
   return (
     <>
       <Navbar
-        sidebarCollapsed={collapsed}
-        setSidebarCollapsed={setCollapsed}
         mobileOpen={mobileOpen}
         setMobileOpen={setMobileOpen}
         isMobile={isMobile}
