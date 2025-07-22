@@ -1,6 +1,6 @@
-// app/dashboard/page.tsx
 "use client";
-import Dashboard from "@/app/dashboard/Dashboard"; // or wherever it is
+
+import Dashboard from "@/app/dashboard/Dashboard";
 
 export default function DashboardPage() {
   return <Dashboard />;

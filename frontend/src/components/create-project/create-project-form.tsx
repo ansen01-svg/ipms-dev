@@ -8,6 +8,9 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
+import { Badge } from "@/components/ui/badge";
+import InstructionsCard from "./instructions-card";
+import { StepProgress } from "./step-progress";
 import {
   fundOptions,
   functionOptions,
@@ -27,6 +30,11 @@ import {
   FileText,
   CheckCircle,
   Info,
+  ArrowLeft,
+  ArrowRight,
+  Edit,
+  Send,
+  AlertCircle,
 } from "lucide-react";
 import {
   Form,
@@ -50,9 +58,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import InstructionsCard from "./instructions-card";
-import TabNavigation from "./tab-navigation";
 
+// ============= INTERFACES =============
 interface TooltipProps {
   content: string;
   children: React.ReactNode;
@@ -64,6 +71,12 @@ interface FormLabelWithTooltipProps {
   required?: boolean;
 }
 
+interface CreateProjectFormProps {
+  onSuccess?: () => void;
+  onCancel?: () => void;
+}
+
+// ============= TOOLTIPS AND LABELS =============
 const Tooltip = ({ content, children }: TooltipProps) => {
   const [isVisible, setIsVisible] = useState(false);
 
@@ -265,19 +278,345 @@ const createProjectSchema = z
 
 type CreateProjectFormValues = z.infer<typeof createProjectSchema>;
 
-interface CreateProjectFormProps {
-  onSuccess?: () => void;
-  onCancel?: () => void;
-}
+// ============= PREVIEW COMPONENT =============
+const ProjectPreview = ({
+  formData,
+  uploadedFiles,
+  onEdit,
+}: {
+  formData: CreateProjectFormValues;
+  uploadedFiles: File[];
+  onEdit: () => void;
+}) => {
+  const formatCurrency = (amount: string) => {
+    const num = parseFloat(amount);
+    return new Intl.NumberFormat("en-IN", {
+      style: "currency",
+      currency: "INR",
+    }).format(num);
+  };
 
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString("en-IN", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+  };
+
+  const getFileIcon = (fileName: string) => {
+    const extension = fileName.split(".").pop()?.toLowerCase();
+    switch (extension) {
+      case "pdf":
+        return <FileText className="w-5 h-5 text-red-500" />;
+      case "jpg":
+      case "jpeg":
+      case "png":
+        return <FileText className="w-5 h-5 text-purple-500" />;
+      default:
+        return <FileText className="w-5 h-5 text-gray-500" />;
+    }
+  };
+
+  const InfoItem = ({
+    label,
+    value,
+    className = "",
+  }: {
+    label: string;
+    value: string | React.ReactNode;
+    className?: string;
+  }) => (
+    <div className={`space-y-1 ${className}`}>
+      <h4 className="text-sm font-medium text-gray-600">{label}</h4>
+      <div className="text-gray-900 font-medium">{value}</div>
+    </div>
+  );
+
+  return (
+    <div className="space-y-6">
+      {/* Header with Edit Button */}
+      <div className="flex items-center justify-between p-4 bg-orange-50 border border-orange-200 rounded-lg">
+        <div className="flex items-center gap-3">
+          <AlertCircle className="w-5 h-5 text-orange-500" />
+          <div>
+            <h3 className="font-semibold text-orange-800">
+              Review & Corrections
+            </h3>
+            <p className="text-sm text-orange-700">
+              {`Please review your project details carefully. You can make
+              corrections by clicking "Edit Details".`}
+            </p>
+          </div>
+        </div>
+        <Button
+          type="button"
+          variant="outline"
+          onClick={onEdit}
+          className="flex items-center gap-2 border-orange-300 text-orange-700 hover:bg-orange-100"
+        >
+          <Edit className="w-4 h-4" />
+          Edit Details
+        </Button>
+      </div>
+
+      {/* Project Summary Card */}
+      <Card className="border-2 border-blue-200 shadow-sm">
+        <CardHeader className="bg-blue-50">
+          <CardTitle className="text-xl text-blue-800">
+            {formData.projectName}
+          </CardTitle>
+          <div className="flex flex-wrap items-center gap-4 text-sm">
+            <Badge
+              variant={
+                formData.hasSubProjects === "yes" ? "default" : "secondary"
+              }
+            >
+              {formData.hasSubProjects === "yes"
+                ? "Has Sub-Projects"
+                : "Single Project"}
+            </Badge>
+            <span className="text-blue-700 font-semibold text-lg">
+              {formatCurrency(formData.estimatedCost)}
+            </span>
+            <span className="text-blue-600">
+              {formatDate(formData.projectStartDate)} -{" "}
+              {formatDate(formData.projectEndDate)}
+            </span>
+          </div>
+        </CardHeader>
+        <CardContent className="pt-4">
+          <p className="text-gray-700 leading-relaxed">
+            {formData.description}
+          </p>
+        </CardContent>
+      </Card>
+
+      {/* Basic Information */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">Project Information</CardTitle>
+        </CardHeader>
+        <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <InfoItem
+            label="Date of Proposal"
+            value={formatDate(formData.dateOfProposal)}
+          />
+          <InfoItem
+            label="Letter Reference"
+            value={formData.letterReference || "Not specified"}
+          />
+          <InfoItem label="Beneficiary" value={formData.beneficiary} />
+          <InfoItem
+            label="Departments"
+            value={
+              <div className="space-y-1">
+                <div>
+                  <span className="text-sm text-gray-500">Owning:</span>{" "}
+                  {formData.owningDepartment}
+                </div>
+                <div>
+                  <span className="text-sm text-gray-500">Executing:</span>{" "}
+                  {formData.executingDepartment}
+                </div>
+              </div>
+            }
+          />
+        </CardContent>
+      </Card>
+
+      {/* Work Classification */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">Work Classification</CardTitle>
+        </CardHeader>
+        <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <InfoItem label="Type of Work" value={formData.typeOfWork} />
+          <InfoItem label="Sub-Type of Work" value={formData.subTypeOfWork} />
+          <InfoItem label="Nature of Work" value={formData.natureOfWork} />
+          <InfoItem
+            label="Mode of Execution"
+            value={formData.recommendedModeOfExecution}
+          />
+        </CardContent>
+      </Card>
+
+      {/* Financial Details */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">Financial Information</CardTitle>
+        </CardHeader>
+        <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <InfoItem label="Fund" value={formData.fund} />
+          <InfoItem label="Function" value={formData.function} />
+          <InfoItem label="Budget Head" value={formData.budgetHead} />
+          <InfoItem
+            label="Estimated Cost"
+            value={
+              <span className="text-xl font-bold text-green-600">
+                {formatCurrency(formData.estimatedCost)}
+              </span>
+            }
+          />
+          <InfoItem label="Scheme" value={formData.scheme} />
+          <InfoItem label="Sub Scheme" value={formData.subScheme} />
+        </CardContent>
+      </Card>
+
+      {/* Location Details */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg flex items-center gap-2">
+            <MapPin className="w-5 h-5 text-blue-600" />
+            Location Information
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <InfoItem label="Locality" value={formData.locality} />
+          <InfoItem label="Ward" value={formData.ward} />
+          <InfoItem label="ULB" value={formData.ulb} />
+          {formData.geoLocation && (
+            <InfoItem label="Geo Location" value={formData.geoLocation} />
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Sub-projects */}
+      {formData.hasSubProjects === "yes" &&
+        formData.subProjects &&
+        formData.subProjects.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Sub-project Details</CardTitle>
+              <CardDescription>
+                {formData.subProjects.length} sub-project
+                {formData.subProjects.length > 1 ? "s" : ""} configured
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {formData.subProjects.map((subProject, index) => (
+                <div
+                  key={index}
+                  className="border border-gray-200 rounded-lg p-4 bg-gradient-to-r from-gray-50 to-white"
+                >
+                  <div className="flex items-center justify-between mb-4">
+                    <h4 className="font-semibold text-lg text-gray-800">
+                      Sub-project {index + 1}
+                    </h4>
+                    <Badge
+                      variant="outline"
+                      className="text-blue-600 border-blue-300"
+                    >
+                      {formatCurrency(subProject.estimatedAmount)}
+                    </Badge>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <InfoItem label="Name" value={subProject.name} />
+                    <InfoItem
+                      label="Type of Work"
+                      value={subProject.typeOfWork}
+                    />
+                    <InfoItem
+                      label="Sub-Type"
+                      value={subProject.subTypeOfWork}
+                    />
+                    <InfoItem label="Nature" value={subProject.natureOfWork} />
+                    <InfoItem
+                      label="Duration"
+                      value={`${formatDate(
+                        subProject.projectStartDate
+                      )} - ${formatDate(subProject.projectEndDate)}`}
+                      className="md:col-span-2"
+                    />
+                  </div>
+                </div>
+              ))}
+
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <div className="flex items-center justify-between">
+                  <span className="font-medium text-blue-800">
+                    Total Sub-project Cost:
+                  </span>
+                  <span className="text-xl font-bold text-blue-600">
+                    {formatCurrency(
+                      formData.subProjects
+                        .reduce(
+                          (total, sub) =>
+                            total + parseFloat(sub.estimatedAmount),
+                          0
+                        )
+                        .toString()
+                    )}
+                  </span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+      {/* Uploaded Documents */}
+      {uploadedFiles.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Supporting Documents</CardTitle>
+            <CardDescription>
+              {uploadedFiles.length} document
+              {uploadedFiles.length > 1 ? "s" : ""} uploaded
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {uploadedFiles.map((file, index) => (
+                <div
+                  key={index}
+                  className="flex items-center space-x-3 p-4 border border-gray-200 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors"
+                >
+                  {getFileIcon(file.name)}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-900 truncate">
+                      {file.name}
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      {(file.size / 1024 / 1024).toFixed(2)} MB •{" "}
+                      {file.type.split("/")[1].toUpperCase()}
+                    </p>
+                  </div>
+                  <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Important Notice */}
+      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+        <div className="flex items-start space-x-3">
+          <Info className="w-5 h-5 text-yellow-600 mt-0.5 flex-shrink-0" />
+          <div>
+            <h4 className="font-medium text-yellow-800">Important Notice</h4>
+            <p className="text-sm text-yellow-700 mt-1">
+              Once you submit this project, you will not be able to modify the
+              details. Please ensure all information is accurate and complete
+              before proceeding to submission.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+type FormStep = "form" | "preview" | "submit";
+
+// ============= MAIN COMPONENT =============
 export default function CreateProjectForm({
   onSuccess,
   onCancel,
 }: CreateProjectFormProps) {
+  const [currentStep, setCurrentStep] = useState<FormStep>("form");
   const [isSubmittingForm, setIsSubmittingForm] = useState(false);
-  const [activeTab, setActiveTab] = useState<
-    "details" | "financial" | "subProjects"
-  >("details");
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const [uploadProgress, setUploadProgress] = useState<Record<string, number>>(
     {}
@@ -317,14 +656,11 @@ export default function CreateProjectForm({
   });
 
   const watchHasSubProjects = form.watch("hasSubProjects");
-
-  // Watch all form values to determine if form is valid for submission
   const watchedValues = form.watch();
 
   // Function to check if all required fields are filled
   const isFormValid = () => {
     try {
-      // Check basic required fields
       const basicFields = [
         "dateOfProposal",
         "projectName",
@@ -356,14 +692,12 @@ export default function CreateProjectForm({
         }
       }
 
-      // If sub-projects are enabled, check if at least one sub-project exists and is valid
       if (watchedValues.hasSubProjects === "yes") {
         const subProjects = watchedValues.subProjects || [];
         if (subProjects.length === 0) {
           return false;
         }
 
-        // Check if all sub-projects have required fields filled
         for (const subProject of subProjects) {
           const requiredSubFields = [
             "name",
@@ -385,8 +719,7 @@ export default function CreateProjectForm({
       }
 
       return true;
-    } catch (error) {
-      console.log(error);
+    } catch {
       return false;
     }
   };
@@ -419,31 +752,24 @@ export default function CreateProjectForm({
     );
   };
 
-  // Handle file upload
+  // Handle file upload (RESTRICTED TO PDF AND IMAGES ONLY)
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files || []);
 
     if (files.length === 0) return;
 
-    // Validate file types
-    const allowedTypes = [
-      ".pdf",
-      ".doc",
-      ".docx",
-      ".jpg",
-      ".jpeg",
-      ".png",
-      ".xls",
-      ".xlsx",
-    ];
+    // Validate file types - ONLY PDF and Images
+    const allowedTypes = [".pdf", ".jpg", ".jpeg", ".png"];
     const invalidFiles = files.filter((file) => {
       const extension = "." + file.name.split(".").pop()?.toLowerCase();
       return !allowedTypes.includes(extension);
     });
 
     if (invalidFiles.length > 0) {
-      alert(
-        `Invalid file types: ${invalidFiles.map((f) => f.name).join(", ")}`
+      toast.error(
+        `Invalid file types. Only PDF and image files (JPG, PNG) are allowed: ${invalidFiles
+          .map((f) => f.name)
+          .join(", ")}`
       );
       return;
     }
@@ -453,7 +779,7 @@ export default function CreateProjectForm({
     const oversizedFiles = files.filter((file) => file.size > maxSize);
 
     if (oversizedFiles.length > 0) {
-      alert(
+      toast.error(
         `Files too large (max 10MB): ${oversizedFiles
           .map((f) => f.name)
           .join(", ")}`
@@ -466,7 +792,6 @@ export default function CreateProjectForm({
       const fileId = `${file.name}_${Date.now()}_${index}`;
       setUploadProgress((prev) => ({ ...prev, [fileId]: 0 }));
 
-      // Simulate progress
       const interval = setInterval(() => {
         setUploadProgress((prev) => {
           const current = prev[fileId] || 0;
@@ -485,7 +810,6 @@ export default function CreateProjectForm({
     const currentFiles = form.getValues("uploadedFiles") || [];
     form.setValue("uploadedFiles", [...currentFiles, ...fileNames]);
 
-    // Reset input
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
@@ -496,7 +820,6 @@ export default function CreateProjectForm({
     const fileToRemove = uploadedFiles[index];
     setUploadedFiles((prev) => prev.filter((_, i) => i !== index));
 
-    // Remove from progress tracking
     setUploadProgress((prev) => {
       const newProgress = { ...prev };
       Object.keys(newProgress).forEach((key) => {
@@ -524,183 +847,50 @@ export default function CreateProjectForm({
     const files = Array.from(e.dataTransfer.files);
 
     if (fileInputRef.current) {
-      // Create a new FileList-like object
       const dt = new DataTransfer();
       files.forEach((file) => dt.items.add(file));
       fileInputRef.current.files = dt.files;
 
-      // Trigger the change event
       const event = new Event("change", { bubbles: true });
       fileInputRef.current.dispatchEvent(event);
     }
   };
 
-  // Helper function for date validation
-  const validateDate = (
-    dateString: string,
-    fieldName: string
-  ): string | null => {
-    if (!dateString) return `${fieldName} is required`;
-
-    const inputDate = new Date(dateString);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    if (inputDate < today) {
-      return `${fieldName} cannot be in the past`;
+  // Step navigation functions
+  const handleNextStep = async () => {
+    if (currentStep === "form") {
+      // Validate form before moving to preview
+      const isValid = await form.trigger();
+      if (isValid && formIsValid) {
+        setCurrentStep("preview");
+      } else {
+        toast.error("Please fill all required fields correctly");
+      }
+    } else if (currentStep === "preview") {
+      setCurrentStep("submit");
     }
-
-    return null;
   };
 
-  const validateDateRange = (
-    startDate: string,
-    endDate: string,
-    prefix: string = "Project"
-  ): string | null => {
-    const startDateObj = new Date(startDate);
-    const endDateObj = new Date(endDate);
-
-    if (startDateObj >= endDateObj) {
-      return `${prefix} end date must be after start date`;
+  const handlePrevStep = () => {
+    if (currentStep === "preview") {
+      setCurrentStep("form");
+    } else if (currentStep === "submit") {
+      setCurrentStep("preview");
     }
-
-    return null;
   };
 
-  // onSubmit function
+  const handleEditFromPreview = () => {
+    setCurrentStep("form");
+  };
+
+  // Final form submission
   const onSubmit = async (values: CreateProjectFormValues) => {
     try {
       setIsSubmittingForm(true);
 
-      // 1. Validate Date of Proposal
-      const proposalDateError = validateDate(
-        values.dateOfProposal,
-        "Date of proposal"
-      );
-      if (proposalDateError) {
-        throw new Error(proposalDateError);
-      }
-
-      // 2. Validate Project Start and End Dates
-      const projectStartDateError = validateDate(
-        values.projectStartDate,
-        "Project start date"
-      );
-      if (projectStartDateError) {
-        throw new Error(projectStartDateError);
-      }
-
-      const projectEndDateError = validateDate(
-        values.projectEndDate,
-        "Project end date"
-      );
-      if (projectEndDateError) {
-        throw new Error(projectEndDateError);
-      }
-
-      // 3. Validate Project Date Range
-      const projectDateRangeError = validateDateRange(
-        values.projectStartDate,
-        values.projectEndDate
-      );
-      if (projectDateRangeError) {
-        throw new Error(projectDateRangeError);
-      }
-
-      // 4. Validate Sub-projects if enabled
-      if (values.hasSubProjects === "yes") {
-        if (!values.subProjects || values.subProjects.length === 0) {
-          throw new Error(
-            "At least one sub-project is required when sub-projects are enabled"
-          );
-        }
-
-        // Validate each sub-project
-        for (let i = 0; i < values.subProjects.length; i++) {
-          const subProject = values.subProjects[i];
-          const subProjectPrefix = `Sub-project ${i + 1}`;
-
-          // Check if all required fields are filled
-          if (!subProject.name.trim()) {
-            throw new Error(`${subProjectPrefix}: Name is required`);
-          }
-          if (!subProject.estimatedAmount.trim()) {
-            throw new Error(
-              `${subProjectPrefix}: Estimated amount is required`
-            );
-          }
-          if (!subProject.typeOfWork) {
-            throw new Error(`${subProjectPrefix}: Type of work is required`);
-          }
-          if (!subProject.subTypeOfWork) {
-            throw new Error(
-              `${subProjectPrefix}: Sub-type of work is required`
-            );
-          }
-          if (!subProject.natureOfWork) {
-            throw new Error(`${subProjectPrefix}: Nature of work is required`);
-          }
-
-          // Validate sub-project start date
-          const subStartDateError = validateDate(
-            subProject.projectStartDate,
-            `${subProjectPrefix} start date`
-          );
-          if (subStartDateError) {
-            throw new Error(subStartDateError);
-          }
-
-          // Validate sub-project end date
-          const subEndDateError = validateDate(
-            subProject.projectEndDate,
-            `${subProjectPrefix} end date`
-          );
-          if (subEndDateError) {
-            throw new Error(subEndDateError);
-          }
-
-          // Validate sub-project date range
-          const subDateRangeError = validateDateRange(
-            subProject.projectStartDate,
-            subProject.projectEndDate,
-            subProjectPrefix
-          );
-          if (subDateRangeError) {
-            throw new Error(subDateRangeError);
-          }
-
-          // Validate estimated amount format
-          if (!/^\d+(\.\d{1,2})?$/.test(subProject.estimatedAmount)) {
-            throw new Error(
-              `${subProjectPrefix}: Invalid amount format. Use decimal format (e.g., 150000.50)`
-            );
-          }
-        }
-      }
-
-      // 5. Validate estimated cost format
-      if (!/^\d+(\.\d{1,2})?$/.test(values.estimatedCost)) {
-        throw new Error(
-          "Invalid estimated cost format. Use decimal format (e.g., 500000.50)"
-        );
-      }
-
-      // 6. Additional validations
-      if (values.projectName.trim().length < 3) {
-        throw new Error("Project name must be at least 3 characters long");
-      }
-
-      if (values.description.trim().length < 10) {
-        throw new Error(
-          "Project description must be at least 10 characters long"
-        );
-      }
-
-      // 7. Prepare data for API call
+      // API submission logic here
       const apiPayload = {
         ...values,
-        // Convert string amounts to numbers if needed
         estimatedCost: parseFloat(values.estimatedCost),
         subProjects:
           values.subProjects?.map((subProject) => ({
@@ -709,129 +899,35 @@ export default function CreateProjectForm({
           })) || [],
       };
 
-      // 8. Make API call
       const response = await fetch(
         "http://localhost:3000/api/v1/projects/create",
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            // Add authorization header if needed
-            // "Authorization": `Bearer ${getAuthToken()}`,
           },
           body: JSON.stringify(apiPayload),
         }
       );
 
-      // 9. Handle API response
       if (!response.ok) {
-        let errorMessage = "Failed to create project";
-
-        try {
-          const errorData = await response.json();
-
-          // Handle different types of API errors
-          if (response.status === 400) {
-            errorMessage = errorData.message || "Invalid project data provided";
-          } else if (response.status === 401) {
-            errorMessage = "Authentication required. Please login again.";
-          } else if (response.status === 403) {
-            errorMessage = "You don't have permission to create projects";
-          } else if (response.status === 409) {
-            errorMessage = "A project with this name already exists";
-          } else if (response.status === 422) {
-            // Handle validation errors from server
-            if (errorData.errors && Array.isArray(errorData.errors)) {
-              errorMessage = errorData.errors.join(", ");
-            } else {
-              errorMessage = errorData.message || "Validation failed";
-            }
-          } else if (response.status >= 500) {
-            errorMessage = "Server error. Please try again later.";
-          } else {
-            errorMessage =
-              errorData.message ||
-              `Request failed with status ${response.status}`;
-          }
-        } catch (parseError) {
-          console.log(parseError);
-          // If we can't parse the error response, use status-based message
-          if (response.status >= 500) {
-            errorMessage = "Server error. Please try again later.";
-          } else if (response.status === 404) {
-            errorMessage =
-              "API endpoint not found. Please contact administrator.";
-          }
-        }
-
-        toast.error(errorMessage);
-        throw new Error(errorMessage);
+        throw new Error("Failed to create project");
       }
 
-      // 10. Handle successful response
-      const responseData = await response.json();
-      toast.success("A new project has been created.");
+      toast.success("Project created successfully!");
 
-      // Reset form after successful submission
-      form.reset({
-        dateOfProposal: new Date().toISOString().split("T")[0],
-        projectName: "",
-        description: "",
-        hasSubProjects: "no",
-        fund: "",
-        function: "",
-        budgetHead: "",
-        scheme: "",
-        subScheme: "",
-        owningDepartment: "",
-        executingDepartment: "",
-        beneficiary: "",
-        letterReference: "",
-        estimatedCost: "",
-        typeOfWork: "",
-        subTypeOfWork: "",
-        natureOfWork: "",
-        projectStartDate: "",
-        projectEndDate: "",
-        recommendedModeOfExecution: "",
-        locality: "",
-        ward: "",
-        ulb: "",
-        geoLocation: "",
-        subProjects: [],
-        uploadedFiles: [],
-      });
-
+      // Reset form
+      form.reset();
       setUploadedFiles([]);
       setUploadProgress({});
-      setActiveTab("details");
+      setCurrentStep("form");
 
-      // Show success message
-      alert(
-        `Project created successfully! Project ID: ${
-          responseData.data?.id || "N/A"
-        }`
-      );
-
-      // Call success callback if provided
       if (onSuccess) {
         onSuccess();
       }
     } catch (error) {
       console.error("Error creating project:", error);
-
-      // Handle network errors
-      if (error instanceof TypeError && error.message.includes("fetch")) {
-        alert(
-          "Network error: Unable to connect to server. Please check your internet connection."
-        );
-      } else {
-        toast.error(
-          `Error: ${
-            error instanceof Error ? error.message : "Something went wrong"
-          }`
-        );
-      }
+      toast.error("Failed to create project. Please try again.");
     } finally {
       setIsSubmittingForm(false);
     }
@@ -880,12 +976,6 @@ export default function CreateProjectForm({
     switch (extension) {
       case "pdf":
         return <FileText className="w-5 h-5 text-red-500" />;
-      case "doc":
-      case "docx":
-        return <FileText className="w-5 h-5 text-blue-500" />;
-      case "xls":
-      case "xlsx":
-        return <FileText className="w-5 h-5 text-green-500" />;
       case "jpg":
       case "jpeg":
       case "png":
@@ -921,490 +1011,167 @@ export default function CreateProjectForm({
             color: #6b7280 !important;
             opacity: 1 !important;
           }
-          
-          @media (max-width: 640px) {
-            .space-y-6 > * + * {
-              margin-top: 1rem !important;
-            }
-            
-            .space-y-4 > * + * {
-              margin-top: 0.75rem !important;
-            }
-          }
         `,
         }}
       />
 
+      {/* Step Progress */}
+      <StepProgress currentStep={currentStep} />
+
       {/* Instructions Card */}
-      <InstructionsCard />
+      {currentStep === "form" && <InstructionsCard />}
 
       <Form {...form}>
         <div className="space-y-6">
-          {/* Basic Project Information */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Basic Project Information</CardTitle>
-              <CardDescription>
-                Enter the fundamental details of your project
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4 sm:space-y-6">
-              <FormField
-                control={form.control}
-                name="dateOfProposal"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabelWithTooltip
-                      tooltip="Select a date. Past dates are not allowed for new proposals"
-                      required
-                    >
-                      Date of Proposal
-                    </FormLabelWithTooltip>
-                    <FormControl>
-                      <div className="dark-border">
-                        <Input type="date" {...field} className="w-full" />
-                      </div>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="projectName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabelWithTooltip
-                      tooltip="Enter a descriptive project title. Example: 'Rural Road Construction - Village ABC to XYZ'"
-                      required
-                    >
-                      Project Name
-                    </FormLabelWithTooltip>
-                    <FormControl>
-                      <div className="dark-border">
-                        <Input
-                          placeholder="Enter project name"
-                          {...field}
-                          className="w-full"
-                        />
-                      </div>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="description"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabelWithTooltip
-                      tooltip="Provide comprehensive project details including objectives, scope, and expected outcomes"
-                      required
-                    >
-                      Description
-                    </FormLabelWithTooltip>
-                    <FormControl>
-                      <div className="dark-border">
-                        <Textarea
-                          placeholder="Provide a detailed description of the project"
-                          className="min-h-[100px] w-full"
-                          {...field}
-                        />
-                      </div>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="hasSubProjects"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>This project has Sub Projects</FormLabel>
-                    <div className="flex gap-4 sm:gap-6">
-                      <RadioOption
-                        value="yes"
-                        currentValue={field.value}
-                        onChange={field.onChange}
-                        label="Yes"
-                      />
-                      <RadioOption
-                        value="no"
-                        currentValue={field.value}
-                        onChange={field.onChange}
-                        label="No"
-                      />
-                    </div>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </CardContent>
-          </Card>
-
-          {/* Tab Navigation */}
-          <TabNavigation
-            activeTab={activeTab}
-            setActiveTab={setActiveTab}
-            watchHasSubProjects={watchHasSubProjects}
-          />
-
-          {/* Project Details Tab */}
-          {activeTab === "details" && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Project Details</CardTitle>
-                <CardDescription>
-                  Detailed information about the project implementation
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4 sm:space-y-6">
-                <FormField
-                  control={form.control}
-                  name="owningDepartment"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabelWithTooltip
-                        tooltip="Select the department that will own and oversee this project from the dropdown list"
-                        required
-                      >
-                        Owning Department
-                      </FormLabelWithTooltip>
-                      <Select
-                        onValueChange={field.onChange}
-                        value={field.value}
-                      >
+          {/* STEP 1: FORM */}
+          {currentStep === "form" && (
+            <>
+              {/* Basic Project Information */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Basic Project Information</CardTitle>
+                  <CardDescription>
+                    Enter the fundamental details of your project
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4 sm:space-y-6">
+                  <FormField
+                    control={form.control}
+                    name="dateOfProposal"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabelWithTooltip
+                          tooltip="Select a date. Past dates are not allowed for new proposals"
+                          required
+                        >
+                          Date of Proposal
+                        </FormLabelWithTooltip>
                         <FormControl>
                           <div className="dark-border">
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select department" />
-                            </SelectTrigger>
+                            <Input type="date" {...field} className="w-full" />
                           </div>
                         </FormControl>
-                        <SelectContent>
-                          {departmentOptions.map((dept) => (
-                            <SelectItem key={dept} value={dept}>
-                              {dept}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-                <FormField
-                  control={form.control}
-                  name="executingDepartment"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabelWithTooltip
-                        tooltip="Choose the department responsible for implementing and executing the project work"
-                        required
-                      >
-                        Executing Department
-                      </FormLabelWithTooltip>
-                      <Select
-                        onValueChange={field.onChange}
-                        value={field.value}
-                      >
+                  <FormField
+                    control={form.control}
+                    name="projectName"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabelWithTooltip
+                          tooltip="Enter a descriptive project title"
+                          required
+                        >
+                          Project Name
+                        </FormLabelWithTooltip>
                         <FormControl>
                           <div className="dark-border">
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select department" />
-                            </SelectTrigger>
+                            <Input
+                              placeholder="Enter project name"
+                              {...field}
+                              className="w-full"
+                            />
                           </div>
                         </FormControl>
-                        <SelectContent>
-                          {departmentOptions.map((dept) => (
-                            <SelectItem key={dept} value={dept}>
-                              {dept}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-                <FormField
-                  control={form.control}
-                  name="beneficiary"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabelWithTooltip
-                        tooltip="Specify the target beneficiaries - e.g., 'Rural Population of Village XYZ', 'School Students'"
-                        required
-                      >
-                        Beneficiary
-                      </FormLabelWithTooltip>
-                      <FormControl>
-                        <div className="dark-border">
-                          <Input placeholder="Enter beneficiary" {...field} />
-                        </div>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                  <FormField
+                    control={form.control}
+                    name="description"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabelWithTooltip
+                          tooltip="Provide comprehensive project details including objectives, scope, and expected outcomes"
+                          required
+                        >
+                          Description
+                        </FormLabelWithTooltip>
+                        <FormControl>
+                          <div className="dark-border">
+                            <Textarea
+                              placeholder="Provide a detailed description of the project"
+                              className="min-h-[100px] w-full"
+                              {...field}
+                            />
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-                <FormField
-                  control={form.control}
-                  name="letterReference"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabelWithTooltip tooltip="Enter official reference number if available - e.g., 'REF/2024/PWD/001'. Leave blank if not applicable">
-                        Letter Reference/Implementation Number
-                      </FormLabelWithTooltip>
-                      <FormControl>
-                        <div className="dark-border">
-                          <Input
-                            placeholder="Enter reference number"
-                            {...field}
+                  <FormField
+                    control={form.control}
+                    name="hasSubProjects"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>This project has Sub Projects</FormLabel>
+                        <div className="flex gap-4 sm:gap-6">
+                          <RadioOption
+                            value="yes"
+                            currentValue={field.value}
+                            onChange={field.onChange}
+                            label="Yes"
+                          />
+                          <RadioOption
+                            value="no"
+                            currentValue={field.value}
+                            onChange={field.onChange}
+                            label="No"
                           />
                         </div>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </CardContent>
+              </Card>
 
-                <FormField
-                  control={form.control}
-                  name="estimatedCost"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabelWithTooltip
-                        tooltip="Enter total project cost in rupees using decimal format - e.g., 500000"
-                        required
-                      >
-                        Estimated Cost (₹)
-                      </FormLabelWithTooltip>
-                      <FormControl>
-                        <div className="dark-border">
-                          <Input
-                            placeholder="Enter estimated cost"
-                            {...field}
-                          />
-                        </div>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="typeOfWork"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabelWithTooltip
-                        tooltip="Select the primary category of work"
-                        required
-                      >
-                        Type of Work
-                      </FormLabelWithTooltip>
-                      <Select
-                        onValueChange={field.onChange}
-                        value={field.value}
-                      >
-                        <FormControl>
-                          <div className="dark-border">
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select type" />
-                            </SelectTrigger>
-                          </div>
-                        </FormControl>
-                        <SelectContent>
-                          {typeOfWorkOptions.map((type) => (
-                            <SelectItem key={type} value={type}>
-                              {type}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="subTypeOfWork"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabelWithTooltip
-                        tooltip="Choose the specific type of work based on your project requirements"
-                        required
-                      >
-                        Sub-Type of Work
-                      </FormLabelWithTooltip>
-                      <Select
-                        onValueChange={field.onChange}
-                        value={field.value}
-                      >
-                        <FormControl>
-                          <div className="dark-border">
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select sub-type" />
-                            </SelectTrigger>
-                          </div>
-                        </FormControl>
-                        <SelectContent>
-                          {subTypeOfWorkOptions.map((subType) => (
-                            <SelectItem key={subType} value={subType}>
-                              {subType}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="natureOfWork"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabelWithTooltip
-                        tooltip="Indicate whether this is new work, ongoing work, maintenance, or emergency work"
-                        required
-                      >
-                        Nature of Work
-                      </FormLabelWithTooltip>
-                      <Select
-                        onValueChange={field.onChange}
-                        value={field.value}
-                      >
-                        <FormControl>
-                          <div className="dark-border">
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select nature" />
-                            </SelectTrigger>
-                          </div>
-                        </FormControl>
-                        <SelectContent>
-                          {natureOfWorkOptions.map((nature) => (
-                            <SelectItem key={nature} value={nature}>
-                              {nature}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="projectStartDate"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabelWithTooltip
-                        tooltip="Select the planned commencement date"
-                        required
-                      >
-                        Project Start Date
-                      </FormLabelWithTooltip>
-                      <FormControl>
-                        <div className="dark-border">
-                          <Input type="date" {...field} />
-                        </div>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="projectEndDate"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabelWithTooltip
-                        tooltip="Choose the expected completion date"
-                        required
-                      >
-                        Project End Date
-                      </FormLabelWithTooltip>
-                      <FormControl>
-                        <div className="dark-border">
-                          <Input type="date" {...field} />
-                        </div>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="recommendedModeOfExecution"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabelWithTooltip
-                        tooltip="Select how the project should be executed"
-                        required
-                      >
-                        Recommended Mode of Execution
-                      </FormLabelWithTooltip>
-                      <Select
-                        onValueChange={field.onChange}
-                        value={field.value}
-                      >
-                        <FormControl>
-                          <div className="dark-border">
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select mode" />
-                            </SelectTrigger>
-                          </div>
-                        </FormControl>
-                        <SelectContent>
-                          {modeOfExecutionOptions.map((mode) => (
-                            <SelectItem key={mode} value={mode}>
-                              {mode}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                {/* Location Details */}
-                <div className="space-y-4">
-                  <h4 className="font-semibold text-lg text-gray-900 flex items-center gap-2">
-                    <MapPin className="w-5 h-5" />
-                    Location Details
-                  </h4>
-
+              {/* Financial Details */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Financial Details</CardTitle>
+                  <CardDescription>
+                    Budget allocation and financial planning information
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4 sm:space-y-6">
                   <FormField
                     control={form.control}
-                    name="locality"
+                    name="fund"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabelWithTooltip
-                          tooltip="Enter the specific area or locality name where the project will be implemented"
+                          tooltip="Select the source of funding for this project"
                           required
                         >
-                          Locality
+                          Fund
                         </FormLabelWithTooltip>
-                        <FormControl>
-                          <div className="dark-border">
-                            <Input placeholder="Enter locality" {...field} />
-                          </div>
-                        </FormControl>
+                        <Select
+                          onValueChange={field.onChange}
+                          value={field.value}
+                        >
+                          <FormControl>
+                            <div className="dark-border">
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select fund" />
+                              </SelectTrigger>
+                            </div>
+                          </FormControl>
+                          <SelectContent>
+                            {fundOptions.map((fund) => (
+                              <SelectItem key={fund} value={fund}>
+                                {fund}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -1412,20 +1179,34 @@ export default function CreateProjectForm({
 
                   <FormField
                     control={form.control}
-                    name="ward"
+                    name="function"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabelWithTooltip
-                          tooltip="Provide the ward number or name for precise location identification"
+                          tooltip="Choose the functional classification that best describes your project's purpose"
                           required
                         >
-                          Ward
+                          Function
                         </FormLabelWithTooltip>
-                        <FormControl>
-                          <div className="dark-border">
-                            <Input placeholder="Enter ward" {...field} />
-                          </div>
-                        </FormControl>
+                        <Select
+                          onValueChange={field.onChange}
+                          value={field.value}
+                        >
+                          <FormControl>
+                            <div className="dark-border">
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select function" />
+                              </SelectTrigger>
+                            </div>
+                          </FormControl>
+                          <SelectContent>
+                            {functionOptions.map((func) => (
+                              <SelectItem key={func} value={func}>
+                                {func}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -1433,18 +1214,53 @@ export default function CreateProjectForm({
 
                   <FormField
                     control={form.control}
-                    name="ulb"
+                    name="budgetHead"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabelWithTooltip
-                          tooltip="Enter the Urban Local Body name - Municipality/Corporation for the project location"
+                          tooltip="Select appropriate budget head classification"
                           required
                         >
-                          ULB
+                          Budget Head
+                        </FormLabelWithTooltip>
+                        <Select
+                          onValueChange={field.onChange}
+                          value={field.value}
+                        >
+                          <FormControl>
+                            <div className="dark-border">
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select budget head" />
+                              </SelectTrigger>
+                            </div>
+                          </FormControl>
+                          <SelectContent>
+                            {budgetHeadOptions.map((head) => (
+                              <SelectItem key={head} value={head}>
+                                {head}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="scheme"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabelWithTooltip
+                          tooltip="Enter the name of the government scheme under which this project falls"
+                          required
+                        >
+                          Scheme
                         </FormLabelWithTooltip>
                         <FormControl>
                           <div className="dark-border">
-                            <Input placeholder="Enter ULB" {...field} />
+                            <Input placeholder="Enter scheme" {...field} />
                           </div>
                         </FormControl>
                         <FormMessage />
@@ -1454,562 +1270,910 @@ export default function CreateProjectForm({
 
                   <FormField
                     control={form.control}
-                    name="geoLocation"
+                    name="subScheme"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabelWithTooltip tooltip="Optional: Enter GPS coordinates in format 'Latitude, Longitude' - e.g., 26.1445, 91.7362">
-                          Geo Location
+                        <FormLabelWithTooltip
+                          tooltip="Specify the sub-scheme or component name if applicable to your project"
+                          required
+                        >
+                          Sub Scheme
                         </FormLabelWithTooltip>
                         <FormControl>
                           <div className="dark-border">
-                            <Input placeholder="Enter coordinates" {...field} />
+                            <Input placeholder="Enter sub scheme" {...field} />
                           </div>
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
-                </div>
 
-                {/* Document Upload */}
-                <div className="space-y-4">
-                  <h4 className="font-semibold text-lg text-gray-900">
-                    Relevant Documents
-                  </h4>
-                  <h5 className="font-semibold text-sm text-gray-900">
-                    Upload supporting documents. Include project proposals,
-                    approvals, site photos, etc.
-                  </h5>
+                  <FormField
+                    control={form.control}
+                    name="estimatedCost"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabelWithTooltip
+                          tooltip="Enter total project cost in rupees using decimal format"
+                          required
+                        >
+                          Estimated Cost (₹)
+                        </FormLabelWithTooltip>
+                        <FormControl>
+                          <div className="dark-border">
+                            <Input
+                              placeholder="Enter estimated cost"
+                              {...field}
+                            />
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </CardContent>
+              </Card>
 
-                  <div
-                    className="border-2 border-dashed border-gray-300 rounded-lg p-4 sm:p-8 text-center hover:border-blue-400 transition-colors"
-                    onDragOver={handleDragOver}
-                    onDrop={handleDrop}
-                  >
-                    <Upload className="mx-auto h-8 w-8 sm:h-12 sm:w-12 text-gray-400 mb-3 sm:mb-4" />
-                    <div className="space-y-1 sm:space-y-2">
-                      <p className="text-xs sm:text-sm font-medium text-gray-900">
-                        Drag and drop files here, or click to browse
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        Supports: PDF, DOC, DOCX, JPG, PNG, XLS, XLSX (Max 10MB
-                        each)
-                      </p>
-                    </div>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className="mt-3 sm:mt-4 w-full sm:w-auto"
-                      onClick={() => fileInputRef.current?.click()}
-                    >
-                      Choose Files
-                    </Button>
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      multiple
-                      accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.xls,.xlsx"
-                      onChange={handleFileUpload}
-                      className="hidden"
+              {/* Project Details */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Project Details</CardTitle>
+                  <CardDescription>
+                    Detailed information about the project implementation
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4 sm:space-y-6">
+                  <FormField
+                    control={form.control}
+                    name="owningDepartment"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabelWithTooltip
+                          tooltip="Select the department that will own and oversee this project"
+                          required
+                        >
+                          Owning Department
+                        </FormLabelWithTooltip>
+                        <Select
+                          onValueChange={field.onChange}
+                          value={field.value}
+                        >
+                          <FormControl>
+                            <div className="dark-border">
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select department" />
+                              </SelectTrigger>
+                            </div>
+                          </FormControl>
+                          <SelectContent>
+                            {departmentOptions.map((dept) => (
+                              <SelectItem key={dept} value={dept}>
+                                {dept}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="executingDepartment"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabelWithTooltip
+                          tooltip="Choose the department responsible for implementing and executing the project work"
+                          required
+                        >
+                          Executing Department
+                        </FormLabelWithTooltip>
+                        <Select
+                          onValueChange={field.onChange}
+                          value={field.value}
+                        >
+                          <FormControl>
+                            <div className="dark-border">
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select department" />
+                              </SelectTrigger>
+                            </div>
+                          </FormControl>
+                          <SelectContent>
+                            {departmentOptions.map((dept) => (
+                              <SelectItem key={dept} value={dept}>
+                                {dept}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="beneficiary"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabelWithTooltip
+                          tooltip="Specify the target beneficiaries"
+                          required
+                        >
+                          Beneficiary
+                        </FormLabelWithTooltip>
+                        <FormControl>
+                          <div className="dark-border">
+                            <Input placeholder="Enter beneficiary" {...field} />
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="letterReference"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabelWithTooltip tooltip="Enter official reference number if available">
+                          Letter Reference/Implementation Number
+                        </FormLabelWithTooltip>
+                        <FormControl>
+                          <div className="dark-border">
+                            <Input
+                              placeholder="Enter reference number"
+                              {...field}
+                            />
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="typeOfWork"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabelWithTooltip
+                          tooltip="Select the primary category of work"
+                          required
+                        >
+                          Type of Work
+                        </FormLabelWithTooltip>
+                        <Select
+                          onValueChange={field.onChange}
+                          value={field.value}
+                        >
+                          <FormControl>
+                            <div className="dark-border">
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select type" />
+                              </SelectTrigger>
+                            </div>
+                          </FormControl>
+                          <SelectContent>
+                            {typeOfWorkOptions.map((type) => (
+                              <SelectItem key={type} value={type}>
+                                {type}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="subTypeOfWork"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabelWithTooltip
+                          tooltip="Choose the specific type of work"
+                          required
+                        >
+                          Sub-Type of Work
+                        </FormLabelWithTooltip>
+                        <Select
+                          onValueChange={field.onChange}
+                          value={field.value}
+                        >
+                          <FormControl>
+                            <div className="dark-border">
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select sub-type" />
+                              </SelectTrigger>
+                            </div>
+                          </FormControl>
+                          <SelectContent>
+                            {subTypeOfWorkOptions.map((subType) => (
+                              <SelectItem key={subType} value={subType}>
+                                {subType}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="natureOfWork"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabelWithTooltip
+                          tooltip="Indicate whether this is new work, ongoing work, maintenance, or emergency work"
+                          required
+                        >
+                          Nature of Work
+                        </FormLabelWithTooltip>
+                        <Select
+                          onValueChange={field.onChange}
+                          value={field.value}
+                        >
+                          <FormControl>
+                            <div className="dark-border">
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select nature" />
+                              </SelectTrigger>
+                            </div>
+                          </FormControl>
+                          <SelectContent>
+                            {natureOfWorkOptions.map((nature) => (
+                              <SelectItem key={nature} value={nature}>
+                                {nature}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="projectStartDate"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabelWithTooltip
+                          tooltip="Select the planned commencement date"
+                          required
+                        >
+                          Project Start Date
+                        </FormLabelWithTooltip>
+                        <FormControl>
+                          <div className="dark-border">
+                            <Input type="date" {...field} />
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="projectEndDate"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabelWithTooltip
+                          tooltip="Choose the expected completion date"
+                          required
+                        >
+                          Project End Date
+                        </FormLabelWithTooltip>
+                        <FormControl>
+                          <div className="dark-border">
+                            <Input type="date" {...field} />
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="recommendedModeOfExecution"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabelWithTooltip
+                          tooltip="Select how the project should be executed"
+                          required
+                        >
+                          Recommended Mode of Execution
+                        </FormLabelWithTooltip>
+                        <Select
+                          onValueChange={field.onChange}
+                          value={field.value}
+                        >
+                          <FormControl>
+                            <div className="dark-border">
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select mode" />
+                              </SelectTrigger>
+                            </div>
+                          </FormControl>
+                          <SelectContent>
+                            {modeOfExecutionOptions.map((mode) => (
+                              <SelectItem key={mode} value={mode}>
+                                {mode}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  {/* Location Details */}
+                  <div className="space-y-4">
+                    <h4 className="font-semibold text-lg text-gray-900 flex items-center gap-2">
+                      <MapPin className="w-5 h-5" />
+                      Location Details
+                    </h4>
+
+                    <FormField
+                      control={form.control}
+                      name="locality"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabelWithTooltip
+                            tooltip="Enter the specific area or locality name"
+                            required
+                          >
+                            Locality
+                          </FormLabelWithTooltip>
+                          <FormControl>
+                            <div className="dark-border">
+                              <Input placeholder="Enter locality" {...field} />
+                            </div>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="ward"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabelWithTooltip
+                            tooltip="Provide the ward number or name"
+                            required
+                          >
+                            Ward
+                          </FormLabelWithTooltip>
+                          <FormControl>
+                            <div className="dark-border">
+                              <Input placeholder="Enter ward" {...field} />
+                            </div>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="ulb"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabelWithTooltip
+                            tooltip="Enter the Urban Local Body name"
+                            required
+                          >
+                            ULB
+                          </FormLabelWithTooltip>
+                          <FormControl>
+                            <div className="dark-border">
+                              <Input placeholder="Enter ULB" {...field} />
+                            </div>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="geoLocation"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabelWithTooltip tooltip="Optional: Enter GPS coordinates">
+                            Geo Location
+                          </FormLabelWithTooltip>
+                          <FormControl>
+                            <div className="dark-border">
+                              <Input
+                                placeholder="Enter coordinates"
+                                {...field}
+                              />
+                            </div>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
                     />
                   </div>
 
-                  {/* Uploaded Files */}
-                  {uploadedFiles.length > 0 && (
-                    <div className="space-y-3">
-                      <h5 className="font-medium text-gray-900">
-                        Uploaded Files ({uploadedFiles.length})
-                      </h5>
-                      <div className="space-y-2">
-                        {uploadedFiles.map((file, index) => {
-                          const fileId = `${file.name}_${Date.now()}_${index}`;
-                          const progress = uploadProgress[fileId] || 100;
+                  {/* Document Upload */}
+                  <div className="space-y-4">
+                    <h4 className="font-semibold text-lg text-gray-900">
+                      Relevant Documents
+                    </h4>
+                    <h5 className="font-semibold text-sm text-gray-900">
+                      Upload supporting documents (PDF and Image files only)
+                    </h5>
 
-                          return (
-                            <div
-                              key={index}
-                              className="flex items-center justify-between bg-gray-50 p-4 rounded-lg border"
-                            >
-                              <div className="flex items-center space-x-3">
-                                {getFileIcon(file.name)}
-                                <div className="flex-1">
-                                  <p className="text-sm font-medium text-gray-900">
-                                    {file.name}
-                                  </p>
-                                  <p className="text-xs text-gray-500">
-                                    {formatFileSize(file.size)}
-                                  </p>
-                                  {progress < 100 && (
-                                    <div className="mt-1">
-                                      <div className="bg-gray-200 rounded-full h-1.5">
-                                        <div
-                                          className="bg-blue-600 h-1.5 rounded-full transition-all duration-300"
-                                          style={{ width: `${progress}%` }}
-                                        />
+                    <div
+                      className="border-2 border-dashed border-gray-300 rounded-lg p-4 sm:p-8 text-center hover:border-blue-400 transition-colors"
+                      onDragOver={handleDragOver}
+                      onDrop={handleDrop}
+                    >
+                      <Upload className="mx-auto h-8 w-8 sm:h-12 sm:w-12 text-gray-400 mb-3 sm:mb-4" />
+                      <div className="space-y-1 sm:space-y-2">
+                        <p className="text-xs sm:text-sm font-medium text-gray-900">
+                          Drag and drop files here, or click to browse
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          Supports: PDF, JPG, PNG (Max 10MB each)
+                        </p>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="mt-3 sm:mt-4 w-full sm:w-auto"
+                        onClick={() => fileInputRef.current?.click()}
+                      >
+                        Choose Files
+                      </Button>
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        multiple
+                        accept=".pdf,.jpg,.jpeg,.png"
+                        onChange={handleFileUpload}
+                        className="hidden"
+                      />
+                    </div>
+
+                    {/* Uploaded Files */}
+                    {uploadedFiles.length > 0 && (
+                      <div className="space-y-3">
+                        <h5 className="font-medium text-gray-900">
+                          Uploaded Files ({uploadedFiles.length})
+                        </h5>
+                        <div className="space-y-2">
+                          {uploadedFiles.map((file, index) => {
+                            const fileId = `${
+                              file.name
+                            }_${Date.now()}_${index}`;
+                            const progress = uploadProgress[fileId] || 100;
+
+                            return (
+                              <div
+                                key={index}
+                                className="flex items-center justify-between bg-gray-50 p-4 rounded-lg border"
+                              >
+                                <div className="flex items-center space-x-3">
+                                  {getFileIcon(file.name)}
+                                  <div className="flex-1">
+                                    <p className="text-sm font-medium text-gray-900">
+                                      {file.name}
+                                    </p>
+                                    <p className="text-xs text-gray-500">
+                                      {formatFileSize(file.size)}
+                                    </p>
+                                    {progress < 100 && (
+                                      <div className="mt-1">
+                                        <div className="bg-gray-200 rounded-full h-1.5">
+                                          <div
+                                            className="bg-blue-600 h-1.5 rounded-full transition-all duration-300"
+                                            style={{ width: `${progress}%` }}
+                                          />
+                                        </div>
+                                        <p className="text-xs text-gray-500 mt-1">
+                                          {progress}% uploaded
+                                        </p>
                                       </div>
-                                      <p className="text-xs text-gray-500 mt-1">
-                                        {progress}% uploaded
-                                      </p>
-                                    </div>
+                                    )}
+                                  </div>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                  {progress >= 100 && (
+                                    <CheckCircle className="w-4 h-4 text-green-500" />
                                   )}
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => handleRemoveFile(index)}
+                                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                  >
+                                    <X className="w-4 h-4" />
+                                  </Button>
                                 </div>
                               </div>
-                              <div className="flex items-center space-x-2">
-                                {progress >= 100 && (
-                                  <CheckCircle className="w-4 h-4 text-green-500" />
-                                )}
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => handleRemoveFile(index)}
-                                  className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                                >
-                                  <X className="w-4 h-4" />
-                                </Button>
-                              </div>
-                            </div>
-                          );
-                        })}
+                            );
+                          })}
+                        </div>
                       </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Sub-projects */}
+              {watchHasSubProjects === "yes" && (
+                <Card>
+                  <CardHeader>
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <CardTitle>Sub-project Details</CardTitle>
+                        <CardDescription>
+                          Manage individual sub-projects within this main
+                          project
+                        </CardDescription>
+                      </div>
+                      <Button
+                        type="button"
+                        onClick={handleAddSubProject}
+                        className="flex items-center gap-2"
+                      >
+                        <Plus className="w-4 h-4" />
+                        Add sub project
+                      </Button>
                     </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
+                  </CardHeader>
+                  <CardContent>
+                    {form.watch("subProjects")?.length === 0 ? (
+                      <div className="text-center py-8 sm:py-12 text-gray-500">
+                        <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gray-100 rounded-lg flex items-center justify-center mx-auto mb-3 sm:mb-4">
+                          <Plus className="w-6 h-6 sm:w-8 sm:h-8 text-gray-400" />
+                        </div>
+                        <p className="text-base sm:text-lg font-medium mb-2">
+                          No sub-projects added yet
+                        </p>
+                        <p className="text-sm text-gray-400 mb-4">
+                          {`Click "Add sub project" to get started`}
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="space-y-4 sm:space-y-6">
+                        {form.watch("subProjects")?.map((_, index) => (
+                          <div
+                            key={index}
+                            className="border border-gray-200 rounded-lg p-4 sm:p-6 space-y-3 sm:space-y-4 bg-gray-50"
+                          >
+                            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 sm:gap-0">
+                              <h4 className="font-semibold text-base sm:text-lg text-gray-900">
+                                Sub-project {index + 1}
+                              </h4>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleRemoveSubProject(index)}
+                                className="text-red-600 hover:text-red-700 hover:bg-red-50 self-end sm:self-auto"
+                              >
+                                <X className="w-4 h-4" />
+                              </Button>
+                            </div>
+
+                            <div className="space-y-3 sm:space-y-4">
+                              <FormField
+                                control={form.control}
+                                name={`subProjects.${index}.name`}
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabelWithTooltip tooltip="Enter descriptive name for this sub-project">
+                                      Name of the Work
+                                    </FormLabelWithTooltip>
+                                    <FormControl>
+                                      <div className="dark-border">
+                                        <Input
+                                          placeholder="Enter work name"
+                                          {...field}
+                                        />
+                                      </div>
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+
+                              <FormField
+                                control={form.control}
+                                name={`subProjects.${index}.estimatedAmount`}
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabelWithTooltip tooltip="Enter cost for this sub-project in decimal format">
+                                      Estimated Amount (₹)
+                                    </FormLabelWithTooltip>
+                                    <FormControl>
+                                      <div className="dark-border">
+                                        <Input
+                                          placeholder="Enter amount"
+                                          {...field}
+                                        />
+                                      </div>
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+
+                              <FormField
+                                control={form.control}
+                                name={`subProjects.${index}.typeOfWork`}
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabelWithTooltip tooltip="Select the work category for this specific sub-project">
+                                      Type of Work
+                                    </FormLabelWithTooltip>
+                                    <Select
+                                      onValueChange={field.onChange}
+                                      value={field.value}
+                                    >
+                                      <FormControl>
+                                        <div className="dark-border">
+                                          <SelectTrigger>
+                                            <SelectValue placeholder="Select type" />
+                                          </SelectTrigger>
+                                        </div>
+                                      </FormControl>
+                                      <SelectContent>
+                                        {typeOfWorkOptions.map((type) => (
+                                          <SelectItem key={type} value={type}>
+                                            {type}
+                                          </SelectItem>
+                                        ))}
+                                      </SelectContent>
+                                    </Select>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+
+                              <FormField
+                                control={form.control}
+                                name={`subProjects.${index}.subTypeOfWork`}
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabelWithTooltip tooltip="Choose specific sub-category">
+                                      Sub-Type of Work
+                                    </FormLabelWithTooltip>
+                                    <Select
+                                      onValueChange={field.onChange}
+                                      value={field.value}
+                                    >
+                                      <FormControl>
+                                        <div className="dark-border">
+                                          <SelectTrigger>
+                                            <SelectValue placeholder="Select sub-type" />
+                                          </SelectTrigger>
+                                        </div>
+                                      </FormControl>
+                                      <SelectContent>
+                                        {subTypeOfWorkOptions.map((subType) => (
+                                          <SelectItem
+                                            key={subType}
+                                            value={subType}
+                                          >
+                                            {subType}
+                                          </SelectItem>
+                                        ))}
+                                      </SelectContent>
+                                    </Select>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+
+                              <FormField
+                                control={form.control}
+                                name={`subProjects.${index}.natureOfWork`}
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabelWithTooltip tooltip="Indicate if this sub-project is new, ongoing, maintenance, or emergency work">
+                                      Nature of Work
+                                    </FormLabelWithTooltip>
+                                    <Select
+                                      onValueChange={field.onChange}
+                                      value={field.value}
+                                    >
+                                      <FormControl>
+                                        <div className="dark-border">
+                                          <SelectTrigger>
+                                            <SelectValue placeholder="Select nature" />
+                                          </SelectTrigger>
+                                        </div>
+                                      </FormControl>
+                                      <SelectContent>
+                                        {natureOfWorkOptions.map((nature) => (
+                                          <SelectItem
+                                            key={nature}
+                                            value={nature}
+                                          >
+                                            {nature}
+                                          </SelectItem>
+                                        ))}
+                                      </SelectContent>
+                                    </Select>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+
+                              <FormField
+                                control={form.control}
+                                name={`subProjects.${index}.projectStartDate`}
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabelWithTooltip tooltip="Select start date for this sub-project">
+                                      Project Start Date
+                                    </FormLabelWithTooltip>
+                                    <FormControl>
+                                      <div className="dark-border">
+                                        <Input type="date" {...field} />
+                                      </div>
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+
+                              <FormField
+                                control={form.control}
+                                name={`subProjects.${index}.projectEndDate`}
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabelWithTooltip tooltip="Choose completion date for this sub-project">
+                                      Project End Date
+                                    </FormLabelWithTooltip>
+                                    <FormControl>
+                                      <div className="dark-border">
+                                        <Input type="date" {...field} />
+                                      </div>
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
+            </>
           )}
 
-          {/* Financial Details Tab */}
-          {activeTab === "financial" && (
+          {/* STEP 2: PREVIEW & REVIEW */}
+          {currentStep === "preview" && (
             <Card>
               <CardHeader>
-                <CardTitle>Financial Details</CardTitle>
+                <CardTitle>Project Preview & Review</CardTitle>
                 <CardDescription>
-                  Budget allocation and financial planning information
+                  Review all project details and make corrections if needed
+                  before final submission
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4 sm:space-y-6">
-                <FormField
-                  control={form.control}
-                  name="fund"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabelWithTooltip
-                        tooltip="Select the source of funding for this project"
-                        required
-                      >
-                        Fund
-                      </FormLabelWithTooltip>
-                      <Select
-                        onValueChange={field.onChange}
-                        value={field.value}
-                      >
-                        <FormControl>
-                          <div className="dark-border">
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select fund" />
-                            </SelectTrigger>
-                          </div>
-                        </FormControl>
-                        <SelectContent>
-                          {fundOptions.map((fund) => (
-                            <SelectItem key={fund} value={fund}>
-                              {fund}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="function"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabelWithTooltip
-                        tooltip="Choose the functional classification that best describes your project's purpose"
-                        required
-                      >
-                        Function
-                      </FormLabelWithTooltip>
-                      <Select
-                        onValueChange={field.onChange}
-                        value={field.value}
-                      >
-                        <FormControl>
-                          <div className="dark-border">
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select function" />
-                            </SelectTrigger>
-                          </div>
-                        </FormControl>
-                        <SelectContent>
-                          {functionOptions.map((func) => (
-                            <SelectItem key={func} value={func}>
-                              {func}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="budgetHead"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabelWithTooltip
-                        tooltip="Select appropriate budget head classification"
-                        required
-                      >
-                        Budget Head
-                      </FormLabelWithTooltip>
-                      <Select
-                        onValueChange={field.onChange}
-                        value={field.value}
-                      >
-                        <FormControl>
-                          <div className="dark-border">
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select budget head" />
-                            </SelectTrigger>
-                          </div>
-                        </FormControl>
-                        <SelectContent>
-                          {budgetHeadOptions.map((head) => (
-                            <SelectItem key={head} value={head}>
-                              {head}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="scheme"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabelWithTooltip
-                        tooltip="Enter the name of the government scheme under which this project falls"
-                        required
-                      >
-                        Scheme
-                      </FormLabelWithTooltip>
-                      <FormControl>
-                        <div className="dark-border">
-                          <Input placeholder="Enter scheme" {...field} />
-                        </div>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="subScheme"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabelWithTooltip
-                        tooltip="Specify the sub-scheme or component name if applicable to your project"
-                        required
-                      >
-                        Sub Scheme
-                      </FormLabelWithTooltip>
-                      <FormControl>
-                        <div className="dark-border">
-                          <Input placeholder="Enter sub scheme" {...field} />
-                        </div>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+              <CardContent>
+                <ProjectPreview
+                  formData={form.getValues()}
+                  uploadedFiles={uploadedFiles}
+                  onEdit={handleEditFromPreview}
                 />
               </CardContent>
             </Card>
           )}
 
-          {/* Sub-project Details Tab */}
-          {activeTab === "subProjects" && watchHasSubProjects === "yes" && (
+          {/* STEP 3: SUBMIT */}
+          {currentStep === "submit" && (
             <Card>
               <CardHeader>
-                <div className="flex justify-between items-center">
-                  <div>
-                    <CardTitle>Sub-project Details</CardTitle>
-                    <CardDescription>
-                      Manage individual sub-projects within this main project
-                    </CardDescription>
+                <CardTitle className="flex items-center gap-2">
+                  <Send className="w-5 h-5 text-green-500" />
+                  Final Submission
+                </CardTitle>
+                <CardDescription>
+                  You are ready to submit your project. Click the button below
+                  to create the project.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                  <div className="flex items-start space-x-3">
+                    <CheckCircle className="w-5 h-5 text-green-500 mt-0.5" />
+                    <div>
+                      <h4 className="font-medium text-green-800">
+                        Ready for Submission
+                      </h4>
+                      <p className="text-sm text-green-700 mt-1">
+                        All required fields have been completed and validated.
+                        Your project is ready to be created.
+                      </p>
+                    </div>
                   </div>
+                </div>
+
+                <div className="text-center py-8">
+                  <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                    Project Ready for Submission
+                  </h3>
+                  <p className="text-gray-600 mb-6">
+                    Click the button below to create your project and submit it
+                    for processing.
+                  </p>
+
                   <Button
                     type="button"
-                    onClick={handleAddSubProject}
-                    className="flex items-center gap-2"
+                    disabled={isSubmittingForm}
+                    onClick={form.handleSubmit(onSubmit)}
+                    className="px-8 py-3 bg-green-600 hover:bg-green-700 text-white"
+                    size="lg"
                   >
-                    <Plus className="w-4 h-4" />
-                    Add sub project
+                    {isSubmittingForm ? (
+                      <>
+                        <Loader2 className="animate-spin mr-2 w-5 h-5" />
+                        Creating Project...
+                      </>
+                    ) : (
+                      <>
+                        <Send className="mr-2 w-5 h-5" />
+                        Submit Project
+                      </>
+                    )}
                   </Button>
                 </div>
-              </CardHeader>
-              <CardContent>
-                {form.watch("subProjects")?.length === 0 ? (
-                  <div className="text-center py-8 sm:py-12 text-gray-500">
-                    <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gray-100 rounded-lg flex items-center justify-center mx-auto mb-3 sm:mb-4">
-                      <Plus className="w-6 h-6 sm:w-8 sm:h-8 text-gray-400" />
-                    </div>
-                    <p className="text-base sm:text-lg font-medium mb-2">
-                      No sub-projects added yet
-                    </p>
-                    <p className="text-sm text-gray-400 mb-4">
-                      {`Click "Add Line Item" to get started`}
-                    </p>
-                  </div>
-                ) : (
-                  <div className="space-y-4 sm:space-y-6">
-                    {form.watch("subProjects")?.map((_, index) => (
-                      <div
-                        key={index}
-                        className="border border-gray-200 rounded-lg p-4 sm:p-6 space-y-3 sm:space-y-4 bg-gray-50"
-                      >
-                        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 sm:gap-0">
-                          <h4 className="font-semibold text-base sm:text-lg text-gray-900">
-                            Sub-project {index + 1}
-                          </h4>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleRemoveSubProject(index)}
-                            className="text-red-600 hover:text-red-700 hover:bg-red-50 self-end sm:self-auto"
-                          >
-                            <X className="w-4 h-4" />
-                          </Button>
-                        </div>
-
-                        <div className="space-y-3 sm:space-y-4">
-                          <FormField
-                            control={form.control}
-                            name={`subProjects.${index}.name`}
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabelWithTooltip tooltip="Enter descriptive name for this sub-project component">
-                                  Name of the Work
-                                </FormLabelWithTooltip>
-                                <FormControl>
-                                  <div className="dark-border">
-                                    <Input
-                                      placeholder="Enter work name"
-                                      {...field}
-                                    />
-                                  </div>
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-
-                          <FormField
-                            control={form.control}
-                            name={`subProjects.${index}.estimatedAmount`}
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabelWithTooltip tooltip="Enter cost for this sub-project in decimal format - e.g., 150000">
-                                  Estimated Amount (₹)
-                                </FormLabelWithTooltip>
-                                <FormControl>
-                                  <div className="dark-border">
-                                    <Input
-                                      placeholder="Enter amount"
-                                      {...field}
-                                    />
-                                  </div>
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-
-                          <FormField
-                            control={form.control}
-                            name={`subProjects.${index}.typeOfWork`}
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabelWithTooltip tooltip="Select the work category for this specific sub-project">
-                                  Type of Work
-                                </FormLabelWithTooltip>
-                                <Select
-                                  onValueChange={field.onChange}
-                                  value={field.value}
-                                >
-                                  <FormControl>
-                                    <div className="dark-border">
-                                      <SelectTrigger>
-                                        <SelectValue placeholder="Select type" />
-                                      </SelectTrigger>
-                                    </div>
-                                  </FormControl>
-                                  <SelectContent>
-                                    {typeOfWorkOptions.map((type) => (
-                                      <SelectItem key={type} value={type}>
-                                        {type}
-                                      </SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-
-                          <FormField
-                            control={form.control}
-                            name={`subProjects.${index}.subTypeOfWork`}
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabelWithTooltip tooltip="Choose specific sub-category">
-                                  Sub-Type of Work
-                                </FormLabelWithTooltip>
-                                <Select
-                                  onValueChange={field.onChange}
-                                  value={field.value}
-                                >
-                                  <FormControl>
-                                    <div className="dark-border">
-                                      <SelectTrigger>
-                                        <SelectValue placeholder="Select sub-type" />
-                                      </SelectTrigger>
-                                    </div>
-                                  </FormControl>
-                                  <SelectContent>
-                                    {subTypeOfWorkOptions.map((subType) => (
-                                      <SelectItem key={subType} value={subType}>
-                                        {subType}
-                                      </SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-
-                          <FormField
-                            control={form.control}
-                            name={`subProjects.${index}.natureOfWork`}
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabelWithTooltip tooltip="Indicate if this sub-project is new, ongoing, maintenance, or emergency work">
-                                  Nature of Work
-                                </FormLabelWithTooltip>
-                                <Select
-                                  onValueChange={field.onChange}
-                                  value={field.value}
-                                >
-                                  <FormControl>
-                                    <div className="dark-border">
-                                      <SelectTrigger>
-                                        <SelectValue placeholder="Select nature" />
-                                      </SelectTrigger>
-                                    </div>
-                                  </FormControl>
-                                  <SelectContent>
-                                    {natureOfWorkOptions.map((nature) => (
-                                      <SelectItem key={nature} value={nature}>
-                                        {nature}
-                                      </SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-
-                          <FormField
-                            control={form.control}
-                            name={`subProjects.${index}.projectStartDate`}
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabelWithTooltip tooltip="Select start date for this sub-project">
-                                  Project Start Date
-                                </FormLabelWithTooltip>
-                                <FormControl>
-                                  <div className="dark-border">
-                                    <Input type="date" {...field} />
-                                  </div>
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-
-                          <FormField
-                            control={form.control}
-                            name={`subProjects.${index}.projectEndDate`}
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabelWithTooltip tooltip="Choose completion date for this sub-project">
-                                  Project End Date
-                                </FormLabelWithTooltip>
-                                <FormControl>
-                                  <div className="dark-border">
-                                    <Input type="date" {...field} />
-                                  </div>
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
               </CardContent>
             </Card>
           )}
 
-          {/* Action Buttons */}
-          <div className="flex flex-col sm:flex-row justify-end gap-3 sm:gap-4 pt-4 sm:pt-6">
-            {onCancel && (
-              <Button
-                type="button"
-                variant="outline"
-                onClick={onCancel}
-                disabled={isSubmittingForm}
-                className="w-full sm:w-auto"
-              >
-                Cancel
-              </Button>
-            )}
+          {/* Navigation Buttons */}
+          <div className="flex justify-between pt-6">
             <Button
               type="button"
-              disabled={isSubmittingForm || !formIsValid}
-              onClick={form.handleSubmit(onSubmit)}
-              className={`w-full sm:w-auto px-6 sm:px-8 text-white ${
-                formIsValid && !isSubmittingForm
-                  ? "bg-orange-600 hover:bg-orange-700"
-                  : "bg-orange-400 cursor-not-allowed hover:bg-gray-400"
-              }`}
+              variant="outline"
+              onClick={currentStep === "form" ? onCancel : handlePrevStep}
+              disabled={isSubmittingForm}
+              className="flex items-center gap-2"
             >
-              {isSubmittingForm ? (
-                <>
-                  <Loader2 className="animate-spin mr-2 w-4 h-4" />
-                  Creating Project...
-                </>
-              ) : (
-                "Create Project"
-              )}
+              <ArrowLeft className="w-4 h-4" />
+              {currentStep === "form" ? "Cancel" : "Previous"}
             </Button>
+
+            {currentStep !== "submit" && (
+              <Button
+                type="button"
+                onClick={handleNextStep}
+                disabled={
+                  isSubmittingForm || (currentStep === "form" && !formIsValid)
+                }
+                className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white"
+              >
+                {currentStep === "form" ? "Preview & Review" : "Final Submit"}
+                <ArrowRight className="w-4 h-4" />
+              </Button>
+            )}
           </div>
         </div>
       </Form>

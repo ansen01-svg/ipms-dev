@@ -1,29 +1,29 @@
-'use client'
+"use client";
 
-import Sidebar from '@/components/Sidebar'
-import Navbar from '@/components/Navbar'
-import { useState, useEffect } from 'react'
+import Sidebar from "@/components/dashboards/admin/Sidebar";
+import Navbar from "@/components/dashboards/admin/Navbar";
+import { useState, useEffect } from "react";
 
 export default function DashboardLayout({
   children,
 }: {
-  children: React.ReactNode
+  children: React.ReactNode;
 }) {
-  const [collapsed, setCollapsed] = useState(false)
-  const [mobileOpen, setMobileOpen] = useState(false)
-  const [isMobile, setIsMobile] = useState(false)
+  const [collapsed, setCollapsed] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
     function handleResize() {
-      setIsMobile(window.innerWidth < 640)
+      setIsMobile(window.innerWidth < 640);
       if (window.innerWidth >= 640) {
-        setMobileOpen(false)
+        setMobileOpen(false);
       }
     }
-    handleResize()
-    window.addEventListener('resize', handleResize)
-    return () => window.removeEventListener('resize', handleResize)
-  }, [])
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   return (
     <>
@@ -43,7 +43,7 @@ export default function DashboardLayout({
         />
         <main
           className={`flex-1 p-4 overflow-auto transition-all duration-300 ${
-            !isMobile ? (collapsed ? 'ml-20' : 'ml-64') : 'ml-0'
+            !isMobile ? (collapsed ? "ml-20" : "ml-64") : "ml-0"
           }`}
           style={{ minWidth: 0 }}
         >
@@ -51,5 +51,5 @@ export default function DashboardLayout({
         </main>
       </div>
     </>
-  )
+  );
 }

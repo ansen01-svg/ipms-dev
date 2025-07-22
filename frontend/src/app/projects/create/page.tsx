@@ -10,9 +10,10 @@ export default function CreateProjectPage() {
   const router = useRouter();
 
   const handleSuccess = () => {
-    // Navigate to projects list or project detail page
-    // router.push("/dashboard/projects");
+    // Navigate to projects list after successful submission
     console.log("Project created successfully");
+    // Uncomment the line below to enable navigation after success
+    // router.push("/dashboard/projects");
   };
 
   const handleCancel = () => {
@@ -30,8 +31,10 @@ export default function CreateProjectPage() {
         {/* Page Header */}
         <PageHeader />
 
-        {/* Create Project Form */}
+        {/* Multi-Step Create Project Form */}
         <CreateProjectForm onSuccess={handleSuccess} onCancel={handleCancel} />
+
+        {/* Toast Notifications */}
         <Toaster position="top-center" />
       </div>
     </div>
