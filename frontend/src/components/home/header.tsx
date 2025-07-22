@@ -67,7 +67,7 @@ const smoothScrollToTop = (): void => {
 };
 
 /**
- * Enhanced Header Component with Smooth Scroll
+ * Enhanced Header Component with Harmonized Color Scheme
  */
 export default function Header({ className = "" }: HeaderProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
@@ -147,7 +147,7 @@ export default function Header({ className = "" }: HeaderProps) {
       <div className="">
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex justify-end items-center py-2">
-            <div className="flex items-center gap-2 text-sm font-medium ">
+            <div className="flex items-center gap-2 text-sm font-medium">
               <Calendar className="w-4 h-4" />
               <span className="tracking-wide">
                 {currentDate || formatDate(new Date())}
@@ -212,17 +212,17 @@ export default function Header({ className = "" }: HeaderProps) {
                   key={item.label}
                   href={item.href}
                   onClick={(e) => handleNavItemClick(e, item)}
-                  className="text-sm font-semibold text-gray-700 hover:text-orange-600 tracking-wider transition-colors duration-200 cursor-pointer"
+                  className="text-sm font-semibold text-gray-700 hover:text-blue-600 tracking-wider transition-colors duration-200 cursor-pointer"
                 >
                   {item.label}
                 </Link>
               ))}
 
-              {/* Log In Button */}
+              {/* Log In Button - Updated to teal theme */}
               <Link href="/login">
                 <Button
                   variant="outline"
-                  className="text-sm font-semibold tracking-wider border-orange-300 text-orange-700 hover:border-orange-400 hover:bg-orange-50 hover:text-orange-800"
+                  className="text-sm font-semibold tracking-wider border-blue-300 text-blue-700 hover:border-blue-400 hover:bg-blue-50 hover:text-blue-800"
                 >
                   LOG IN
                 </Button>
@@ -235,7 +235,7 @@ export default function Header({ className = "" }: HeaderProps) {
                 variant="ghost"
                 size="sm"
                 onClick={toggleMobileMenu}
-                className="text-gray-700 hover:text-orange-600 hover:bg-orange-50 transition-all duration-200"
+                className="text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition-all duration-200"
                 aria-label="Toggle navigation menu"
               >
                 <div className="relative w-5 h-5">
@@ -261,7 +261,7 @@ export default function Header({ className = "" }: HeaderProps) {
 
         {/* Mobile Navigation Menu with Enhanced Transitions */}
         <div
-          className={`md:hidden border-t border-gray-100 bg-orange-50/40 backdrop-blur-sm overflow-hidden transition-all duration-300 ease-out ${
+          className={`md:hidden border-t border-gray-100 bg-teal-50/40 backdrop-blur-sm overflow-hidden transition-all duration-300 ease-out ${
             isMobileMenuOpen
               ? "max-h-80 opacity-100 py-4"
               : "max-h-0 opacity-0 py-0"
@@ -276,7 +276,7 @@ export default function Header({ className = "" }: HeaderProps) {
                   handleNavItemClick(e, item);
                   handleNavigationClick();
                 }}
-                className={`text-sm font-semibold text-gray-700 hover:text-orange-600 tracking-wider transition-all duration-300 ease-out py-2 cursor-pointer transform hover:translate-x-1 ${
+                className={`text-sm font-semibold text-gray-700 hover:text-blue-600 tracking-wider transition-all duration-300 ease-out py-2 cursor-pointer transform hover:translate-x-1 ${
                   isMobileMenuOpen
                     ? "translate-x-0 opacity-100"
                     : "translate-x-4 opacity-0"
@@ -293,7 +293,7 @@ export default function Header({ className = "" }: HeaderProps) {
             <Link href="/login" onClick={handleNavigationClick}>
               <Button
                 variant="outline"
-                className={`w-full text-sm font-semibold tracking-wider border-orange-300 text-orange-700 hover:border-orange-400 hover:bg-orange-50 hover:text-orange-800 mt-2 transition-all duration-300 ease-out transform hover:scale-105 active:scale-95 ${
+                className={`w-full text-sm font-semibold tracking-wider border-blue-300 text-blue-700 hover:border-blue-400 hover:bg-blue-50 hover:text-blue-800 mt-2 transition-all duration-300 ease-out transform hover:scale-105 active:scale-95 ${
                   isMobileMenuOpen
                     ? "translate-x-0 opacity-100"
                     : "translate-x-4 opacity-0"

@@ -24,7 +24,7 @@ const footerLinks = [
 ];
 
 /**
- * Footer Component
+ * Footer Component with Harmonized Color Scheme
  */
 export default function Footer({ className = "" }: FooterProps) {
   const currentYear = new Date().getFullYear();
@@ -40,7 +40,7 @@ export default function Footer({ className = "" }: FooterProps) {
               <Link
                 key={index}
                 href={link.href}
-                className="text-gray-700 hover:text-orange-500 transition-colors duration-200 font-medium text-lg"
+                className="text-gray-700 hover:text-blue-600 transition-colors duration-200 font-medium text-sm sm:text-base"
               >
                 {link.label}
               </Link>
@@ -51,7 +51,7 @@ export default function Footer({ className = "" }: FooterProps) {
           <div className="text-center space-y-4">
             {/* iPMS Information */}
             <div>
-              <p className="text-base text-gray-600 font-medium">
+              <p className="text-sm sm:text-base text-gray-600 font-medium">
                 INTEGRATED PROJECT MONITORING SYSTEM (iPMS)
               </p>
             </div>

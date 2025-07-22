@@ -2,9 +2,17 @@ import StatusBadge from "./StatusBadge";
 
 export default function DashboardCard() {
   const projects = [
-    { name: "Bridge development project", district: "Dibrugarh", status: "Ongoing" },
+    {
+      name: "Bridge development project",
+      district: "Dibrugarh",
+      status: "Ongoing",
+    },
     { name: "Road development project", district: "Nagaon", status: "Ongoing" },
-    { name: "Building development project", district: "Sonitpur", status: "Done" },
+    {
+      name: "Building development project",
+      district: "Sonitpur",
+      status: "Done",
+    },
   ];
 
   return (

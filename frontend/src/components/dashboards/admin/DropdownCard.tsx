@@ -46,9 +46,7 @@ export default function DropdownCard({ title, children }: DropdownCardProps) {
           borderRadius: "0 0 0.5rem 0.5rem",
         }}
       >
-        <div style={{ padding: isOpen ? "1rem" : 0 }}>
-          {children}
-        </div>
+        <div style={{ padding: isOpen ? "1rem" : 0 }}>{children}</div>
       </div>
     </div>
   );

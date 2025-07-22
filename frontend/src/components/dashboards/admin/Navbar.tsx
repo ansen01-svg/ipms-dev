@@ -1,12 +1,12 @@
-'use client'
+"use client";
 
-import { Bell, MessageCircleMore, UserCircle, Menu } from 'lucide-react'
-import Image from 'next/image'
+import { Bell, MessageCircleMore, UserCircle, Menu } from "lucide-react";
+import Image from "next/image";
 
 interface NavbarProps {
-  mobileOpen: boolean
-  setMobileOpen: React.Dispatch<React.SetStateAction<boolean>>
-  isMobile: boolean
+  mobileOpen: boolean;
+  setMobileOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  isMobile: boolean;
 }
 
 export default function Navbar({
@@ -23,7 +23,7 @@ export default function Navbar({
       {isMobile && (
         <button
           className="p-2 rounded hover:bg-gray-200 text-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-          aria-label={mobileOpen ? 'Close sidebar' : 'Open sidebar'}
+          aria-label={mobileOpen ? "Close sidebar" : "Open sidebar"}
           onClick={() => setMobileOpen(!mobileOpen)}
         >
           <Menu className="w-6 h-6" />
@@ -32,7 +32,12 @@ export default function Navbar({
 
       {/* Logo */}
       <div className="flex items-center space-x-2">
-        <Image src="/assets/images/logo.png" alt="Logo" width={100} height={100} />
+        <Image
+          src="/assets/images/logo.png"
+          alt="Logo"
+          width={100}
+          height={100}
+        />
       </div>
 
       {/* Welcome text */}
@@ -62,5 +67,5 @@ export default function Navbar({
         </button>
       </div>
     </header>
-  )
+  );
 }

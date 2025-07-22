@@ -1,9 +1,5 @@
 import React from "react";
-import {
-  ComposableMap,
-  Geographies,
-  Geography,
-} from "react-simple-maps";
+import { ComposableMap, Geographies, Geography } from "react-simple-maps";
 import { Tooltip } from "react-tooltip";
 
 const geoUrl = "/assets/maps/assam-districts.json";
