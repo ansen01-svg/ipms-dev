@@ -23,7 +23,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import Image from "next/image";
-import avatarImg from "@/assets/avatar.png";
 
 interface createuserFormSchema {
   fullName: string;
@@ -106,7 +105,7 @@ const createuserFormSchema = z.object({
   email: z.string().email("Invalid email address").toLowerCase(),
   phoneNumber: z
     .string({
-      error: "Phone number is required",
+      message: "Phone number is required",
     })
     .min(10, "Phone number must be exactly 10 digits")
     .max(10, "Phone number must be exactly 10 digits")
@@ -119,13 +118,12 @@ const createuserFormSchema = z.object({
       "Phone number cannot be all same digits"
     ),
   roleId: z
-    .string({
-      error: "Role selection is required",
-    })
+    .string()
+    .min(1, "Role selection is required")
     .min(1, "Please select a role"),
   departmentName: z
     .string({
-      error: "Department name is required",
+      message: "Department name is required",
     })
     .min(2, "Department name must be at least 2 characters long")
     .max(100, "Department name cannot exceed 100 characters")
@@ -135,14 +133,10 @@ const createuserFormSchema = z.object({
     )
     .refine((val) => val.trim().length > 0, "Department name cannot be empty")
     .transform(cleanAndFormat),
-  departmentId: z
-    .string({
-      error: "Department selection is required",
-    })
-    .min(1, "Please select a department"),
+  departmentId: z.string().min(1, "Department selection is required"),
   designation: z
     .enum(designation as [string, ...string[]], {
-      error: "Designation is required",
+      message: "Designation is required",
     })
     .refine(
       (val) => designation.includes(val as (typeof designation)[number]),
@@ -150,7 +144,7 @@ const createuserFormSchema = z.object({
     ),
   officeLocation: z
     .string({
-      error: "Office location is required",
+      message: "Office location is required",
     })
     .min(5, "Office location must be at least 5 characters long")
     .max(200, "Office location cannot exceed 200 characters")
@@ -231,7 +225,7 @@ const CreateUserPage = () => {
         <div className="bg-gradient-to-br from-indigo-600 to-purple-600 text-white p-10 space-y-6 flex flex-col justify-center">
           <div className="flex flex-col items-center">
             <Image
-              src={avatarImg}
+              src={"/assets/images/avatar.png"}
               alt="User Avatar"
               width={100}
               height={100}

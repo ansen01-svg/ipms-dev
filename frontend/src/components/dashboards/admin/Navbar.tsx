@@ -33,7 +33,7 @@ export default function Navbar({
       {/* Logo */}
       <div className="flex items-center space-x-2">
         <Image
-          src="/assets/images/logo.png"
+          src="/assets/images/logo.PNG"
           alt="Logo"
           width={100}
           height={100}
