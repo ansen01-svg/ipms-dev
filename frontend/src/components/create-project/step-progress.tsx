@@ -1,10 +1,10 @@
 import { Eye, Edit, Send, Check } from "lucide-react";
 
-type FormStep = "form" | "preview" | "submit";
+type FormStep = "form" | "review" | "submit";
 
 const steps = [
   { key: "form", label: "Fill Details", icon: Edit },
-  { key: "preview", label: "Preview", icon: Eye },
+  { key: "review", label: "Review", icon: Eye },
   { key: "submit", label: "Submit", icon: Send },
 ];
 

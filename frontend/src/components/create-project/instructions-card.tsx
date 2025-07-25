@@ -15,7 +15,7 @@ export default function InstructionsCard() {
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className="text-xl text-white flex items-center gap-2">
-            Guidelines - Step-by-Step Process
+            Guidelines for Project Creation
           </CardTitle>
           <Button
             type="button"
@@ -53,7 +53,7 @@ export default function InstructionsCard() {
                   comprehensive form below
                 </li>
                 <li>
-                  • <strong>Step 2:</strong> Preview all entered information,
+                  • <strong>Step 2:</strong> Review all entered information,
                   uploaded documents, and make corrections if needed
                 </li>
                 <li>
@@ -79,7 +79,7 @@ export default function InstructionsCard() {
                 <li>
                   • Fields marked with{" "}
                   <span className="text-red-300 font-bold">*</span> are
-                  mandatory and must be completed before proceeding to preview.
+                  mandatory and must be completed before proceeding to review.
                 </li>
                 <li>
                   • If you enable sub-projects, at least one sub-project with
@@ -192,14 +192,14 @@ export default function InstructionsCard() {
               <ul className="text-sm text-white space-y-2 ml-4">
                 <li>
                   {`• You can navigate back to edit details at any point during
-                  the preview step by clicking "Edit Details".`}
+                  the review step by clicking "Edit Details".`}
                 </li>
                 <li>
-                  • The preview step shows exactly how your project information
+                  • The review step shows exactly how your project information
                   will appear in the system and allows for corrections.
                 </li>
                 <li>
-                  • Use the preview step to make final reviews before submission
+                  • Use the review step to make final reviews before submission
                   - once submitted, modifications may require additional
                   approvals.
                 </li>
