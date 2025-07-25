@@ -134,6 +134,19 @@ export const createProjectSchema = z
     // Documents
     uploadedFiles: z.array(z.string()).optional(),
   })
+  // Validation 1: Project start date cannot be before date of proposal
+  .refine(
+    (data) => {
+      const proposalDate = new Date(data.dateOfProposal);
+      const projectStartDate = new Date(data.projectStartDate);
+      return projectStartDate >= proposalDate;
+    },
+    {
+      message: "Project start date cannot be before the date of proposal",
+      path: ["projectStartDate"],
+    }
+  )
+  // Existing validation: Project end date must be after start date
   .refine(
     (data) => {
       const startDate = new Date(data.projectStartDate);
@@ -145,6 +158,7 @@ export const createProjectSchema = z
       path: ["projectEndDate"],
     }
   )
+  // Existing validation: Sub-projects required when enabled
   .refine(
     (data) => {
       if (data.hasSubProjects === "yes") {
@@ -155,6 +169,45 @@ export const createProjectSchema = z
     {
       message:
         "At least one sub-project is required when sub-projects are enabled",
+      path: ["subProjects"],
+    }
+  )
+  // Validation 2: Sub project start dates cannot be before main project start date
+  .refine(
+    (data) => {
+      if (!data.subProjects || data.subProjects.length === 0) {
+        return true;
+      }
+
+      const mainProjectStartDate = new Date(data.projectStartDate);
+
+      return data.subProjects.every((subProject) => {
+        const subProjectStartDate = new Date(subProject.projectStartDate);
+        return subProjectStartDate >= mainProjectStartDate;
+      });
+    },
+    {
+      message:
+        "Sub-project start date cannot be before the main project start date",
+      path: ["subProjects"],
+    }
+  )
+  // Validation 3: Sub project end dates cannot be after main project end date
+  .refine(
+    (data) => {
+      if (!data.subProjects || data.subProjects.length === 0) {
+        return true;
+      }
+
+      const mainProjectEndDate = new Date(data.projectEndDate);
+
+      return data.subProjects.every((subProject) => {
+        const subProjectEndDate = new Date(subProject.projectEndDate);
+        return subProjectEndDate <= mainProjectEndDate;
+      });
+    },
+    {
+      message: "Sub-project end date cannot be after the main project end date",
       path: ["subProjects"],
     }
   );
