@@ -40,135 +40,6 @@ interface createuserFormSchema {
   status: boolean;
 }
 
-<<<<<<< HEAD
-const cleanText = (value: string): string => {
-  if (!value) return value;
-  return value
-    .replace(/[^\w\s.,'-]/g, "")
-    .trim()
-    .replace(/\s+/g, " ");
-};
-
-const toTitleCase = (value: string): string => {
-  if (!value) return value;
-  const words = value.split(" ");
-  const lowerCaseWords = new Set([
-    "a",
-    "an",
-    "the",
-    "and",
-    "but",
-    "or",
-    "for",
-    "nor",
-    "as",
-    "at",
-    "by",
-    "from",
-    "in",
-    "into",
-    "near",
-    "of",
-    "on",
-    "onto",
-    "to",
-    "with",
-    "is",
-    "are",
-    "was",
-    "were",
-  ]);
-  return words
-    .map((word, index) => {
-      if (word.length > 1 && word === word.toUpperCase()) return word;
-      if (word.includes("-")) {
-        return word
-          .split("-")
-          .map(
-            (part) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase()
-          )
-          .join("-");
-      }
-      if (index === 0 || !lowerCaseWords.has(word.toLowerCase())) {
-        return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
-      }
-      return word.toLowerCase();
-    })
-    .join(" ");
-};
-
-const cleanAndFormat = (value: string): string => {
-  return toTitleCase(cleanText(value));
-};
-
-const designation = ["Administrator", "JE", "AEE", "CE", "MD", "MLA"];
-
-const createuserFormSchema = z.object({
-  fullName: z.string().min(3).max(100).transform(cleanAndFormat),
-  username: z.string().min(3).max(100).transform(cleanAndFormat),
-  email: z.string().email("Invalid email address").toLowerCase(),
-  phoneNumber: z
-    .string({
-      message: "Phone number is required",
-    })
-    .min(10, "Phone number must be exactly 10 digits")
-    .max(10, "Phone number must be exactly 10 digits")
-    .regex(
-      /^[6-9]\d{9}$/,
-      "Please enter a valid Indian mobile number (must start with 6, 7, 8, or 9)"
-    )
-    .refine(
-      (val) => !/^(\d)\1{9}$/.test(val),
-      "Phone number cannot be all same digits"
-    ),
-  roleId: z
-    .string()
-    .min(1, "Role selection is required")
-    .min(1, "Please select a role"),
-  departmentName: z
-    .string({
-      message: "Department name is required",
-    })
-    .min(2, "Department name must be at least 2 characters long")
-    .max(100, "Department name cannot exceed 100 characters")
-    .regex(
-      /^[a-zA-Z\s&.-]+$/,
-      "Department name can only contain letters, spaces, ampersands, dots, and hyphens"
-    )
-    .refine((val) => val.trim().length > 0, "Department name cannot be empty")
-    .transform(cleanAndFormat),
-  departmentId: z.string().min(1, "Department selection is required"),
-  designation: z
-    .enum(designation as [string, ...string[]], {
-      message: "Designation is required",
-    })
-    .refine(
-      (val) => designation.includes(val as (typeof designation)[number]),
-      "Please select a valid designation from the list"
-    ),
-  officeLocation: z
-    .string({
-      message: "Office location is required",
-    })
-    .min(5, "Office location must be at least 5 characters long")
-    .max(200, "Office location cannot exceed 200 characters")
-    .regex(
-      /^[a-zA-Z0-9\s,.-]+$/,
-      "Office location can only contain letters, numbers, spaces, commas, dots, and hyphens"
-    )
-    .refine(
-      (val) => /[a-zA-Z]/.test(val),
-      "Office location must contain at least one letter"
-    )
-    .refine(
-      (val) => val.trim().length >= 5,
-      "Office location must be at least 5 characters after trimming spaces"
-    )
-    .transform(cleanAndFormat),
-});
-
-=======
->>>>>>> 91ee1af (fix: fixed login page validations)
 const CreateUserPage = () => {
   const [error, setError] = useState<string>("");
   const [successMsg, setSuccessMsg] = useState<string>("");
@@ -231,11 +102,7 @@ const CreateUserPage = () => {
         <div className="bg-gradient-to-br from-indigo-600 to-purple-600 text-white p-10 space-y-6 flex flex-col justify-center">
           <div className="flex flex-col items-center">
             <Image
-<<<<<<< HEAD
-              src={"/assets/images/avatar.png"}
-=======
               src="/assets/images/avatar.png"
->>>>>>> 91ee1af (fix: fixed login page validations)
               alt="User Avatar"
               width={100}
               height={100}
