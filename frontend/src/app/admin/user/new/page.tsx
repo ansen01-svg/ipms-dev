@@ -1,12 +1,14 @@
 "use client";
 
 import { useState } from "react";
+import z from "zod";
 import { Input } from "@/components/ui/input";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { z } from "zod";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import createuserFormSchema from "@/schema/create-user/create-user.schema";
+import { designation } from "@/schema/create-user/create-user.schema";
 import {
   Form,
   FormControl,
@@ -22,6 +24,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+
 import Image from "next/image";
 
 interface createuserFormSchema {
@@ -37,6 +40,7 @@ interface createuserFormSchema {
   status: boolean;
 }
 
+<<<<<<< HEAD
 const cleanText = (value: string): string => {
   if (!value) return value;
   return value
@@ -163,6 +167,8 @@ const createuserFormSchema = z.object({
     .transform(cleanAndFormat),
 });
 
+=======
+>>>>>>> 91ee1af (fix: fixed login page validations)
 const CreateUserPage = () => {
   const [error, setError] = useState<string>("");
   const [successMsg, setSuccessMsg] = useState<string>("");
@@ -225,7 +231,11 @@ const CreateUserPage = () => {
         <div className="bg-gradient-to-br from-indigo-600 to-purple-600 text-white p-10 space-y-6 flex flex-col justify-center">
           <div className="flex flex-col items-center">
             <Image
+<<<<<<< HEAD
               src={"/assets/images/avatar.png"}
+=======
+              src="/assets/images/avatar.png"
+>>>>>>> 91ee1af (fix: fixed login page validations)
               alt="User Avatar"
               width={100}
               height={100}
@@ -263,7 +273,8 @@ const CreateUserPage = () => {
                 render={({ field }) => (
                   <FormItem className="w-full">
                     <FormLabel>
-                      Full name <span className="text-red-500">*</span>
+                      Full name
+                      {/* <span className="text-red-500">*</span> */}
                     </FormLabel>
                     <FormControl>
                       <Input
@@ -284,7 +295,8 @@ const CreateUserPage = () => {
                 render={({ field }) => (
                   <FormItem className="w-full">
                     <FormLabel>
-                      Username <span className="text-red-500">*</span>
+                      Username
+                      {/* <span className="text-red-500">*</span> */}
                     </FormLabel>
                     <FormControl>
                       <Input
@@ -305,7 +317,8 @@ const CreateUserPage = () => {
                 render={({ field }) => (
                   <FormItem className="w-full">
                     <FormLabel>
-                      Email <span className="text-red-500">*</span>
+                      Email
+                      <span className="text-red-500">*</span>
                     </FormLabel>
                     <FormControl>
                       <Input
@@ -347,7 +360,8 @@ const CreateUserPage = () => {
                 render={({ field }) => (
                   <FormItem className="w-full">
                     <FormLabel>
-                      Role id <span className="text-red-500">*</span>
+                      Role id
+                      {/* <span className="text-red-500">*</span> */}
                     </FormLabel>
                     <FormControl>
                       <Input
@@ -369,7 +383,8 @@ const CreateUserPage = () => {
                 render={({ field }) => (
                   <FormItem className="w-full">
                     <FormLabel>
-                      Department name <span className="text-red-500">*</span>
+                      Department name
+                      {/* <span className="text-red-500">*</span> */}
                     </FormLabel>
                     <FormControl>
                       <Input
@@ -390,7 +405,8 @@ const CreateUserPage = () => {
                 render={({ field }) => (
                   <FormItem className="w-full">
                     <FormLabel>
-                      Department ID<span className="text-red-500">*</span>
+                      Department ID
+                      {/* <span className="text-red-500">*</span> */}
                     </FormLabel>
                     <FormControl>
                       <Input
@@ -412,7 +428,8 @@ const CreateUserPage = () => {
                 render={({ field }) => (
                   <FormItem className="w-full">
                     <FormLabel>
-                      Designation <span className="text-red-500">*</span>
+                      Designation
+                      <span className="text-red-500">*</span>
                     </FormLabel>
                     <Select
                       onValueChange={field.onChange}
@@ -445,7 +462,8 @@ const CreateUserPage = () => {
                 render={({ field }) => (
                   <FormItem className="w-full">
                     <FormLabel>
-                      Office <span className="text-red-500">*</span>
+                      Office
+                      {/* <span className="text-red-500">*</span> */}
                     </FormLabel>
                     <FormControl>
                       <Input
@@ -476,7 +494,7 @@ const CreateUserPage = () => {
               <Button
                 type="submit"
                 disabled={
-                  Object.keys(form.formState.dirtyFields).length < 9 ||
+                  Object.keys(form.formState.dirtyFields).length < 3 ||
                   isSubmittingForm
                 }
                 className="w-full bg-indigo-600 text-white py-2 rounded-lg hover:bg-indigo-700 transition disabled:bg-indigo-400"
