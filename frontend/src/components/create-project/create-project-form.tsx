@@ -1,48 +1,15 @@
 "use client";
 
-import { useState, useRef } from "react";
-import { useRouter } from "next/navigation";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { toast } from "sonner";
-import { Toaster } from "@/components/ui/sonner";
-import { Badge } from "@/components/ui/badge";
-import InstructionsCard from "./instructions-card";
-import { StepProgress } from "./step-progress";
 import { type DropdownOptions } from "@/actions/create-project/fetchDropDownOptions";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
-  CreateProjectFormValues,
-  createProjectSchema,
-} from "@/schemas/create-project/create-projects.schema";
-import {
-  getCurrentPosition,
-  formatGeoLocation,
-  type GeoLocationData,
-} from "@/utils/create-project/getCurrentPosition";
-import {
-  generateProjectPDF,
-  type ProjectPDFData,
-} from "@/utils/create-project/generateProjectPdf";
-import {
-  Loader2,
-  Plus,
-  X,
-  Upload,
-  MapPin,
-  FileText,
-  CheckCircle,
-  Info,
-  ArrowLeft,
-  ArrowRight,
-  Edit,
-  Send,
-  AlertCircle,
-  Download,
-  Navigation,
-} from "lucide-react";
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import {
   Form,
   FormControl,
@@ -51,6 +18,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -58,13 +26,44 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Toaster } from "@/components/ui/sonner";
+import { Textarea } from "@/components/ui/textarea";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+  CreateProjectFormValues,
+  createProjectSchema,
+} from "@/schema/create-project/create-projects.schema";
+import {
+  generateProjectPDF,
+  type ProjectPDFData,
+} from "@/utils/create-project/generateProjectPdf";
+import {
+  getCurrentPosition,
+  type GeoLocationData,
+} from "@/utils/create-project/getCurrentPosition";
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  AlertCircle,
+  ArrowLeft,
+  ArrowRight,
+  CheckCircle,
+  Download,
+  Edit,
+  FileText,
+  Info,
+  Loader2,
+  MapPin,
+  Navigation,
+  Plus,
+  Send,
+  Upload,
+  X,
+} from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useRef, useState } from "react";
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
+import InstructionsCard from "./instructions-card";
+import { StepProgress } from "./step-progress";
 
 // ============= INTERFACES =============
 interface TooltipProps {
@@ -140,7 +139,7 @@ const ProjectSuccessScreen = ({
   isGeneratingPDF: boolean;
 }) => {
   return (
-    <div className="w-full max-w-4xl mx-auto">
+    <div className="w-full max-w-4xl mx-auto rounded-lg">
       <Card className="border-0 shadow-lg">
         <CardContent className="p-0">
           {/* Success Header */}
@@ -155,7 +154,7 @@ const ProjectSuccessScreen = ({
           </div>
 
           {/* Success Message */}
-          <div className="p-8 bg-gray-50 text-center">
+          <div className="p-8 bg-gray-50 text-center rounded-b-lg">
             <p className="text-gray-700 mb-8">
               A new Project has been created successfully and forwarded to{" "}
               <span className="font-semibold">AEE</span> for processing.
@@ -166,15 +165,16 @@ const ProjectSuccessScreen = ({
               <Button
                 variant="outline"
                 onClick={onGoToProjects}
-                className="flex items-center gap-2 px-6 py-3 border-orange-400 text-orange-600 hover:bg-orange-50"
+                className="flex items-center gap-2 px-6 py-3 hover:bg-gray-100"
               >
                 <ArrowLeft className="w-4 h-4" />
                 Go To Projects
               </Button>
 
               <Button
+                variant="outline"
                 onClick={onCreateNewProject}
-                className="flex items-center gap-2 px-6 py-3 bg-orange-500 hover:bg-orange-600 text-white"
+                className="flex items-center gap-2 px-6 py-3 hover:bg-gray-100"
               >
                 <Plus className="w-4 h-4" />
                 Create New Project
@@ -216,12 +216,11 @@ const ProjectPreview = ({
   uploadedFiles: File[];
   onEdit: () => void;
 }) => {
-  const formatCurrency = (amount: string) => {
-    const num = parseFloat(amount);
+  const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("en-IN", {
       style: "currency",
       currency: "INR",
-    }).format(num);
+    }).format(amount);
   };
 
   const formatDate = (dateString: string) => {
@@ -403,9 +402,21 @@ const ProjectPreview = ({
           <InfoItem label="Locality" value={formData.locality} />
           <InfoItem label="Ward" value={formData.ward} />
           <InfoItem label="ULB" value={formData.ulb} />
-          {formData.geoLocation && (
-            <InfoItem label="Geo Location" value={formData.geoLocation} />
-          )}
+          <InfoItem
+            label="Geo Location"
+            value={
+              <div className="space-y-1">
+                <div>
+                  <span className="text-sm text-gray-500">Latitude:</span>{" "}
+                  {formData.geoLocation?.latitude || "Not specified"}
+                </div>
+                <div>
+                  <span className="text-sm text-gray-500">Longitude:</span>{" "}
+                  {formData.geoLocation?.longitude || "Not specified"}
+                </div>
+              </div>
+            }
+          />
         </CardContent>
       </Card>
 
@@ -468,13 +479,10 @@ const ProjectPreview = ({
                   </span>
                   <span className="text-xl font-bold text-blue-600">
                     {formatCurrency(
-                      formData.subProjects
-                        .reduce(
-                          (total, sub) =>
-                            total + parseFloat(sub.estimatedAmount),
-                          0
-                        )
-                        .toString()
+                      formData.subProjects.reduce(
+                        (total, sub) => total + sub.estimatedAmount,
+                        0
+                      )
                     )}
                   </span>
                 </div>
@@ -570,7 +578,7 @@ export default function CreateProjectForm({
       executingDepartment: "",
       beneficiary: "",
       letterReference: "",
-      estimatedCost: "",
+      estimatedCost: 0,
       typeOfWork: "",
       subTypeOfWork: "",
       natureOfWork: "",
@@ -580,7 +588,10 @@ export default function CreateProjectForm({
       locality: "",
       ward: "",
       ulb: "",
-      geoLocation: "",
+      geoLocation: {
+        latitude: "",
+        longitude: "",
+      },
       subProjects: [],
       uploadedFiles: [],
     },
@@ -591,9 +602,12 @@ export default function CreateProjectForm({
     try {
       setIsFetchingLocation(true);
       const geoData: GeoLocationData = await getCurrentPosition();
-      const formattedLocation = formatGeoLocation(geoData);
 
-      form.setValue("geoLocation", formattedLocation);
+      form.setValue("geoLocation", {
+        latitude: geoData.latitude,
+        longitude: geoData.longitude,
+      });
+
       toast.success("Location retrieved successfully!");
     } catch (error: unknown) {
       console.error("Error getting location:", error);
@@ -662,7 +676,6 @@ export default function CreateProjectForm({
         "owningDepartment",
         "executingDepartment",
         "beneficiary",
-        "estimatedCost",
         "typeOfWork",
         "subTypeOfWork",
         "natureOfWork",
@@ -681,6 +694,17 @@ export default function CreateProjectForm({
         }
       }
 
+      // Check estimated cost - handle both empty and zero values
+      const estimatedCost = watchedValues.estimatedCost;
+      if (
+        estimatedCost === undefined ||
+        estimatedCost === null ||
+        estimatedCost <= 0 ||
+        isNaN(Number(estimatedCost))
+      ) {
+        return false;
+      }
+
       if (watchedValues.hasSubProjects === "yes") {
         const subProjects = watchedValues.subProjects || [];
         if (subProjects.length === 0) {
@@ -690,7 +714,6 @@ export default function CreateProjectForm({
         for (const subProject of subProjects) {
           const requiredSubFields = [
             "name",
-            "estimatedAmount",
             "typeOfWork",
             "subTypeOfWork",
             "natureOfWork",
@@ -703,6 +726,17 @@ export default function CreateProjectForm({
             if (!value || (typeof value === "string" && value.trim() === "")) {
               return false;
             }
+          }
+
+          // Check estimated amount - handle both empty and zero values
+          const estimatedAmount = subProject.estimatedAmount;
+          if (
+            estimatedAmount === undefined ||
+            estimatedAmount === null ||
+            estimatedAmount <= 0 ||
+            isNaN(Number(estimatedAmount))
+          ) {
+            return false;
           }
         }
       }
@@ -722,7 +756,7 @@ export default function CreateProjectForm({
       ...currentSubProjects,
       {
         name: "",
-        estimatedAmount: "",
+        estimatedAmount: 0,
         typeOfWork: "",
         subTypeOfWork: "",
         natureOfWork: "",
@@ -880,12 +914,8 @@ export default function CreateProjectForm({
       // Prepare API payload
       const apiPayload = {
         ...values,
-        estimatedCost: parseFloat(values.estimatedCost),
-        subProjects:
-          values.subProjects?.map((subProject) => ({
-            ...subProject,
-            estimatedAmount: parseFloat(subProject.estimatedAmount),
-          })) || [],
+        // No need to parse estimatedCost as it's already a number
+        subProjects: values.subProjects || [],
       };
 
       // Generate project data for success simulation (always available)
@@ -894,6 +924,15 @@ export default function CreateProjectForm({
         projectId: `PROJ_${Date.now()}`,
         createdAt: new Date().toISOString(),
         status: "Created",
+        // Convert geoLocation back to string format for PDF
+        geoLocation: values.geoLocation,
+        // Convert numeric fields to strings for PDF compatibility
+        estimatedCost: values.estimatedCost,
+        subProjects:
+          values.subProjects?.map((sub) => ({
+            ...sub,
+            estimatedAmount: sub.estimatedAmount,
+          })) || [],
       };
 
       // Attempt API call but don't let it affect the success flow
@@ -923,8 +962,8 @@ export default function CreateProjectForm({
           console.log("API call successful:", apiResult);
 
           // If API returns a project ID, use it instead of generated one
-          if (apiResult?.projectId) {
-            projectData.projectId = apiResult.projectId;
+          if (apiResult?.data.projectId) {
+            projectData.projectId = apiResult.data.projectId;
           }
         } else {
           console.warn(`API call failed with status: ${response.status}`);
@@ -969,6 +1008,15 @@ export default function CreateProjectForm({
         projectId: `PROJ_${Date.now()}`,
         createdAt: new Date().toISOString(),
         status: "Created",
+        // Keep geoLocation as object format - don't convert to string
+        geoLocation: values.geoLocation,
+        // Convert numeric fields to strings for PDF compatibility
+        estimatedCost: values.estimatedCost,
+        subProjects:
+          values.subProjects?.map((sub) => ({
+            ...sub,
+            estimatedAmount: sub.estimatedAmount,
+          })) || [],
       };
 
       setSubmittedProjectData(fallbackProjectData);
@@ -1057,7 +1105,7 @@ export default function CreateProjectForm({
                 border-width: 1.5px !important;
                 width: 100% !important;
               }
-              
+
               .dark-border input:focus,
               .dark-border textarea:focus,
               .dark-border button[role="combobox"]:focus {
@@ -1065,7 +1113,7 @@ export default function CreateProjectForm({
                 border-width: 2px !important;
                 box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1) !important;
               }
-              
+
               .dark-border input::placeholder,
               .dark-border textarea::placeholder {
                 color: #6b7280 !important;
@@ -1364,7 +1412,7 @@ export default function CreateProjectForm({
                         render={({ field }) => (
                           <FormItem>
                             <FormLabelWithTooltip
-                              tooltip="Enter total project cost in rupees using decimal format"
+                              tooltip="Enter total project cost in rupees"
                               required
                             >
                               Estimated Cost (₹)
@@ -1372,8 +1420,17 @@ export default function CreateProjectForm({
                             <FormControl>
                               <div className="dark-border">
                                 <Input
+                                  type="number"
+                                  min="0"
+                                  step="0.01"
                                   placeholder="Enter estimated cost"
                                   {...field}
+                                  onChange={(e) =>
+                                    field.onChange(
+                                      parseFloat(e.target.value) || 0
+                                    )
+                                  }
+                                  value={field.value || ""}
                                 />
                               </div>
                             </FormControl>
@@ -1775,44 +1832,91 @@ export default function CreateProjectForm({
                           )}
                         />
 
-                        <FormField
-                          control={form.control}
-                          name="geoLocation"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabelWithTooltip tooltip="Optional: Enter GPS coordinates or click to get current location">
-                                Geo Location
-                              </FormLabelWithTooltip>
-                              <div className="flex items-center justify-center gap-2">
-                                <FormControl>
-                                  <div className="dark-border flex-1">
-                                    <Input
-                                      placeholder="Enter coordinates (lat, lng) or click Get Location"
-                                      {...field}
-                                    />
-                                  </div>
-                                </FormControl>
-                                <Button
-                                  type="button"
-                                  variant="outline"
-                                  onClick={handleGetCurrentLocation}
-                                  disabled={isFetchingLocation}
-                                  className="flex items-center gap-2 whitespace-nowrap"
-                                >
-                                  {isFetchingLocation ? (
-                                    <Loader2 className="w-4 h-4 animate-spin" />
-                                  ) : (
-                                    <Navigation className="w-4 h-4" />
-                                  )}
-                                  {isFetchingLocation
-                                    ? "Getting..."
-                                    : "Get Location"}
-                                </Button>
-                              </div>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
+                        {/* Geo Location with separate Latitude and Longitude inputs */}
+                        <div className="space-y-4">
+                          <FormLabelWithTooltip tooltip="Optional: Enter GPS coordinates or click to get current location">
+                            Geo Location
+                          </FormLabelWithTooltip>
+
+                          <div className="flex flex-col lg:flex-row gap-4">
+                            <FormField
+                              control={form.control}
+                              name="geoLocation.latitude"
+                              render={({ field }) => (
+                                <FormItem className="flex-1">
+                                  <FormLabel>Latitude</FormLabel>
+                                  <FormControl>
+                                    <div className="dark-border">
+                                      <Input
+                                        type="number"
+                                        step="any"
+                                        min="-90"
+                                        max="90"
+                                        placeholder="Enter latitude"
+                                        {...field}
+                                        onChange={(e) =>
+                                          field.onChange(
+                                            parseFloat(e.target.value) || ""
+                                          )
+                                        }
+                                        value={field.value || ""}
+                                      />
+                                    </div>
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+
+                            <FormField
+                              control={form.control}
+                              name="geoLocation.longitude"
+                              render={({ field }) => (
+                                <FormItem className="flex-1">
+                                  <FormLabel>Longitude</FormLabel>
+                                  <FormControl>
+                                    <div className="dark-border">
+                                      <Input
+                                        type="number"
+                                        step="any"
+                                        min="-180"
+                                        max="180"
+                                        placeholder="Enter longitude"
+                                        {...field}
+                                        onChange={(e) =>
+                                          field.onChange(
+                                            parseFloat(e.target.value) || ""
+                                          )
+                                        }
+                                        value={field.value || ""}
+                                      />
+                                    </div>
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+
+                            <div className="flex flex-col lg:justify-end lg:mt-[30px] lg:pb-6">
+                              <Button
+                                type="button"
+                                variant="outline"
+                                onClick={handleGetCurrentLocation}
+                                disabled={isFetchingLocation}
+                                className="flex items-center gap-2 w-full lg:w-auto whitespace-nowrap"
+                              >
+                                {isFetchingLocation ? (
+                                  <Loader2 className="w-4 h-4 animate-spin" />
+                                ) : (
+                                  <Navigation className="w-4 h-4" />
+                                )}
+                                {isFetchingLocation
+                                  ? "Getting..."
+                                  : "Get Current Location"}
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
                       </div>
 
                       {/* Document Upload */}
@@ -2010,14 +2114,24 @@ export default function CreateProjectForm({
                                     name={`subProjects.${index}.estimatedAmount`}
                                     render={({ field }) => (
                                       <FormItem>
-                                        <FormLabelWithTooltip tooltip="Enter cost for this sub-project in decimal format">
+                                        <FormLabelWithTooltip tooltip="Enter cost for this sub-project">
                                           Estimated Amount (₹)
                                         </FormLabelWithTooltip>
                                         <FormControl>
                                           <div className="dark-border">
                                             <Input
+                                              type="number"
+                                              min="0"
+                                              step="0.01"
                                               placeholder="Enter amount"
                                               {...field}
+                                              onChange={(e) =>
+                                                field.onChange(
+                                                  parseFloat(e.target.value) ||
+                                                    0
+                                                )
+                                              }
+                                              value={field.value || ""}
                                             />
                                           </div>
                                         </FormControl>

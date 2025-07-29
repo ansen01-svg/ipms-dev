@@ -8,9 +8,9 @@ const subProjectSchema = z
       .min(3, "Sub-project name must be at least 3 characters")
       .max(200, "Sub-project name must be less than 200 characters"),
     estimatedAmount: z
-      .string()
-      .min(1, "Estimated amount is required")
-      .regex(/^\d+(\.\d{1,2})?$/, "Please enter a valid amount"),
+      .number()
+      .min(0.01, "Estimated amount must be greater than 0")
+      .max(9999999999.99, "Estimated amount is too large"),
     typeOfWork: z.string().min(1, "Type of work is required"),
     subTypeOfWork: z.string().min(1, "Sub-type of work is required"),
     natureOfWork: z.string().min(1, "Nature of work is required"),
@@ -89,9 +89,9 @@ export const createProjectSchema = z
       .max(200, "Beneficiary name must be less than 200 characters"),
     letterReference: z.string(),
     estimatedCost: z
-      .string()
-      .min(1, "Estimated cost is required")
-      .regex(/^\d+(\.\d{1,2})?$/, "Please enter a valid amount"),
+      .number()
+      .min(0.01, "Estimated cost must be greater than 0")
+      .max(9999999999.99, "Estimated cost is too large"),
 
     // Work Details
     typeOfWork: z.string().min(1, "Type of work is required"),
@@ -126,7 +126,12 @@ export const createProjectSchema = z
       .max(200, "Locality name must be less than 200 characters"),
     ward: z.string().min(1, "Ward is required"),
     ulb: z.string().min(1, "ULB is required"),
-    geoLocation: z.string(),
+    geoLocation: z
+      .object({
+        latitude: z.number().min(-90).max(90).optional().or(z.literal("")),
+        longitude: z.number().min(-180).max(180).optional().or(z.literal("")),
+      })
+      .optional(),
 
     // Sub-projects (conditional)
     subProjects: z.array(subProjectSchema).optional(),
@@ -146,7 +151,7 @@ export const createProjectSchema = z
       path: ["projectStartDate"],
     }
   )
-  // Existing validation: Project end date must be after start date
+  // Project end date must be after start date
   .refine(
     (data) => {
       const startDate = new Date(data.projectStartDate);
@@ -158,7 +163,7 @@ export const createProjectSchema = z
       path: ["projectEndDate"],
     }
   )
-  // Existing validation: Sub-projects required when enabled
+  // Sub-projects required when enabled
   .refine(
     (data) => {
       if (data.hasSubProjects === "yes") {
@@ -172,44 +177,45 @@ export const createProjectSchema = z
       path: ["subProjects"],
     }
   )
-  // Validation 2: Sub project start dates cannot be before main project start date
-  .refine(
-    (data) => {
-      if (!data.subProjects || data.subProjects.length === 0) {
-        return true;
-      }
-
-      const mainProjectStartDate = new Date(data.projectStartDate);
-
-      return data.subProjects.every((subProject) => {
-        const subProjectStartDate = new Date(subProject.projectStartDate);
-        return subProjectStartDate >= mainProjectStartDate;
-      });
-    },
-    {
-      message:
-        "Sub-project start date cannot be before the main project start date",
-      path: ["subProjects"],
+  // FIXED: Sub project start dates cannot be before main project start date
+  .superRefine((data, ctx) => {
+    if (!data.subProjects || data.subProjects.length === 0) {
+      return;
     }
-  )
-  // Validation 3: Sub project end dates cannot be after main project end date
-  .refine(
-    (data) => {
-      if (!data.subProjects || data.subProjects.length === 0) {
-        return true;
+
+    const mainProjectStartDate = new Date(data.projectStartDate);
+
+    data.subProjects.forEach((subProject, index) => {
+      const subProjectStartDate = new Date(subProject.projectStartDate);
+      if (subProjectStartDate < mainProjectStartDate) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message:
+            "Sub-project start date cannot be before the main project start date",
+          path: ["subProjects", index, "projectStartDate"],
+        });
       }
-
-      const mainProjectEndDate = new Date(data.projectEndDate);
-
-      return data.subProjects.every((subProject) => {
-        const subProjectEndDate = new Date(subProject.projectEndDate);
-        return subProjectEndDate <= mainProjectEndDate;
-      });
-    },
-    {
-      message: "Sub-project end date cannot be after the main project end date",
-      path: ["subProjects"],
+    });
+  })
+  // FIXED: Sub project end dates cannot be after main project end date
+  .superRefine((data, ctx) => {
+    if (!data.subProjects || data.subProjects.length === 0) {
+      return;
     }
-  );
+
+    const mainProjectEndDate = new Date(data.projectEndDate);
+
+    data.subProjects.forEach((subProject, index) => {
+      const subProjectEndDate = new Date(subProject.projectEndDate);
+      if (subProjectEndDate > mainProjectEndDate) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message:
+            "Sub-project end date cannot be after the main project end date",
+          path: ["subProjects", index, "projectEndDate"],
+        });
+      }
+    });
+  });
 
 export type CreateProjectFormValues = z.infer<typeof createProjectSchema>;

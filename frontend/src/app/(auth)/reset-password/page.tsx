@@ -1,17 +1,17 @@
 "use client";
 
-import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { Button } from "@/components/ui/button";
 import {
   resetPasswordSchema,
   ResetPasswordSchema,
-} from "@/schemas/auth/resetPasswordSchema";
-import { useRouter } from "next/navigation";
+} from "@/schema/auth/resetPasswordSchema";
+import { zodResolver } from "@hookform/resolvers/zod";
 import axios from "axios";
+import { Eye, EyeOff, LoaderCircle, Lock } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { LoaderCircle, Lock, Eye, EyeOff } from "lucide-react";
-import { Button } from "@/components/ui/button";
 
 export default function ResetPasswordPage() {
   const router = useRouter();

@@ -1,18 +1,18 @@
 "use client";
 
-import axios from "axios";
-import Image from "next/image";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { loginSchema, LoginFormData } from "@/schemas/auth/loginSchema";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Toaster } from "@/components/ui/sonner";
-import { User, Lock, LoaderCircle, Eye, EyeOff } from "lucide-react";
+import { LoginFormData, loginSchema } from "@/schema/auth/loginSchema";
+import { zodResolver } from "@hookform/resolvers/zod";
+import axios from "axios";
+import { Eye, EyeOff, LoaderCircle, Lock, User } from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 
 const LoginPage = () => {
   const router = useRouter();

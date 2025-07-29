@@ -1,14 +1,6 @@
 "use client";
 
-import { useState } from "react";
-import z from "zod";
-import { Input } from "@/components/ui/input";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import createuserFormSchema from "@/schema/create-user/create-user.schema";
-import { designation } from "@/schema/create-user/create-user.schema";
 import {
   Form,
   FormControl,
@@ -17,6 +9,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -24,6 +17,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import createuserFormSchema, {
+  designation,
+} from "@/schema/create-user/create-user.schema";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Loader2 } from "lucide-react";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import z from "zod";
 
 import Image from "next/image";
 

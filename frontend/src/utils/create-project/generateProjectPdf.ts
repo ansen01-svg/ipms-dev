@@ -1,4 +1,4 @@
-import { CreateProjectFormValues } from "@/schemas/create-project/create-projects.schema";
+import { CreateProjectFormValues } from "@/schema/create-project/create-projects.schema";
 
 export interface ProjectPDFData extends CreateProjectFormValues {
   projectId?: string;
@@ -29,13 +29,15 @@ export const generateProjectPDF = async (
       }
     };
 
-    // Helper function to format currency
-    const formatCurrency = (amount: string) => {
-      const num = parseFloat(amount);
-      return new Intl.NumberFormat("en-IN", {
-        style: "currency",
-        currency: "INR",
-      }).format(num);
+    // Helper function to format currency - fixed to avoid encoding issues
+    const formatCurrency = (amount: number) => {
+      return (
+        new Intl.NumberFormat("en-IN", {
+          style: "decimal",
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        }).format(amount) + " INR"
+      );
     };
 
     // Helper function to format date
@@ -45,6 +47,28 @@ export const generateProjectPDF = async (
         month: "long",
         day: "numeric",
       });
+    };
+
+    // Helper function to format geo location - updated to show separate latitude and longitude
+    const formatGeoLocationEntries = (geoLocation?: {
+      latitude?: number | "";
+      longitude?: number | "";
+    }) => {
+      if (!geoLocation || (!geoLocation.latitude && !geoLocation.longitude)) {
+        return [["Geo Location:", "Not specified"]];
+      }
+
+      const entries = [];
+      if (geoLocation.latitude) {
+        entries.push(["Latitude:", geoLocation.latitude.toString()]);
+      }
+      if (geoLocation.longitude) {
+        entries.push(["Longitude:", geoLocation.longitude.toString()]);
+      }
+
+      return entries.length > 0
+        ? entries
+        : [["Geo Location:", "Not specified"]];
     };
 
     // Title
@@ -196,7 +220,7 @@ export const generateProjectPDF = async (
     yPosition += 10;
 
     // Location Details
-    checkNewPage(40);
+    checkNewPage(50);
     doc.setFontSize(14);
     doc.setFont("helvetica", "bold");
     doc.text("LOCATION DETAILS", margin, yPosition);
@@ -209,10 +233,23 @@ export const generateProjectPDF = async (
       [`Locality:`, projectData.locality],
       [`Ward:`, projectData.ward],
       [`ULB:`, projectData.ulb],
-      [`Geo Location:`, projectData.geoLocation || "Not specified"],
     ];
 
+    // Add basic location info
     locationInfo.forEach(([label, value]) => {
+      checkNewPage(8);
+      doc.setFont("helvetica", "bold");
+      doc.text(label, margin, yPosition);
+      doc.setFont("helvetica", "normal");
+      doc.text(value, margin + 80, yPosition);
+      yPosition += 8;
+    });
+
+    // Add geo location with separate latitude and longitude
+    const geoLocationEntries = formatGeoLocationEntries(
+      projectData.geoLocation
+    );
+    geoLocationEntries.forEach(([label, value]) => {
       checkNewPage(8);
       doc.setFont("helvetica", "bold");
       doc.text(label, margin, yPosition);
@@ -260,30 +297,14 @@ export const generateProjectPDF = async (
           doc.setFont("helvetica", "bold");
           doc.text(label, margin + 10, yPosition);
           doc.setFont("helvetica", "normal");
-          doc.text(value, margin + 90, yPosition);
+          doc.text(value, margin + 80, yPosition); // Fixed: changed from margin + 90 to margin + 80
           yPosition += 6;
         });
 
         yPosition += 5;
       });
 
-      // Total sub-project cost
-      const totalSubProjectCost = projectData.subProjects.reduce(
-        (total, sub) => total + parseFloat(sub.estimatedAmount),
-        0
-      );
-
-      checkNewPage(15);
-      doc.setFontSize(12);
-      doc.setFont("helvetica", "bold");
-      doc.text(
-        `Total Sub-project Cost: ${formatCurrency(
-          totalSubProjectCost.toString()
-        )}`,
-        margin,
-        yPosition
-      );
-      yPosition += 15;
+      yPosition += 10;
     }
 
     // Uploaded Documents
