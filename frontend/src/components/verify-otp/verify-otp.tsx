@@ -1,18 +1,18 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { useForm, Controller } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useRouter, useSearchParams } from "next/navigation";
-import { toast } from "sonner";
-import axios, { AxiosError } from "axios";
 import { Button } from "@/components/ui/button";
-import { LoaderCircle } from "lucide-react";
-import Image from "next/image";
 import {
   VerifyOtpSchema,
   verifyOtpSchema,
-} from "@/schemas/auth/verifyOtpSchema";
+} from "@/schema/auth/verifyOtpSchema";
+import { zodResolver } from "@hookform/resolvers/zod";
+import axios, { AxiosError } from "axios";
+import { LoaderCircle } from "lucide-react";
+import Image from "next/image";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
+import { Controller, useForm } from "react-hook-form";
+import { toast } from "sonner";
 
 export default function VerifyOTPForm() {
   const router = useRouter();

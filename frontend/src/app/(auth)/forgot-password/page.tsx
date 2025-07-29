@@ -1,16 +1,16 @@
 "use client";
 
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { Button } from "@/components/ui/button";
 import {
   forgotPasswordSchema,
   ForgotPasswordSchema,
-} from "@/schemas/auth/forgotPasswordSchema";
-import { Mail, LoaderCircle } from "lucide-react";
-import { toast } from "sonner";
+} from "@/schema/auth/forgotPasswordSchema";
+import { zodResolver } from "@hookform/resolvers/zod";
 import axios from "axios";
+import { LoaderCircle, Mail } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 
 export default function ForgotPasswordPage() {
   const router = useRouter();
