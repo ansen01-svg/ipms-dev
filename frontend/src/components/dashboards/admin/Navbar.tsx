@@ -13,7 +13,6 @@ interface NavbarProps {
   mobileOpen: boolean;
   setMobileOpen: React.Dispatch<React.SetStateAction<boolean>>;
   isMobile: boolean;
-
   onSearch?: (term: string) => void; // new prop
 }
 
@@ -38,10 +37,10 @@ export default function Navbar({
             </button>
           )}
           <Image
-            src="/assets/images/logo.png"
+            src="/assets/images/logo4.png"
             alt="Logo"
-            width={90}
-            height={90}
+            width={50}
+            height={50}
             className="object-contain"
             priority
           />
@@ -97,10 +96,10 @@ export default function Navbar({
               <Menu className="w-6 h-6 text-white" />
             </button>
             <Image
-              src="/assets/images/logo.png"
+              src="/assets/images/logo4.png"
               alt="Logo"
-              width={70}
-              height={70}
+              width={50}
+              height={50}
               className="object-contain"
               priority
             />
