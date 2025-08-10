@@ -58,7 +58,7 @@ const MOCK_USERS: User[] = [
 export async function POST(request: NextRequest) {
   try {
     const { userId, password } = await request.json();
-    console.log("Login attempt:", { userId, password });
+
     // Mock authentication - replace with real auth
     const user = MOCK_USERS.find((u) => u.id === userId);
 

@@ -1,5 +1,6 @@
 "use client";
 
+import logo from "@/assets/images/logo4.png";
 import { Button } from "@/components/ui/button";
 import { Calendar, Menu, X } from "lucide-react";
 import Image from "next/image";
@@ -165,11 +166,11 @@ export default function Header({ className = "" }: HeaderProps) {
             {/* Logo */}
             <div className="flex-shrink-0">
               <Image
-                src="/assets/images/logo4.png"
+                src={logo}
                 alt="Government of Assam Logo"
                 width={60}
                 height={60}
-                className="w-20 h-16 md:w-32 md:h-16 object-cover"
+                className="object-cover"
                 priority
               />
             </div>

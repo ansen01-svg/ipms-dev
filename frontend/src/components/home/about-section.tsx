@@ -1,14 +1,15 @@
 "use client";
 
-import Image from "next/image";
+import dashboard from "@/assets/images/dashboard.jpg";
 import {
-  Monitor,
-  DollarSign,
-  Users,
   BarChart3,
   Clock,
+  DollarSign,
   MapPin,
+  Monitor,
+  Users,
 } from "lucide-react";
+import Image from "next/image";
 
 /**
  * About Us section component props
@@ -199,9 +200,10 @@ export default function AboutUsSection({
             <div className="space-y-6 sm:space-y-8">
               <div className="relative h-[200px] sm:h-[250px] md:h-[300px] rounded-lg overflow-hidden shadow-lg">
                 <Image
-                  src="/assets/images/dashboard.jpg"
+                  src={dashboard}
                   alt="iPMS Dashboard Interface"
                   fill
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                   className="object-cover"
                 />
               </div>

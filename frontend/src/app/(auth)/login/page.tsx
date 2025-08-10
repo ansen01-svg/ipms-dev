@@ -4,13 +4,14 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Toaster } from "@/components/ui/sonner";
 import { ROLE_DASHBOARD_PATHS } from "@/lib/rbac-config.ts/constants";
+import { setCookie } from "@/lib/rbac-config.ts/sett-cookie";
 import { LoginFormData, loginSchema } from "@/schema/auth/loginSchema";
 import { zodResolver } from "@hookform/resolvers/zod";
-import axios from "axios";
 import { Eye, EyeOff, LoaderCircle, Lock, User } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 // import { useRouter } from "next/navigation";
+import logo from "@/assets/images/logo4.png";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -36,30 +37,65 @@ const LoginPage = () => {
 
   const onSubmit = async (loginData: LoginFormData) => {
     try {
-      const data = await axios.post("/api/auth/login", loginData, {
-        headers: { "Content-Type": "application/json" },
-      });
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/auth/login`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(loginData),
+        }
+      );
 
+      // Parse response data first
+      const data = await response.json();
+      console.log(data);
+
+      if (!response.ok) {
+        // Handle HTTP error responses
+        throw new Error(data.error || data.message || "Login failed");
+      }
+
+      // Reset form on successful login
       reset();
 
-      // Set authentication cookie
-      document.cookie = `auth-token=${data.data.token}; path=/; max-age=${
-        24 * 60 * 60
-      }; secure; samesite=strict`;
+      // Set authentication cookie with better security
+      const maxAge = 24 * 60 * 60; // 24 hours in seconds
+      const cookieValue = `auth-token=${data.token}; path=/; max-age=${maxAge}; secure; samesite=strict; httponly`;
+      document.cookie = cookieValue;
+
+      // Alternative: Use a more secure cookie setting function
+      setCookie("auth-token", data.token, {
+        maxAge: maxAge,
+        secure: true,
+        sameSite: "strict",
+        httpOnly: true,
+      });
 
       // Redirect to role-specific dashboard
       const dashboardPath =
         ROLE_DASHBOARD_PATHS[
-          data.data.user.role as keyof typeof ROLE_DASHBOARD_PATHS
+          data.user.role as keyof typeof ROLE_DASHBOARD_PATHS
         ];
-      window.location.replace(dashboardPath);
-    } catch (error) {
-      if (axios.isAxiosError(error)) {
-        const msg = error.response?.data?.error || "Login failed.";
-        toast.error(msg);
+
+      if (dashboardPath) {
+        window.location.replace(dashboardPath);
       } else {
-        toast.error("Something went wrong.");
+        throw new Error("Invalid user role or dashboard path not found");
       }
+    } catch (error) {
+      // Proper error handling for fetch API
+      if (error instanceof Error) {
+        toast.error(error.message);
+      } else if (error instanceof TypeError) {
+        // Network errors or fetch failures
+        toast.error("Network error. Please check your connection.");
+      } else {
+        toast.error("Something went wrong. Please try again.");
+      }
+
+      console.error("Login error:", error);
     }
   };
 
@@ -72,7 +108,7 @@ const LoginPage = () => {
           <div className="relative z-10 text-center max-w-md">
             <div className="mb-8">
               <Image
-                src="/assets/images/logo4.png"
+                src={logo}
                 width={80}
                 height={80}
                 alt="Logo"
@@ -104,7 +140,7 @@ const LoginPage = () => {
             <div className="lg:hidden text-center mb-8">
               <div className="flex items-center justify-center gap-3 mb-6">
                 <Image
-                  src="/assets/images/logo4.png"
+                  src={logo}
                   alt="iPMS Logo"
                   width={60}
                   height={60}
@@ -123,7 +159,7 @@ const LoginPage = () => {
             <div className="hidden lg:block text-center">
               <div className="flex items-center justify-center gap-3 mb-6">
                 <Image
-                  src="/assets/images/logo4.png"
+                  src={logo}
                   alt="iPMS Logo"
                   width={50}
                   height={50}

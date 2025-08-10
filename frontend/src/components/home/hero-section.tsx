@@ -1,9 +1,10 @@
 "use client";
 
-import Image from "next/image";
-import Link from "next/link";
+import banner from "@/assets/images/banner2.jpg";
 import { Button } from "@/components/ui/button";
 import { LogIn } from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
 
 /**
  * Hero section component props
@@ -24,12 +25,13 @@ export default function HeroSection({ className = "" }: HeroSectionProps) {
       {/* Background Image */}
       <div className="absolute inset-0">
         <Image
-          src="/assets/images/banner2.jpg"
+          src={banner}
           alt="Project Management and Development"
           fill
           className="object-cover object-center"
           priority
           quality={90}
+          sizes="100vw"
         />
 
         {/* Enhanced Overlay for better contrast */}
@@ -96,22 +98,6 @@ export default function HeroSection({ className = "" }: HeroSectionProps) {
           </div>
         </div>
       </div>
-
-      {/* Optional: Add subtle animated elements */}
-      <style jsx>{`
-        @keyframes shimmer {
-          0% {
-            background-position: -200% 0;
-          }
-          100% {
-            background-position: 200% 0;
-          }
-        }
-        .animate-shimmer {
-          animation: shimmer 3s ease-in-out infinite;
-          background-size: 200% 100%;
-        }
-      `}</style>
     </section>
   );
 }
