@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Calendar, Menu, X } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { Menu, X, Calendar } from "lucide-react";
+import { useEffect, useState } from "react";
 
 /**
  * Header component props interface
@@ -167,8 +167,8 @@ export default function Header({ className = "" }: HeaderProps) {
               <Image
                 src="/assets/images/logo4.png"
                 alt="Government of Assam Logo"
-                width={80}
-                height={80}
+                width={60}
+                height={60}
                 className="w-20 h-16 md:w-32 md:h-16 object-cover"
                 priority
               />

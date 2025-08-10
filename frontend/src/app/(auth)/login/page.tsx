@@ -3,19 +3,20 @@
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Toaster } from "@/components/ui/sonner";
+import { ROLE_DASHBOARD_PATHS } from "@/lib/rbac-config.ts/constants";
 import { LoginFormData, loginSchema } from "@/schema/auth/loginSchema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import axios from "axios";
 import { Eye, EyeOff, LoaderCircle, Lock, User } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+// import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
 const LoginPage = () => {
-  const router = useRouter();
+  // const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
 
   const {
@@ -33,159 +34,188 @@ const LoginPage = () => {
     },
   });
 
-  const onSubmit = async (data: LoginFormData) => {
-    console.log("User ID:", data);
-
+  const onSubmit = async (loginData: LoginFormData) => {
     try {
-      await axios.post("/api/auth/login", data, {
+      const data = await axios.post("/api/auth/login", loginData, {
         headers: { "Content-Type": "application/json" },
       });
 
-      toast.success("Login successful!");
       reset();
-      router.push("/dashboard");
+
+      // Set authentication cookie
+      document.cookie = `auth-token=${data.data.token}; path=/; max-age=${
+        24 * 60 * 60
+      }; secure; samesite=strict`;
+
+      // Redirect to role-specific dashboard
+      const dashboardPath =
+        ROLE_DASHBOARD_PATHS[
+          data.data.user.role as keyof typeof ROLE_DASHBOARD_PATHS
+        ];
+      window.location.replace(dashboardPath);
     } catch (error) {
-      // if (axios.isAxiosError(error)) {
-      //   const msg = error.response?.data?.error || "Login failed.";
-      //   toast.error(msg);
-      // } else {
-      //   toast.error("Something went wrong.");
-      // }
-      console.log("Login error:", error);
-    } finally {
-      router.push("/admin/dashboard");
+      if (axios.isAxiosError(error)) {
+        const msg = error.response?.data?.error || "Login failed.";
+        toast.error(msg);
+      } else {
+        toast.error("Something went wrong.");
+      }
     }
   };
 
   return (
-    <div className="min-h-screen w-full overflow-hidden">
+    <div className="min-h-screen w-full overflow-hidden bg-gray-50">
       {/* Main Grid Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 min-h-screen font-sans text-sm">
-        {/* Left Panel */}
-        <div className="relative bg-[#279eab] text-white px-4 py-6 sm:px-6 sm:py-8 md:px-8 md:py-10 lg:px-6 lg:py-10 xl:px-8 xl:py-12 flex flex-col justify-center items-center overflow-hidden min-h-[300px] lg:min-h-screen">
-          <div className="mb-4 sm:mb-6">
-            <Image
-              src="/assets/images/logo4.png"
-              width={50}
-              height={50}
-              alt="Logo"
-              className="rounded-sm sm:w-[60px] sm:h-[60px] md:w-[70px] md:h-[70px]"
-            />
-          </div>
-          <div className="relative z-10 text-center max-w-xs sm:max-w-sm md:max-w-md lg:max-w-sm xl:max-w-md">
-            <h1 className="text-xs sm:text-sm md:text-base lg:text-sm xl:text-base font-bold uppercase tracking-wide leading-tight">
+      <div className="grid grid-cols-1 lg:grid-cols-2 min-h-screen">
+        {/* Left Panel - Hidden on mobile */}
+        <div className="hidden lg:flex relative bg-teal-600 text-white px-8 py-12 flex-col justify-center items-center overflow-hidden">
+          <div className="relative z-10 text-center max-w-md">
+            <div className="mb-8">
+              <Image
+                src="/assets/images/logo4.png"
+                width={80}
+                height={80}
+                alt="Logo"
+                className="rounded-lg mx-auto"
+              />
+            </div>
+
+            <h1 className="text-lg font-bold uppercase tracking-wide leading-tight mb-4">
               INTEGRATED PROJECT MONITORING SYSTEM
             </h1>
-            <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-3xl xl:text-4xl font-extrabold mt-2 sm:mt-3 md:mt-4">
-              iPMS
-            </h2>
-            <p className="text-xs sm:text-sm tracking-wide uppercase mt-1 sm:mt-2">
+            <h2 className="text-5xl font-extrabold mb-3">iPMS</h2>
+            <p className="text-base tracking-wide uppercase mb-8 opacity-90">
               Monitoring and Data Analytic System
             </p>
-            <p className="text-[10px] sm:text-[11px] mt-4 sm:mt-5 md:mt-6">
-              Designed, Developed & Maintained by
-            </p>
-            <div className="flex items-center justify-center gap-2 text-xs sm:text-sm font-semibold">
-              <span>GRATIA TECHNOLOGY</span>
+
+            <div className="border-t border-white/20 pt-6">
+              <p className="text-sm mb-2 opacity-75">
+                Designed, Developed & Maintained by
+              </p>
+              <div className="text-lg font-semibold">GRATIA TECHNOLOGY</div>
             </div>
           </div>
         </div>
 
         {/* Right Panel - Login Form */}
-        <div className="flex flex-col justify-center items-center p-3 sm:p-4 md:p-6 lg:p-8 xl:p-16 bg-white w-full min-h-screen overflow-y-auto">
-          <div className="w-full max-w-[400px] sm:max-w-[450px] md:max-w-[500px] lg:max-w-[550px] xl:max-w-[600px] space-y-4 sm:space-y-5 md:space-y-6 bg-white p-3 sm:p-4 md:p-6 lg:p-8 rounded-md shadow-lg mb-auto">
-            <div className="text-center">
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-3">
+        <div className="flex flex-col justify-center items-center p-6 lg:p-16 bg-white w-full min-h-screen">
+          <div className="w-full max-w-md space-y-8">
+            {/* Mobile Header - Only shown on small screens */}
+            <div className="lg:hidden text-center mb-8">
+              <div className="flex items-center justify-center gap-3 mb-6">
                 <Image
                   src="/assets/images/logo4.png"
-                  alt="Council Logo"
+                  alt="iPMS Logo"
                   width={60}
-                  height={45}
-                  className="rounded sm:w-[70px] sm:h-[52px] md:w-[80px] md:h-[60px] flex-shrink-0"
+                  height={60}
+                  className="rounded-lg"
                 />
-                <h1 className="text-sm sm:text-base md:text-lg lg:text-xl font-bold text-[#1266ab] text-center leading-tight">
+                <div>
+                  <h1 className="text-2xl font-bold text-teal-600">iPMS</h1>
+                  <p className="text-xs text-gray-500 uppercase tracking-wide">
+                    Project Monitoring System
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Desktop Header */}
+            <div className="hidden lg:block text-center">
+              <div className="flex items-center justify-center gap-3 mb-6">
+                <Image
+                  src="/assets/images/logo4.png"
+                  alt="iPMS Logo"
+                  width={50}
+                  height={50}
+                  className="rounded-lg"
+                />
+                <h1 className="text-xl font-bold text-teal-600">
                   INTEGRATED PROJECT MONITORING SYSTEM
                 </h1>
               </div>
             </div>
 
             {/* Login Form Container */}
-            <div className="border border-gray-300 p-3 sm:p-4 md:p-5 lg:p-6 rounded-md shadow-sm w-full">
-              <h2 className="text-center text-base sm:text-lg font-semibold text-gray-700 mb-4 sm:mb-5">
+            <div className="bg-white border border-gray-200 rounded-lg p-8 shadow-sm">
+              <h2 className="text-center text-xl font-semibold text-gray-800 mb-6">
                 USER LOGIN
               </h2>
 
-              <form
-                onSubmit={handleSubmit(onSubmit)}
-                className="space-y-3 sm:space-y-4 w-full"
-              >
+              <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
                 {/* User ID Field */}
-                <div className="w-full">
-                  <label className="block text-[11px] sm:text-[12px] font-semibold mb-1">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
                     User ID
                   </label>
-                  <div className="flex items-center w-full min-w-0">
-                    <span className="flex items-center justify-center w-8 h-9 sm:w-9 sm:h-9 md:w-10 md:h-9 bg-[#279eab] rounded-l-sm shrink-0">
-                      <User className="w-3 h-4 sm:w-4 sm:h-4 text-white" />
-                    </span>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 flex items-center">
+                      <span className="flex items-center justify-center w-12 h-full bg-teal-600 rounded-l-md">
+                        <User className="w-4 h-4 text-white" />
+                      </span>
+                    </div>
                     <input
                       type="text"
                       placeholder="Enter User ID"
                       {...register("userId")}
-                      className={`w-full h-9 sm:h-9 px-2 sm:px-3 border-t border-b border-r text-[12px] sm:text-[13px] text-black placeholder:text-gray-500 focus:outline-none  rounded-r-sm transition-colors ${
-                        errors.userId ? "border-red-500" : "border-[#C5C5C5]"
+                      className={`w-full h-10 pl-14 pr-4 border text-sm text-gray-900 placeholder:text-gray-500 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-600 focus:border-transparent transition-all ${
+                        errors.userId
+                          ? "border-red-300 ring-red-100"
+                          : "border-gray-300"
                       }`}
                     />
                   </div>
-                  <div className="h-5 sm:h-5 flex items-start">
-                    {errors.userId && (
-                      <p className="text-red-600 text-[10px] sm:text-xs mt-1 pl-1 sm:pl-2">
-                        {errors.userId.message}
-                      </p>
-                    )}
-                  </div>
+                  {errors.userId && (
+                    <p className="text-red-600 text-sm mt-2">
+                      {errors.userId.message}
+                    </p>
+                  )}
                 </div>
 
-                {/* Password Field with Toggle */}
-                <div className="w-full">
-                  <label className="block text-[11px] sm:text-[12px] md:text-[13px] font-semibold mb-1">
+                {/* Password Field */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
                     Password
                   </label>
-                  <div className="flex items-center w-full min-w-0 relative">
-                    <span className="flex items-center justify-center w-8 h-9 sm:w-9 sm:h-9 md:w-10 md:h-9 bg-[#279eab] rounded-l-sm shrink-0">
-                      <Lock className="w-3 h-3 sm:w-4 sm:h-4 text-white" />
-                    </span>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 flex items-center">
+                      <span className="flex items-center justify-center w-12 h-full bg-teal-600 rounded-l-md">
+                        <Lock className="w-4 h-4 text-white" />
+                      </span>
+                    </div>
                     <input
                       type={showPassword ? "text" : "password"}
                       placeholder="Enter Password"
                       {...register("password")}
-                      className={`w-full h-9 sm:h-9 px-2 sm:px-3 pr-8 border-t border-b border-r text-[12px] sm:text-[13px] text-black placeholder:text-gray-500 focus:outline-none rounded-r-sm transition-colors ${
-                        errors.password ? "border-red-500" : "border-[#C5C5C5]"
+                      className={`w-full h-10 pl-14 pr-12 border text-sm text-gray-900 placeholder:text-gray-500 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-600 focus:border-transparent transition-all ${
+                        errors.password
+                          ? "border-red-300 ring-red-100"
+                          : "border-gray-300"
                       }`}
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-2 top-2.5 text-gray-500 hover:text-black"
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
                     >
                       {showPassword ? (
-                        <EyeOff className="w-4 h-4" />
+                        <EyeOff className="w-5 h-5" />
                       ) : (
-                        <Eye className="w-4 h-4" />
+                        <Eye className="w-5 h-5" />
                       )}
                     </button>
                   </div>
-                  <div className="h-4 sm:h-5 flex items-start justify-between">
-                    <div className="flex-1">
+
+                  <div className="flex items-center justify-between mt-2">
+                    <div>
                       {errors.password && (
-                        <p className="text-red-600 text-[10px] sm:text-xs mt-1 pl-1 sm:pl-2">
+                        <p className="text-red-600 text-sm">
                           {errors.password.message}
                         </p>
                       )}
                     </div>
                     <Link
                       href="/forgot-password"
-                      className="text-[11px] sm:text-[12px] md:text-[13px] text-blue-600 hover:underline mt-1 ml-2 flex-shrink-0 transition-colors"
+                      className="text-sm text-[#279eab] hover:text-[#1e7a85] font-medium transition-colors"
                     >
                       Forgot Password?
                     </Link>
@@ -193,39 +223,48 @@ const LoginPage = () => {
                 </div>
 
                 {/* Remember Me */}
-                <div className="flex items-center space-x-2 pt-1 sm:pt-2">
+                <div className="flex items-center">
                   <Checkbox
                     id="remember"
-                    checked={undefined}
                     onCheckedChange={(val) => setValue("rememberMe", !!val)}
-                    className="w-2 h-2 sm:w-4 sm:h-4"
+                    className="w-4 h-4 text-teal-600 border-gray-300 rounded"
                   />
                   <label
                     htmlFor="remember"
-                    className="text-[12px] sm:text-sm text-gray-700 font-medium cursor-pointer select-none"
+                    className="ml-3 text-sm text-gray-700 font-medium cursor-pointer"
                   >
                     Remember Me
                   </label>
                 </div>
 
                 {/* Submit Button */}
-                <div className="pt-2 sm:pt-3">
-                  <Button
-                    type="submit"
-                    disabled={isSubmitting}
-                    className={`w-full flex justify-center items-center gap-2 border border-[#C5C5C5] text-[12px] sm:text-sm font-medium py-3 sm:py-4 rounded transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] ${
-                      isSubmitting
-                        ? "bg-[#279eab] text-white cursor-not-allowed"
-                        : "bg-white text-gray-700 hover:bg-[#279eab] hover:text-white hover:shadow-lg"
-                    }`}
-                  >
-                    {isSubmitting && (
-                      <LoaderCircle className="w-3 h-3 sm:w-4 sm:h-4 animate-spin [animation-duration:0.5s]" />
-                    )}
-                    {isSubmitting ? "Signing in..." : "SIGN IN"}
-                  </Button>
-                </div>
+                <Button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className={`w-full h-10 flex justify-center items-center gap-2 text-sm font-medium rounded-md transition-all duration-200 ${
+                    isSubmitting
+                      ? "bg-teal-400 text-white cursor-not-allowed opacity-80"
+                      : "bg-teal-600 text-white hover:bg-teal-700 focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 active:bg-teal-800"
+                  }`}
+                >
+                  {isSubmitting ? (
+                    <>
+                      <LoaderCircle className="w-4 h-4 animate-spin" />
+                      Signing in...
+                    </>
+                  ) : (
+                    "SIGN IN"
+                  )}
+                </Button>
               </form>
+            </div>
+
+            {/* Footer - Only shown on mobile */}
+            <div className="lg:hidden text-center text-xs text-gray-500 mt-8">
+              <p>Designed, Developed & Maintained by</p>
+              <p className="font-semibold text-gray-700 mt-1">
+                GRATIA TECHNOLOGY
+              </p>
             </div>
           </div>
         </div>
@@ -237,7 +276,7 @@ const LoginPage = () => {
         richColors
         toastOptions={{
           style: { fontSize: "14px" },
-          className: "text-sm sm:text-base",
+          className: "text-sm",
         }}
       />
     </div>
