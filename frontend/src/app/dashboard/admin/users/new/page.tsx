@@ -1,5 +1,6 @@
 "use client";
 
+import avatar from "@/assets/images/avatar.png";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -22,11 +23,10 @@ import createuserFormSchema, {
 } from "@/schema/create-user/create-user.schema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2 } from "lucide-react";
+import Image from "next/image";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import z from "zod";
-
-import Image from "next/image";
 
 interface createuserFormSchema {
   fullName: string;
@@ -103,7 +103,7 @@ const CreateUserPage = () => {
         <div className="bg-gradient-to-br from-indigo-600 to-purple-600 text-white p-10 space-y-6 flex flex-col justify-center">
           <div className="flex flex-col items-center">
             <Image
-              src="/assets/images/avatar.png"
+              src={avatar}
               alt="User Avatar"
               width={100}
               height={100}
