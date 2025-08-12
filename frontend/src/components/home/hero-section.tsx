@@ -1,5 +1,3 @@
-"use client";
-
 import banner from "@/assets/images/banner2.jpg";
 import { Button } from "@/components/ui/button";
 import { LogIn } from "lucide-react";

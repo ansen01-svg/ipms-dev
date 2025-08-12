@@ -11,6 +11,7 @@ import { Eye, EyeOff, LoaderCircle, Lock, User } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 // import { useRouter } from "next/navigation";
+import panelImage from "@/assets/images/login-panel-img.jpg";
 import logo from "@/assets/images/logo4.png";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -104,31 +105,61 @@ const LoginPage = () => {
       {/* Main Grid Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-2 min-h-screen">
         {/* Left Panel - Hidden on mobile */}
-        <div className="hidden lg:flex relative bg-teal-600 text-white px-8 py-12 flex-col justify-center items-center overflow-hidden">
-          <div className="relative z-10 text-center max-w-md">
+        <div className="hidden lg:flex relative bg-teal-600 text-white overflow-hidden">
+          {/* Background Image */}
+          <div className="absolute inset-0">
+            <Image
+              src={panelImage}
+              alt="Background"
+              fill
+              className="object-cover opacity-20"
+            />
+          </div>
+
+          {/* Content */}
+          <div className="relative z-10 flex flex-col p-12 w-full">
+            {/* Logo Section */}
             <div className="mb-8">
-              <Image
-                src={logo}
-                width={80}
-                height={80}
-                alt="Logo"
-                className="rounded-lg mx-auto"
-              />
+              <Link href={"/"} className="flex-shrink-0">
+                <div className="inline-flex items-center gap-3 bg-white/10 backdrop-blur-sm rounded-lg px-4 py-3 border border-white/20">
+                  <Image
+                    src={logo}
+                    width={40}
+                    height={40}
+                    alt="Logo"
+                    className="rounded"
+                  />
+                  <span className="text-sm font-semibold tracking-wider">
+                    iPMS
+                  </span>
+                </div>
+              </Link>
             </div>
 
-            <h1 className="text-lg font-bold uppercase tracking-wide leading-tight mb-4">
-              INTEGRATED PROJECT MONITORING SYSTEM
-            </h1>
-            <h2 className="text-5xl font-extrabold mb-3">iPMS</h2>
-            <p className="text-base tracking-wide uppercase mb-8 opacity-90">
-              Monitoring and Data Analytic System
-            </p>
+            {/* Main Content */}
+            <div className="flex-1 flex flex-col justify-center max-w-lg">
+              <h1 className="text-5xl font-bold mb-6 leading-tight">
+                Welcome to
+                <br />
+                <span className="text-white/90">iPMS</span>
+              </h1>
 
+              <p className="text-lg text-white/80 leading-relaxed mb-8">
+                The Integrated Project Monitoring System is designed for
+                comprehensive project tracking, data analytics, progress
+                monitoring, and strategic planning across all organizational
+                levels.
+              </p>
+            </div>
+
+            {/* Footer */}
             <div className="border-t border-white/20 pt-6">
-              <p className="text-sm mb-2 opacity-75">
+              <p className="text-sm text-white/70 mb-2">
                 Designed, Developed & Maintained by
               </p>
-              <div className="text-lg font-semibold">GRATIA TECHNOLOGY</div>
+              <div className="text-base font-semibold text-white">
+                GRATIA TECHNOLOGY
+              </div>
             </div>
           </div>
         </div>
@@ -139,13 +170,15 @@ const LoginPage = () => {
             {/* Mobile Header - Only shown on small screens */}
             <div className="lg:hidden text-center mb-8">
               <div className="flex items-center justify-center gap-3 mb-6">
-                <Image
-                  src={logo}
-                  alt="iPMS Logo"
-                  width={60}
-                  height={60}
-                  className="rounded-lg"
-                />
+                <Link href="/" className="flex-shrink-0">
+                  <Image
+                    src={logo}
+                    alt="iPMS Logo"
+                    width={60}
+                    height={60}
+                    className="rounded-lg hover:opacity-80 transition-opacity"
+                  />
+                </Link>
                 <div>
                   <h1 className="text-2xl font-bold text-teal-600">iPMS</h1>
                   <p className="text-xs text-gray-500 uppercase tracking-wide">
@@ -157,14 +190,16 @@ const LoginPage = () => {
 
             {/* Desktop Header */}
             <div className="hidden lg:block text-center">
-              <div className="flex items-center justify-center gap-3 mb-6">
-                <Image
-                  src={logo}
-                  alt="iPMS Logo"
-                  width={50}
-                  height={50}
-                  className="rounded-lg"
-                />
+              <div className="flex flex-col items-center justify-center gap-3 mb-6">
+                <Link href="/" className="flex-shrink-0">
+                  <Image
+                    src={logo}
+                    alt="iPMS Logo"
+                    width={50}
+                    height={50}
+                    className="rounded-lg hover:opacity-80 transition-opacity"
+                  />
+                </Link>
                 <h1 className="text-xl font-bold text-teal-600">
                   INTEGRATED PROJECT MONITORING SYSTEM
                 </h1>

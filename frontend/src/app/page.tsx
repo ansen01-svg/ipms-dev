@@ -1,8 +1,7 @@
-import Header from "@/components/home/header";
-import HeroSection from "@/components/home/hero-section";
 import AboutUsSection from "@/components/home/about-section";
 import Footer from "@/components/home/footer";
-
+import Header from "@/components/home/header";
+import HeroSection from "@/components/home/hero-section";
 
 /**
  * Main Landing Page Component
@@ -18,7 +17,7 @@ export default function LandingPage() {
 
       {/* About Section */}
       <AboutUsSection />
-      
+
       {/* Footer */}
       <Footer />
     </div>

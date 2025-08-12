@@ -100,12 +100,6 @@ function getRoleDashboardPath(role: string): string {
   );
 }
 
-// export async function middleware(request: NextRequest) {
-//   const { pathname } = request.nextUrl;
-
-//   return NextResponse.redirect(new URL(pathname, request.url));
-// }
-
 export const config = {
   matcher: [
     /*
