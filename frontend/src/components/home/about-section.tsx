@@ -1,10 +1,8 @@
-"use client";
-
 import dashboard from "@/assets/images/dashboard.jpg";
 import {
   BarChart3,
   Clock,
-  DollarSign,
+  IndianRupee,
   MapPin,
   Monitor,
   Users,
@@ -68,7 +66,7 @@ export default function AboutUsSection({
             </div>
             <div className="text-center p-4 sm:p-6 bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow duration-300">
               <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gray-100 rounded-lg flex items-center justify-center mx-auto mb-3 sm:mb-4">
-                <DollarSign className="w-5 h-5 sm:w-6 sm:h-6 text-gray-700" />
+                <IndianRupee className="w-5 h-5 sm:w-6 sm:h-6 text-gray-700" />
               </div>
               <h3 className="font-semibold text-gray-900 mb-2 sm:mb-3 text-base lg:text-lg">
                 Financial Oversight

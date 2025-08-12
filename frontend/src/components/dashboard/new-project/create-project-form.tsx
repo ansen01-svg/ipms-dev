@@ -1182,8 +1182,9 @@ export default function CreateProjectForm({
 
       try {
         // Get API URL from environment variables
-        const apiUrl =
-          process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
+        // const apiUrl =
+        //   process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
+        const apiUrl = "https://backend.aptdcl.in/api";
 
         console.log("Attempting to submit project to API...");
 
