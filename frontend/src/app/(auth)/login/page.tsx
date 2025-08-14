@@ -11,6 +11,7 @@ import { Eye, EyeOff, LoaderCircle, Lock, User } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 // import { useRouter } from "next/navigation";
+import gratiaLogo from "@/assets/images/gratia-logo.png";
 import panelImage from "@/assets/images/login-panel-img.jpg";
 import logo from "@/assets/images/logo4.png";
 import { useState } from "react";
@@ -157,8 +158,20 @@ const LoginPage = () => {
               <p className="text-sm text-white/70 mb-2">
                 Designed, Developed & Maintained by
               </p>
-              <div className="text-base font-semibold text-white">
-                GRATIA TECHNOLOGY
+              <div className="flex items-center gap-2">
+                <Image
+                  src={gratiaLogo}
+                  width={50}
+                  height={50}
+                  alt="Gratia Technology Logo"
+                  className="rounded"
+                />
+                <div className="flex flex-col items-start justify-center text-white">
+                  <span className="text-xs font-semibold">
+                    GRATIA TECHNOLOGY
+                  </span>
+                  <span className="text-[10px] gap-2">DEFINING DIGITALLY</span>
+                </div>
               </div>
             </div>
           </div>
@@ -169,7 +182,7 @@ const LoginPage = () => {
           <div className="w-full max-w-md space-y-8">
             {/* Mobile Header - Only shown on small screens */}
             <div className="lg:hidden text-center mb-8">
-              <div className="flex items-center justify-center gap-3 mb-6">
+              <div className="flex flex-col items-center justify-center gap-3 mb-6">
                 <Link href="/" className="flex-shrink-0">
                   <Image
                     src={logo}
@@ -180,10 +193,9 @@ const LoginPage = () => {
                   />
                 </Link>
                 <div>
-                  <h1 className="text-2xl font-bold text-teal-600">iPMS</h1>
-                  <p className="text-xs text-gray-500 uppercase tracking-wide">
-                    Project Monitoring System
-                  </p>
+                  <h1 className="text-xl font-bold text-teal-600 text-wrap">
+                    Integrated Project Monitoring System
+                  </h1>
                 </div>
               </div>
             </div>
@@ -207,9 +219,9 @@ const LoginPage = () => {
             </div>
 
             {/* Login Form Container */}
-            <div className="bg-white border border-gray-200 rounded-lg p-8 shadow-sm">
+            <div className="p-8">
               <h2 className="text-center text-xl font-semibold text-gray-800 mb-6">
-                USER LOGIN
+                Welcome back
               </h2>
 
               <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
@@ -321,10 +333,10 @@ const LoginPage = () => {
                   {isSubmitting ? (
                     <>
                       <LoaderCircle className="w-4 h-4 animate-spin" />
-                      Signing in...
+                      Logging in...
                     </>
                   ) : (
-                    "SIGN IN"
+                    "Login"
                   )}
                 </Button>
               </form>
@@ -333,9 +345,21 @@ const LoginPage = () => {
             {/* Footer - Only shown on mobile */}
             <div className="lg:hidden text-center text-xs text-gray-500 mt-8">
               <p>Designed, Developed & Maintained by</p>
-              <p className="font-semibold text-gray-700 mt-1">
-                GRATIA TECHNOLOGY
-              </p>
+              <div className="flex items-center justify-center gap-2 mt-1">
+                <Image
+                  src={gratiaLogo}
+                  width={40}
+                  height={40}
+                  alt="Gratia Technology Logo"
+                  className="rounded"
+                />
+                <div className="flex flex-col items-start justify-center">
+                  <span className="text-xs font-semibold">
+                    GRATIA TECHNOLOGY
+                  </span>
+                  <span className="text-[10px] gap-2">DEFINING DIGITALLY</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
