@@ -1,7 +1,7 @@
 import { Badge } from "@/components/ui/badge";
-import { MOCK_PROJECT } from "@/utils/project-details/constants";
+import { DbProject } from "@/types/projects.types";
 interface OverviewTabProps {
-  project: typeof MOCK_PROJECT;
+  project: DbProject;
 }
 
 function OverviewTab({ project }: OverviewTabProps) {
@@ -20,11 +20,11 @@ function OverviewTab({ project }: OverviewTabProps) {
       <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
         {/* Description */}
         <div className="px-4 py-4 border-b border-gray-100">
-          <div className="flex justify-between items-start">
+          <div className="flex justify-between items-center">
             <span className="text-sm font-medium text-gray-900">
               Description
             </span>
-            <div className="flex-1 text-right ml-4">
+            <div className="text-right ml-4">
               <p className="text-sm text-gray-600 text-left max-w-md ml-auto">
                 {project.description}
               </p>
@@ -61,7 +61,7 @@ function OverviewTab({ project }: OverviewTabProps) {
           <div className="flex justify-between items-center">
             <span className="text-sm font-medium text-gray-900">Category</span>
             <Badge variant="outline" className="text-xs">
-              {project.category}
+              {project.typeOfWork}
             </Badge>
           </div>
         </div>
@@ -73,7 +73,7 @@ function OverviewTab({ project }: OverviewTabProps) {
               Sub-Projects
             </span>
             <span className="text-sm text-gray-600 font-medium">
-              {project.subProjects} Active
+              {project.subTypeOfWork} Active
             </span>
           </div>
         </div>

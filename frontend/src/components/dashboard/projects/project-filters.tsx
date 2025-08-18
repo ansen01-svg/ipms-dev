@@ -7,7 +7,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Project } from "@/types/projects.types";
+import { DbProject } from "@/types/projects.types";
 import { Search, X } from "lucide-react";
 import { createContext, useContext, useState } from "react";
 import { FilterConfig } from "./projects-container";
@@ -27,7 +27,7 @@ interface FilterProviderProps {
 }
 
 interface ProjectFiltersProps {
-  projects?: Project[];
+  projects?: DbProject[];
 }
 
 const FilterContext = createContext<FilterContextType | undefined>(undefined);
@@ -77,7 +77,7 @@ export function FilterProvider({ children }: FilterProviderProps) {
 }
 
 // Get unique filter options
-const getFilterOptions = (projects: Project[]) => {
+const getFilterOptions = (projects: DbProject[]) => {
   return {
     statuses: Array.from(new Set(projects.map((p) => p.status))).sort(),
     districts: Array.from(new Set(projects.map((p) => p.district))).sort(),

@@ -1,9 +1,9 @@
 import { Button } from "@/components/ui/button";
-import { MOCK_PROJECT } from "@/utils/project-details/constants";
+import { DbProject } from "@/types/projects.types";
 import { Calendar, Eye, MapPin } from "lucide-react";
 
 interface SubProjectsTabProps {
-  project: typeof MOCK_PROJECT;
+  project: DbProject;
 }
 
 function SubProjectsTab({ project }: SubProjectsTabProps) {
@@ -65,13 +65,13 @@ function SubProjectsTab({ project }: SubProjectsTabProps) {
       <div className="flex items-center gap-3">
         <h3 className="text-xl font-semibold text-gray-900">Sub-Projects</h3>
         <span className="text-lg text-gray-500">
-          {project.subProjectDetails.length}
+          {project.subProjects.length}
         </span>
       </div>
 
       {/* Sub-projects cards */}
       <div className="space-y-3">
-        {project.subProjectDetails.map((subProject) => (
+        {project.subProjects.map((subProject) => (
           <div
             key={subProject.id}
             className="bg-white rounded-xl border border-gray-100 p-4 hover:shadow-md transition-all duration-200"
@@ -105,7 +105,7 @@ function SubProjectsTab({ project }: SubProjectsTabProps) {
                     </div>
                   ) : (
                     <div className="text-sm text-gray-500 mb-3">
-                      {subProject.nature}
+                      {subProject.natureOfWork}
                     </div>
                   )}
 
@@ -120,7 +120,7 @@ function SubProjectsTab({ project }: SubProjectsTabProps) {
                     <div>
                       <span className="text-gray-500">Sub-Type</span>
                       <div className="text-gray-900 font-medium">
-                        {subProject.subType}
+                        {subProject.subTypeOfWork}
                       </div>
                     </div>
                     <div>
@@ -133,8 +133,8 @@ function SubProjectsTab({ project }: SubProjectsTabProps) {
                       <span className="text-gray-500">Duration</span>
                       <div className="text-gray-900 font-medium">
                         {getDurationInMonths(
-                          subProject.startDate,
-                          subProject.endDate
+                          subProject.projectStartDate,
+                          subProject.projectEndDate
                         )}{" "}
                         months
                       </div>
@@ -147,15 +147,15 @@ function SubProjectsTab({ project }: SubProjectsTabProps) {
                       <Calendar className="h-3 w-3" />
                       <span>
                         {formatDateRange(
-                          subProject.startDate,
-                          subProject.endDate
+                          subProject.projectStartDate,
+                          subProject.projectEndDate
                         )}
                       </span>
                     </div>
-                    {project.locality && (
+                    {project.district && (
                       <div className="flex items-center gap-1">
                         <MapPin className="h-3 w-3" />
-                        <span>{project.locality}</span>
+                        <span>{project.district}</span>
                       </div>
                     )}
                   </div>
@@ -186,7 +186,7 @@ function SubProjectsTab({ project }: SubProjectsTabProps) {
         <div className="font-medium">
           Total Budget:{" "}
           {formatCurrency(
-            project.subProjectDetails.reduce(
+            project.subProjects.reduce(
               (total, sp) => total + sp.estimatedAmount,
               0
             )

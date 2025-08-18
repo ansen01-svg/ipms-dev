@@ -400,9 +400,9 @@ const ProjectPreview = ({
           </CardTitle>
         </CardHeader>
         <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <InfoItem label="Locality" value={formData.locality} />
-          <InfoItem label="Ward" value={formData.ward} />
-          <InfoItem label="ULB" value={formData.ulb} />
+          <InfoItem label="District" value={formData.district} />
+          <InfoItem label="Block" value={formData.block} />
+          <InfoItem label="Gram Panchayat" value={formData.gramPanchayat} />
           <InfoItem
             label="Geo Location"
             value={
@@ -586,9 +586,12 @@ export default function CreateProjectForm({
       projectStartDate: "",
       projectEndDate: "",
       recommendedModeOfExecution: "",
-      locality: "",
-      ward: "",
-      ulb: "",
+      // locality: "",
+      // ward: "",
+      // ulb: "",
+      district: "",
+      block: "",
+      gramPanchayat: "",
       geoLocation: {
         latitude: "",
         longitude: "",
@@ -683,9 +686,12 @@ export default function CreateProjectForm({
         "projectStartDate",
         "projectEndDate",
         "recommendedModeOfExecution",
-        "locality",
-        "ward",
-        "ulb",
+        "district",
+        "block",
+        "gramPanchayat",
+        // "locality",
+        // "ward",
+        // "ulb",
       ];
 
       for (const field of basicFields) {
@@ -908,130 +914,6 @@ export default function CreateProjectForm({
   };
 
   // 1. Final form submission
-  // const onSubmit = async (values: CreateProjectFormValues) => {
-  //   try {
-  //     setIsSubmittingForm(true);
-
-  //     // Prepare API payload
-  //     const apiPayload = {
-  //       ...values,
-  //       // No need to parse estimatedCost as it's already a number
-  //       subProjects: values.subProjects || [],
-  //     };
-
-  //     // Generate project data for success simulation (always available)
-  //     const projectData: ProjectPDFData = {
-  //       ...values,
-  //       projectId: `PROJ_${Date.now()}`,
-  //       createdAt: new Date().toISOString(),
-  //       status: "Created",
-  //       // Convert geoLocation back to string format for PDF
-  //       geoLocation: values.geoLocation,
-  //       // Convert numeric fields to strings for PDF compatibility
-  //       estimatedCost: values.estimatedCost,
-  //       subProjects:
-  //         values.subProjects?.map((sub) => ({
-  //           ...sub,
-  //           estimatedAmount: sub.estimatedAmount,
-  //         })) || [],
-  //     };
-
-  //     // Attempt API call but don't let it affect the success flow
-  //     let apiSuccess = false;
-  //     let apiResult = null;
-
-  //     try {
-  //       // Get API URL from environment variables
-  //       const apiUrl =
-  //         process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
-
-  //       console.log("Attempting to submit project to API...");
-
-  //       const response = await fetch(`${apiUrl}/projects/create`, {
-  //         method: "POST",
-  //         headers: {
-  //           "Content-Type": "application/json",
-  //         },
-  //         body: JSON.stringify(apiPayload),
-  //       });
-
-  //       console.log("Server response:", response);
-
-  //       if (response.ok) {
-  //         apiResult = await response.json();
-  //         apiSuccess = true;
-  //         console.log("API call successful:", apiResult);
-
-  //         // If API returns a project ID, use it instead of generated one
-  //         if (apiResult?.data.projectId) {
-  //           projectData.projectId = apiResult.data.projectId;
-  //         }
-  //       } else {
-  //         console.warn(`API call failed with status: ${response.status}`);
-  //         const errorText = await response.text();
-  //         console.warn("API error response:", errorText);
-  //       }
-  //     } catch (apiError) {
-  //       console.warn("API call failed with error:", apiError);
-  //       // API call failed, but we continue with success simulation
-  //     }
-
-  //     // Always proceed with success flow regardless of API result
-  //     console.log(
-  //       apiSuccess
-  //         ? "API call succeeded - proceeding with success flow"
-  //         : "API call failed - simulating success anyway"
-  //     );
-
-  //     // Store project data for PDF generation
-  //     setSubmittedProjectData(projectData);
-
-  //     // Always show success message
-  //     toast.success("Project created successfully!");
-
-  //     // Always show success screen
-  //     setShowSuccessScreen(true);
-
-  //     // Optional: Log the final outcome for debugging
-  //     console.log("Project submission completed:", {
-  //       apiCallSuccessful: apiSuccess,
-  //       projectData: projectData,
-  //       apiResult: apiResult,
-  //     });
-  //   } catch (error) {
-  //     // This catch block handles any unexpected errors in the submission flow itself
-  //     // Even here, we can choose to simulate success
-  //     console.error("Unexpected error in submission flow:", error);
-
-  //     // Option 1: Still simulate success even for unexpected errors
-  //     const fallbackProjectData: ProjectPDFData = {
-  //       ...values,
-  //       projectId: `PROJ_${Date.now()}`,
-  //       createdAt: new Date().toISOString(),
-  //       status: "Created",
-  //       // Keep geoLocation as object format - don't convert to string
-  //       geoLocation: values.geoLocation,
-  //       // Convert numeric fields to strings for PDF compatibility
-  //       estimatedCost: values.estimatedCost,
-  //       subProjects:
-  //         values.subProjects?.map((sub) => ({
-  //           ...sub,
-  //           estimatedAmount: sub.estimatedAmount,
-  //         })) || [],
-  //     };
-
-  //     setSubmittedProjectData(fallbackProjectData);
-  //     toast.success("Project created successfully!");
-  //     setShowSuccessScreen(true);
-
-  //     // Option 2: If you want to show error only for unexpected errors, uncomment below:
-  //     // toast.error("Failed to create project. Please try again.");
-  //   } finally {
-  //     setIsSubmittingForm(false);
-  //   }
-  // };
-
-  // 2. Form submit
   const onSubmit = async (values: CreateProjectFormValues) => {
     try {
       setIsSubmittingForm(true);
@@ -1060,131 +942,14 @@ export default function CreateProjectForm({
           })) || [],
       };
 
-      // Calculate days remaining
-      const calculateDaysRemaining = (endDate: string) => {
-        const today = new Date();
-        const end = new Date(endDate);
-        const diffTime = end.getTime() - today.getTime();
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        return Math.max(0, diffDays);
-      };
-
-      // Create complete project object for localStorage
-      const completeProject = {
-        id: projectData.projectId,
-        name: values.projectName,
-        description: values.description,
-        status: "Submitted to AEE",
-        progress: 0,
-        budget: values.estimatedCost,
-        budgetUtilized: 0,
-        district: values.locality,
-        createdBy: "Guest User",
-        createdByName: values.owningDepartment || "Default Department",
-        createdAt: new Date().toISOString().split("T")[0], // Format as YYYY-MM-DD
-        updatedAt: new Date().toISOString().split("T")[0],
-        startDate: values.projectStartDate,
-        expectedCompletion: values.projectEndDate,
-        category: values.typeOfWork || "General Infrastructure",
-        subProjects: values.subProjects?.length || 0,
-        daysRemaining: values.projectEndDate
-          ? calculateDaysRemaining(values.projectEndDate)
-          : 0,
-        currentStage: "Project Created - Awaiting Review",
-        lastUpdated: new Date().toLocaleDateString("en-IN"),
-
-        // Form fields
-        dateOfProposal: values.dateOfProposal,
-        hasSubProjects: values.hasSubProjects === "yes",
-        beneficiary: values.beneficiary,
-        letterReference: values.letterReference,
-        fund: values.fund,
-        function: values.function,
-        budgetHead: values.budgetHead,
-        scheme: values.scheme,
-        subScheme: values.subScheme,
-        estimatedCost: values.estimatedCost,
-        owningDepartment: values.owningDepartment,
-        executingDepartment: values.executingDepartment,
-        typeOfWork: values.typeOfWork,
-        subTypeOfWork: values.subTypeOfWork,
-        natureOfWork: values.natureOfWork,
-        projectStartDate: values.projectStartDate,
-        projectEndDate: values.projectEndDate,
-        modeOfExecution: values.recommendedModeOfExecution,
-        locality: values.locality,
-        ward: values.ward,
-        ulb: values.ulb,
-        latitude: parseFloat(values.geoLocation?.latitude as string) || 0,
-        longitude: parseFloat(values.geoLocation?.longitude as string) || 0,
-
-        // Convert uploaded files to documents format
-        documents:
-          uploadedFiles?.map((file, index) => ({
-            id: (index + 1).toString(),
-            name: file.name || `document_${index + 1}`,
-            type: file.type || "Unknown",
-            size: file
-              ? `${(file.size / 1024 / 1024).toFixed(2)} MB`
-              : "Unknown",
-            uploadedAt: new Date().toISOString().split("T")[0],
-          })) || [],
-
-        // Convert sub-projects to detailed format
-        subProjectDetails:
-          values.subProjects?.map((subProject, index) => ({
-            id: (index + 1).toString(),
-            name: subProject.name,
-            estimatedAmount: subProject.estimatedAmount,
-            typeOfWork: subProject.typeOfWork || values.typeOfWork,
-            subType: subProject.subTypeOfWork || values.subTypeOfWork,
-            nature: subProject.natureOfWork || values.natureOfWork,
-            startDate: subProject.projectStartDate || values.projectStartDate,
-            endDate: subProject.projectEndDate || values.projectEndDate,
-            status: "PENDING",
-            progress: 0,
-          })) || [],
-      };
-
-      // Store to localStorage
-      try {
-        // Get existing projects from localStorage
-        const existingProjectsData = localStorage.getItem("projects_data");
-        let projectsArray = [];
-
-        if (existingProjectsData) {
-          projectsArray = JSON.parse(existingProjectsData);
-          // Ensure it's an array
-          if (!Array.isArray(projectsArray)) {
-            projectsArray = [];
-          }
-        }
-
-        // Add new project to array
-        projectsArray.push(completeProject);
-
-        // Store updated array back to localStorage
-        localStorage.setItem("projects_data", JSON.stringify(projectsArray));
-
-        console.log("Project saved to localStorage:", completeProject);
-        console.log("Total projects in localStorage:", projectsArray.length);
-      } catch (localStorageError) {
-        console.error(
-          "Failed to save project to localStorage:",
-          localStorageError
-        );
-        // Continue with the rest of the submission process even if localStorage fails
-      }
-
       // Attempt API call but don't let it affect the success flow
       let apiSuccess = false;
       let apiResult = null;
 
       try {
         // Get API URL from environment variables
-        // const apiUrl =
-        //   process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
-        const apiUrl = "https://backend.aptdcl.in/api";
+        // const apiUrl = "http://localhost:5000/api";
+        const apiUrl = process.env.NEXT_PUBLIC_PROD_API_URL;
 
         console.log("Attempting to submit project to API...");
 
@@ -1194,6 +959,7 @@ export default function CreateProjectForm({
             "Content-Type": "application/json",
           },
           body: JSON.stringify(apiPayload),
+          credentials: "include",
         });
 
         console.log("Server response:", response);
@@ -1206,28 +972,6 @@ export default function CreateProjectForm({
           // If API returns a project ID, use it instead of generated one
           if (apiResult?.data.projectId) {
             projectData.projectId = apiResult.data.projectId;
-
-            // Update the localStorage entry with the API-returned project ID
-            try {
-              const existingProjectsData =
-                localStorage.getItem("projects_data");
-              if (existingProjectsData) {
-                const projectsArray = JSON.parse(existingProjectsData);
-                const lastProject = projectsArray[projectsArray.length - 1];
-                if (lastProject) {
-                  lastProject.id = apiResult.data.projectId;
-                  localStorage.setItem(
-                    "projects_data",
-                    JSON.stringify(projectsArray)
-                  );
-                }
-              }
-            } catch (updateError) {
-              console.warn(
-                "Failed to update project ID in localStorage:",
-                updateError
-              );
-            }
           }
         } else {
           console.warn(`API call failed with status: ${response.status}`);
@@ -1260,7 +1004,6 @@ export default function CreateProjectForm({
         apiCallSuccessful: apiSuccess,
         projectData: projectData,
         apiResult: apiResult,
-        localStorageUpdated: true,
       });
     } catch (error) {
       // This catch block handles any unexpected errors in the submission flow itself
@@ -1294,6 +1037,268 @@ export default function CreateProjectForm({
       setIsSubmittingForm(false);
     }
   };
+
+  // 2. Form submit
+  // const onSubmit = async (values: CreateProjectFormValues) => {
+  //   try {
+  //     setIsSubmittingForm(true);
+
+  //     // Prepare API payload
+  //     const apiPayload = {
+  //       ...values,
+  //       subProjects: values.subProjects || [],
+  //     };
+
+  //     // Generate project data for success simulation (always available)
+  //     const projectData: ProjectPDFData = {
+  //       ...values,
+  //       projectId: `PROJ_${Date.now()}`,
+  //       createdAt: new Date().toISOString(),
+  //       status: "Created",
+  //       // Convert geoLocation back to string format for PDF
+  //       geoLocation: values.geoLocation,
+  //       // Convert numeric fields to strings for PDF compatibility
+  //       estimatedCost: values.estimatedCost,
+  //       subProjects:
+  //         values.subProjects?.map((sub) => ({
+  //           ...sub,
+  //           estimatedAmount: sub.estimatedAmount,
+  //         })) || [],
+  //     };
+
+  //     // Calculate days remaining
+  //     const calculateDaysRemaining = (endDate: string) => {
+  //       const today = new Date();
+  //       const end = new Date(endDate);
+  //       const diffTime = end.getTime() - today.getTime();
+  //       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  //       return Math.max(0, diffDays);
+  //     };
+
+  //     // Create complete project object for localStorage
+  //     const completeProject = {
+  //       id: projectData.projectId,
+  //       name: values.projectName,
+  //       description: values.description,
+  //       status: "Submitted to AEE",
+  //       progress: 0,
+  //       budget: values.estimatedCost,
+  //       budgetUtilized: 0,
+  //       district: values.district,
+  //       block: values.block,
+  //       gramPanchayat: values.gramPanchayat,
+  //       createdBy: "Guest User",
+  //       createdByName: values.owningDepartment || "Default Department",
+  //       createdAt: new Date().toISOString().split("T")[0], // Format as YYYY-MM-DD
+  //       updatedAt: new Date().toISOString().split("T")[0],
+  //       startDate: values.projectStartDate,
+  //       expectedCompletion: values.projectEndDate,
+  //       category: values.typeOfWork || "General Infrastructure",
+  //       subProjects: values.subProjects?.length || 0,
+  //       daysRemaining: values.projectEndDate
+  //         ? calculateDaysRemaining(values.projectEndDate)
+  //         : 0,
+  //       currentStage: "Project Created - Awaiting Review",
+  //       lastUpdated: new Date().toLocaleDateString("en-IN"),
+
+  //       // Form fields
+  //       dateOfProposal: values.dateOfProposal,
+  //       hasSubProjects: values.hasSubProjects === "yes",
+  //       beneficiary: values.beneficiary,
+  //       letterReference: values.letterReference,
+  //       fund: values.fund,
+  //       function: values.function,
+  //       budgetHead: values.budgetHead,
+  //       scheme: values.scheme,
+  //       subScheme: values.subScheme,
+  //       estimatedCost: values.estimatedCost,
+  //       owningDepartment: values.owningDepartment,
+  //       executingDepartment: values.executingDepartment,
+  //       typeOfWork: values.typeOfWork,
+  //       subTypeOfWork: values.subTypeOfWork,
+  //       natureOfWork: values.natureOfWork,
+  //       projectStartDate: values.projectStartDate,
+  //       projectEndDate: values.projectEndDate,
+  //       modeOfExecution: values.recommendedModeOfExecution,
+  //       latitude: parseFloat(values.geoLocation?.latitude as string) || 0,
+  //       longitude: parseFloat(values.geoLocation?.longitude as string) || 0,
+
+  //       // Convert uploaded files to documents format
+  //       documents:
+  //         uploadedFiles?.map((file, index) => ({
+  //           id: (index + 1).toString(),
+  //           name: file.name || `document_${index + 1}`,
+  //           type: file.type || "Unknown",
+  //           size: file
+  //             ? `${(file.size / 1024 / 1024).toFixed(2)} MB`
+  //             : "Unknown",
+  //           uploadedAt: new Date().toISOString().split("T")[0],
+  //         })) || [],
+
+  //       // Convert sub-projects to detailed format
+  //       subProjectDetails:
+  //         values.subProjects?.map((subProject, index) => ({
+  //           id: (index + 1).toString(),
+  //           name: subProject.name,
+  //           estimatedAmount: subProject.estimatedAmount,
+  //           typeOfWork: subProject.typeOfWork || values.typeOfWork,
+  //           subType: subProject.subTypeOfWork || values.subTypeOfWork,
+  //           nature: subProject.natureOfWork || values.natureOfWork,
+  //           startDate: subProject.projectStartDate || values.projectStartDate,
+  //           endDate: subProject.projectEndDate || values.projectEndDate,
+  //           status: "PENDING",
+  //           progress: 0,
+  //         })) || [],
+  //     };
+
+  //     // Store to localStorage
+  //     try {
+  //       // Get existing projects from localStorage
+  //       const existingProjectsData = localStorage.getItem("projects_data");
+  //       let projectsArray = [];
+
+  //       if (existingProjectsData) {
+  //         projectsArray = JSON.parse(existingProjectsData);
+  //         // Ensure it's an array
+  //         if (!Array.isArray(projectsArray)) {
+  //           projectsArray = [];
+  //         }
+  //       }
+
+  //       // Add new project to array
+  //       projectsArray.push(completeProject);
+
+  //       // Store updated array back to localStorage
+  //       localStorage.setItem("projects_data", JSON.stringify(projectsArray));
+
+  //       console.log("Project saved to localStorage:", completeProject);
+  //       console.log("Total projects in localStorage:", projectsArray.length);
+  //     } catch (localStorageError) {
+  //       console.error(
+  //         "Failed to save project to localStorage:",
+  //         localStorageError
+  //       );
+  //       // Continue with the rest of the submission process even if localStorage fails
+  //     }
+
+  //     // Attempt API call but don't let it affect the success flow
+  //     let apiSuccess = false;
+  //     let apiResult = null;
+
+  //     try {
+  //       // Get API URL from environment variables
+  //       // const apiUrl =
+  //       //   process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
+  //       const apiUrl = "https://backend.aptdcl.in/api";
+
+  //       console.log("Attempting to submit project to API...");
+
+  //       const response = await fetch(`${apiUrl}/projects/create`, {
+  //         method: "POST",
+  //         headers: {
+  //           "Content-Type": "application/json",
+  //         },
+  //         body: JSON.stringify(apiPayload),
+  //       });
+
+  //       console.log("Server response:", response);
+
+  //       if (response.ok) {
+  //         apiResult = await response.json();
+  //         apiSuccess = true;
+  //         console.log("API call successful:", apiResult);
+
+  //         // If API returns a project ID, use it instead of generated one
+  //         if (apiResult?.data.projectId) {
+  //           projectData.projectId = apiResult.data.projectId;
+
+  //           // Update the localStorage entry with the API-returned project ID
+  //           try {
+  //             const existingProjectsData =
+  //               localStorage.getItem("projects_data");
+  //             if (existingProjectsData) {
+  //               const projectsArray = JSON.parse(existingProjectsData);
+  //               const lastProject = projectsArray[projectsArray.length - 1];
+  //               if (lastProject) {
+  //                 lastProject.id = apiResult.data.projectId;
+  //                 localStorage.setItem(
+  //                   "projects_data",
+  //                   JSON.stringify(projectsArray)
+  //                 );
+  //               }
+  //             }
+  //           } catch (updateError) {
+  //             console.warn(
+  //               "Failed to update project ID in localStorage:",
+  //               updateError
+  //             );
+  //           }
+  //         }
+  //       } else {
+  //         console.warn(`API call failed with status: ${response.status}`);
+  //         const errorText = await response.text();
+  //         console.warn("API error response:", errorText);
+  //       }
+  //     } catch (apiError) {
+  //       console.warn("API call failed with error:", apiError);
+  //       // API call failed, but we continue with success simulation
+  //     }
+
+  //     // Always proceed with success flow regardless of API result
+  //     console.log(
+  //       apiSuccess
+  //         ? "API call succeeded - proceeding with success flow"
+  //         : "API call failed - simulating success anyway"
+  //     );
+
+  //     // Store project data for PDF generation
+  //     setSubmittedProjectData(projectData);
+
+  //     // Always show success message
+  //     toast.success("Project created successfully!");
+
+  //     // Always show success screen
+  //     setShowSuccessScreen(true);
+
+  //     // Optional: Log the final outcome for debugging
+  //     console.log("Project submission completed:", {
+  //       apiCallSuccessful: apiSuccess,
+  //       projectData: projectData,
+  //       apiResult: apiResult,
+  //       localStorageUpdated: true,
+  //     });
+  //   } catch (error) {
+  //     // This catch block handles any unexpected errors in the submission flow itself
+  //     // Even here, we can choose to simulate success
+  //     console.error("Unexpected error in submission flow:", error);
+
+  //     // Option 1: Still simulate success even for unexpected errors
+  //     const fallbackProjectData: ProjectPDFData = {
+  //       ...values,
+  //       projectId: `PROJ_${Date.now()}`,
+  //       createdAt: new Date().toISOString(),
+  //       status: "Created",
+  //       // Keep geoLocation as object format - don't convert to string
+  //       geoLocation: values.geoLocation,
+  //       // Convert numeric fields to strings for PDF compatibility
+  //       estimatedCost: values.estimatedCost,
+  //       subProjects:
+  //         values.subProjects?.map((sub) => ({
+  //           ...sub,
+  //           estimatedAmount: sub.estimatedAmount,
+  //         })) || [],
+  //     };
+
+  //     setSubmittedProjectData(fallbackProjectData);
+  //     toast.success("Project created successfully!");
+  //     setShowSuccessScreen(true);
+
+  //     // Option 2: If you want to show error only for unexpected errors, uncomment below:
+  //     // toast.error("Failed to create project. Please try again.");
+  //   } finally {
+  //     setIsSubmittingForm(false);
+  //   }
+  // };
 
   const RadioOption = ({
     value,
@@ -2031,7 +2036,7 @@ export default function CreateProjectForm({
                           Location Details
                         </h4>
 
-                        <FormField
+                        {/* <FormField
                           control={form.control}
                           name="locality"
                           render={({ field }) => (
@@ -2053,9 +2058,91 @@ export default function CreateProjectForm({
                               <FormMessage />
                             </FormItem>
                           )}
+                        /> */}
+
+                        <FormField
+                          control={form.control}
+                          name="district"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabelWithTooltip
+                                tooltip="Select district where the project is located"
+                                required
+                              >
+                                District
+                              </FormLabelWithTooltip>
+                              <Select
+                                onValueChange={field.onChange}
+                                value={field.value}
+                              >
+                                <FormControl>
+                                  <div className="dark-border">
+                                    <SelectTrigger>
+                                      <SelectValue placeholder="Select district" />
+                                    </SelectTrigger>
+                                  </div>
+                                </FormControl>
+                                <SelectContent>
+                                  {dropdownOptions.districtOptions.map(
+                                    (mode) => (
+                                      <SelectItem key={mode} value={mode}>
+                                        {mode}
+                                      </SelectItem>
+                                    )
+                                  )}
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
                         />
 
                         <FormField
+                          control={form.control}
+                          name="block"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabelWithTooltip
+                                tooltip="Enter block name"
+                                required
+                              >
+                                Block
+                              </FormLabelWithTooltip>
+                              <FormControl>
+                                <div className="dark-border">
+                                  <Input placeholder="Enter block" {...field} />
+                                </div>
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name="gramPanchayat"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabelWithTooltip
+                                tooltip="Enter gram panchayat name"
+                                required
+                              >
+                                Gram Panchayat
+                              </FormLabelWithTooltip>
+                              <FormControl>
+                                <div className="dark-border">
+                                  <Input
+                                    placeholder="Enter gram panchcyat"
+                                    {...field}
+                                  />
+                                </div>
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        {/* <FormField
                           control={form.control}
                           name="ward"
                           render={({ field }) => (
@@ -2074,9 +2161,9 @@ export default function CreateProjectForm({
                               <FormMessage />
                             </FormItem>
                           )}
-                        />
+                        /> */}
 
-                        <FormField
+                        {/* <FormField
                           control={form.control}
                           name="ulb"
                           render={({ field }) => (
@@ -2095,7 +2182,7 @@ export default function CreateProjectForm({
                               <FormMessage />
                             </FormItem>
                           )}
-                        />
+                        /> */}
 
                         {/* Geo Location with separate Latitude and Longitude inputs */}
                         <div className="space-y-4">

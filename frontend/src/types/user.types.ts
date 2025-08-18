@@ -1,5 +1,5 @@
 export type UserRole =
-  | "ADMIN"
+  | "Administrator"
   | "JE"
   | "AEE"
   | "CE"

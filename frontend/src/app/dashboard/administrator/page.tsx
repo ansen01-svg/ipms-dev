@@ -6,26 +6,20 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import type { User, UserRole } from "@/types/user.types";
+import { getCurrentUser } from "@/lib/rbac-config.ts/auth";
 import { AlertTriangle, CheckCircle, Clock, Users } from "lucide-react";
 import Link from "next/link";
 
-const user: User = {
-  id: "123",
-  email: "dummy@gmail,com",
-  name: "Guest User",
-  role: "AEE" as UserRole,
-  department: "PWD",
-};
-
 export default async function AEEDashboardPage() {
+  const user = await getCurrentUser();
+
   return (
     <div className="space-y-6 mt-20">
       {/* Welcome Section */}
       <div className="bg-gradient-to-r from-green-600 to-green-700 rounded-lg p-6 text-white">
-        <h1 className="text-3xl font-bold mb-2">Welcome back, {user.name}!</h1>
+        <h1 className="text-3xl font-bold mb-2">Welcome back, {user?.name}!</h1>
         <p className="text-green-100 text-lg">
-          Assistant Executive Engineer Dashboard - {user.department}
+          Assistant Executive Engineer Dashboard - {user?.department}
         </p>
         <p className="text-green-200 mt-2">
           Review and approve project submissions

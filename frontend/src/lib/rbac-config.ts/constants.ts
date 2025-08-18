@@ -10,7 +10,7 @@ export const dummyUser: User = {
 };
 
 export const USER_ROLES = {
-  ADMIN: "ADMIN",
+  Administrator: "Administrator",
   JE: "JE",
   AEE: "AEE",
   CE: "CE",
@@ -22,7 +22,7 @@ export const USER_ROLES = {
 export type UserRole = keyof typeof USER_ROLES;
 
 export const ROLE_LABELS = {
-  ADMIN: "Admin",
+  Administrator: "Administrator",
   JE: "Junior Engineer",
   AEE: "Assistant Executive Engineer",
   CE: "Chief Engineer",
@@ -32,7 +32,7 @@ export const ROLE_LABELS = {
 } as const;
 
 export const ROLE_DASHBOARD_PATHS = {
-  ADMIN: "/dashboard/admin",
+  Administrator: "/dashboard/administrator",
   JE: "/dashboard/je",
   AEE: "/dashboard/aee",
   CE: "/dashboard/ce",
@@ -42,6 +42,7 @@ export const ROLE_DASHBOARD_PATHS = {
 } as const;
 
 export const ROLE_NAVIGATION_LABELS = {
+  Administrator: "Projects",
   JE: "My Projects",
   AEE: "Projects",
   CE: "Approval Queue",

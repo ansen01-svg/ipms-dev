@@ -1,19 +1,17 @@
 "use client";
 
+import gratiaLogo from "@/assets/images/gratia-logo.png";
+import panelImage from "@/assets/images/login-panel-img.jpg";
+import logo from "@/assets/images/logo4.png";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Toaster } from "@/components/ui/sonner";
 import { ROLE_DASHBOARD_PATHS } from "@/lib/rbac-config.ts/constants";
-import { setCookie } from "@/lib/rbac-config.ts/sett-cookie";
 import { LoginFormData, loginSchema } from "@/schema/auth/loginSchema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Eye, EyeOff, LoaderCircle, Lock, User } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-// import { useRouter } from "next/navigation";
-import gratiaLogo from "@/assets/images/gratia-logo.png";
-import panelImage from "@/assets/images/login-panel-img.jpg";
-import logo from "@/assets/images/logo4.png";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -40,40 +38,31 @@ const LoginPage = () => {
   const onSubmit = async (loginData: LoginFormData) => {
     try {
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/auth/login`,
+        // `${process.env.NEXT_PUBLIC_PROD_API_URL}/login`,
+        // `${process.env.NEXT_PUBLIC_DEV_API_URL}/auth/login`,
+        `http://localhost:5000/api/login`,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
           body: JSON.stringify(loginData),
+          credentials: "include",
         }
       );
 
       // Parse response data first
       const data = await response.json();
-      console.log(data);
 
       if (!response.ok) {
         // Handle HTTP error responses
         throw new Error(data.error || data.message || "Login failed");
       }
 
+      console.log("Login successful:", data);
+
       // Reset form on successful login
       reset();
-
-      // Set authentication cookie with better security
-      const maxAge = 24 * 60 * 60; // 24 hours in seconds
-      const cookieValue = `auth-token=${data.token}; path=/; max-age=${maxAge}; secure; samesite=strict; httponly`;
-      document.cookie = cookieValue;
-
-      // Alternative: Use a more secure cookie setting function
-      setCookie("auth-token", data.token, {
-        maxAge: maxAge,
-        secure: true,
-        sameSite: "strict",
-        httpOnly: true,
-      });
 
       // Redirect to role-specific dashboard
       const dashboardPath =
