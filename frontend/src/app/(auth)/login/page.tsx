@@ -38,9 +38,9 @@ const LoginPage = () => {
   const onSubmit = async (loginData: LoginFormData) => {
     try {
       const response = await fetch(
-        // `${process.env.NEXT_PUBLIC_PROD_API_URL}/login`,
+        `${process.env.NEXT_PUBLIC_PROD_API_URL}/login`,
         // `${process.env.NEXT_PUBLIC_DEV_API_URL}/auth/login`,
-        `http://localhost:5000/api/login`,
+        // `http://localhost:5000/api/login`,
         {
           method: "POST",
           headers: {
