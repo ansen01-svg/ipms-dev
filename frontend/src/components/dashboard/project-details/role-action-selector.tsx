@@ -1,4 +1,4 @@
-import { Project } from "@/types/projects.types";
+import { DbProject } from "@/types/projects.types";
 import { User } from "@/types/user.types";
 import { AEEActions } from "./role-actions/aee-actions";
 import { CEActions } from "./role-actions/ce-actions";
@@ -9,7 +9,7 @@ import { ViewerActions } from "./role-actions/viewer-actions";
 
 interface RoleActionSelectorProps {
   user: User;
-  project: Project;
+  project: DbProject;
 }
 
 export function RoleActionSelector({ user, project }: RoleActionSelectorProps) {
@@ -21,7 +21,7 @@ export function RoleActionSelector({ user, project }: RoleActionSelectorProps) {
       {user.role === "MD" && <MDActions project={project} />}
       {user.role === "EXECUTOR" && <ExecutorActions project={project} />}
       {user.role === "VIEWER" && <ViewerActions />}
-      {user.role === "ADMIN" && <ViewerActions />}
+      {user.role === "Administrator" && <ViewerActions />}
     </div>
   );
 }

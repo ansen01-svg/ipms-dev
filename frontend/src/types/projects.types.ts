@@ -47,7 +47,6 @@ export interface Project {
   progress: number;
   budget: number;
   budgetUtilized: number;
-  district: string;
   createdBy: string;
   createdByName: string;
   createdAt: string;
@@ -87,13 +86,92 @@ export interface Project {
   modeOfExecution: string;
 
   // Location details
-  locality: string;
-  ward: string;
-  ulb: string;
+  // locality: string;
+  // ward: string;
+  // ulb: string;
+  district: string;
+  block: string;
+  gramPanchayat: string;
   latitude: number;
   longitude: number;
 
   // Related data
   documents: ProjectDocument[];
   subProjectDetails: SubProject[];
+}
+
+// Db project types
+// Sub-project interface
+export interface DbSubProject {
+  id: string; //FE field
+  name: string;
+  estimatedAmount: number;
+  typeOfWork: string;
+  subTypeOfWork: string;
+  natureOfWork: string;
+  projectStartDate: string;
+  projectEndDate: string;
+  status: "PENDING" | "IN_PROGRESS" | "COMPLETED" | "REJECTED"; //FE field
+  progress: number; //FE field
+}
+export interface DbGeolocation {
+  type: "Point";
+  coordinates: [number, number]; // [longitude, latitude]
+}
+
+export interface DbProject {
+  // Basic project information
+  projectId: string;
+  projectName: string;
+  description: string;
+  status: ProjectStatus; //FE field
+  progress: number; //FE field
+  budgetUtilized: number; //FE field
+  createdBy: string; //FE field
+  createdByName: string; //FE field
+  createdAt: string;
+  updatedAt: string;
+  totalSubProjects: number; //FE field
+  daysRemaining: number; //FE field
+  currentStage: string; //FE field
+  lastUpdated: string; //FE field
+
+  // Proposal information
+  dateOfProposal: string;
+  hasSubProjects: boolean;
+  beneficiary: string;
+  letterReference: string;
+
+  // Financial details
+  fund: string;
+  function: string;
+  budgetHead: string;
+  scheme: string;
+  subScheme: string;
+  estimatedCost: number;
+
+  // Department information
+  owningDepartment: string;
+  executingDepartment: string;
+
+  // Work details
+  typeOfWork: string;
+  subTypeOfWork: string;
+  natureOfWork: string;
+  projectStartDate: string;
+  projectEndDate: string;
+  recommendedModeOfExecution: string;
+
+  // Location details
+  // locality: string;
+  // ward: string;
+  // ulb: string;
+  district: string;
+  block: string;
+  gramPanchayat: string;
+  geoLocation: DbGeolocation;
+
+  // Related data
+  uploadedFiles: [string, string][];
+  subProjects: DbSubProject[];
 }

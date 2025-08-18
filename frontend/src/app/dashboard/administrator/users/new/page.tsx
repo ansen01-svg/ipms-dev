@@ -68,16 +68,20 @@ const CreateUserPage = () => {
 
     console.log("Form submitted with values:", values);
     try {
-      const res = await fetch("http://localhost:5000/api/v1/users/create", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer token`,
-        },
-        body: JSON.stringify(values),
-      });
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_PROD_API_URL}/users/create`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer token`,
+          },
+          body: JSON.stringify(values),
+        }
+      );
 
       const data = await res.json();
+      console.log(data);
 
       if (!res.ok) {
         throw new Error(data.message || "Failed to create user.");

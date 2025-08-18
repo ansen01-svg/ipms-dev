@@ -120,12 +120,15 @@ export const createProjectSchema = z
       .min(1, "Recommended mode is required"),
 
     // Location Details
-    locality: z
-      .string()
-      .min(3, "Locality name must be at least 3 characters")
-      .max(200, "Locality name must be less than 200 characters"),
-    ward: z.string().min(1, "Ward is required"),
-    ulb: z.string().min(1, "ULB is required"),
+    // locality: z
+    //   .string()
+    //   .min(3, "Locality name must be at least 3 characters")
+    //   .max(200, "Locality name must be less than 200 characters"),
+    // ward: z.string().min(1, "Ward is required"),
+    // ulb: z.string().min(1, "ULB is required"),
+    district: z.string().min(1, "District is required"),
+    block: z.string().min(1, "Blog is required"),
+    gramPanchayat: z.string().min(1, "Gram Panchayat is required"),
     geoLocation: z
       .object({
         latitude: z.number().min(-90).max(90).optional().or(z.literal("")),

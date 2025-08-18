@@ -31,13 +31,55 @@ const navigationItems = [
 ];
 
 /**
- * Format date to dd-mm-yy format
+ * Font size options
+ */
+const fontSizes = {
+  small: 0.875, // 14px equivalent
+  normal: 1, // 16px equivalent (base)
+  large: 1.125, // 18px equivalent
+};
+
+/**
+ * Format date to full format
  */
 const formatDate = (date: Date): string => {
-  const day = date.getDate().toString().padStart(2, "0");
-  const month = (date.getMonth() + 1).toString().padStart(2, "0");
-  const year = date.getFullYear().toString().slice(-2);
-  return `${day}-${month}-${year}`;
+  const days = [
+    "Sunday",
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
+  ];
+  const months = [
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
+  ];
+
+  const dayName = days[date.getDay()];
+  const monthName = months[date.getMonth()];
+  const day = date.getDate().toString();
+  const year = date.getFullYear().toString();
+
+  const hours24 = date.getHours();
+  const minutes = date.getMinutes().toString().padStart(2, "0");
+  const ampm = hours24 >= 12 ? "PM" : "AM";
+
+  const hours12 = (hours24 % 12).toString();
+  const displayHours = hours12 === "0" ? "12" : hours12;
+
+  return `${dayName}, ${monthName} ${day}, ${year} ${displayHours}:${minutes} ${ampm}`;
 };
 
 /**
@@ -46,7 +88,7 @@ const formatDate = (date: Date): string => {
 const smoothScrollToElement = (elementId: string): void => {
   const element = document.getElementById(elementId);
   if (element) {
-    const headerOffset = 100; // Adjust based on your header height
+    const headerOffset = 100;
     const elementPosition = element.getBoundingClientRect().top;
     const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
 
@@ -68,11 +110,71 @@ const smoothScrollToTop = (): void => {
 };
 
 /**
- * Enhanced Header Component with Harmonized Color Scheme
+ * Enhanced Header Component with Font Size Controls
  */
 export default function Header({ className = "" }: HeaderProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
   const [currentDate, setCurrentDate] = useState<string>("");
+  const [fontSize, setFontSize] = useState<keyof typeof fontSizes>("normal");
+
+  /**
+   * Load saved font size from localStorage and apply it
+   */
+  useEffect(() => {
+    const savedFontSize = localStorage.getItem(
+      "fontSize"
+    ) as keyof typeof fontSizes;
+    if (savedFontSize && fontSizes[savedFontSize]) {
+      setFontSize(savedFontSize);
+      applyFontSize(savedFontSize);
+    }
+  }, []);
+
+  /**
+   * Apply font size to document root
+   */
+  const applyFontSize = (size: keyof typeof fontSizes): void => {
+    document.documentElement.style.fontSize = `${fontSizes[size]}rem`;
+  };
+
+  /**
+   * Handle font size decrease
+   */
+  const decreaseFontSize = (): void => {
+    const newSize =
+      fontSize === "normal"
+        ? "small"
+        : fontSize === "large"
+        ? "normal"
+        : "small";
+    setFontSize(newSize);
+    applyFontSize(newSize);
+    localStorage.setItem("fontSize", newSize);
+  };
+
+  /**
+   * Handle font size reset to normal
+   */
+  const resetFontSize = (): void => {
+    setFontSize("normal");
+    applyFontSize("normal");
+    localStorage.setItem("fontSize", "normal");
+  };
+
+  /**
+   * Handle font size increase
+   */
+  const increaseFontSize = (): void => {
+    const newSize =
+      fontSize === "small"
+        ? "normal"
+        : fontSize === "normal"
+        ? "large"
+        : "large";
+    setFontSize(newSize);
+    applyFontSize(newSize);
+    localStorage.setItem("fontSize", newSize);
+  };
 
   /**
    * Update current date on component mount and daily
@@ -82,10 +184,8 @@ export default function Header({ className = "" }: HeaderProps) {
       setCurrentDate(formatDate(new Date()));
     };
 
-    // Set initial date
     updateDate();
 
-    // Update date at midnight every day
     const now = new Date();
     const msUntilMidnight =
       new Date(
@@ -100,7 +200,6 @@ export default function Header({ className = "" }: HeaderProps) {
 
     const midnightTimeout = setTimeout(() => {
       updateDate();
-      // Set interval for every 24 hours after first midnight
       const dailyInterval = setInterval(updateDate, 24 * 60 * 60 * 1000);
 
       return () => clearInterval(dailyInterval);
@@ -134,25 +233,55 @@ export default function Header({ className = "" }: HeaderProps) {
       e.preventDefault();
       const elementId = item.href.replace("#", "");
       smoothScrollToElement(elementId);
-      handleNavigationClick(); // Close mobile menu if open
+      handleNavigationClick();
     } else if (item.type === "scroll-top") {
       e.preventDefault();
       smoothScrollToTop();
-      handleNavigationClick(); // Close mobile menu if open
+      handleNavigationClick();
     }
   };
 
   return (
     <header className={`w-full bg-white border-b border-gray-100 ${className}`}>
       {/* Date Display Section */}
-      <div className="">
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="flex justify-end items-center py-2">
+      <div className="bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 py-2">
+          <div className="flex justify-between items-center py-2">
             <div className="flex items-center gap-2 text-sm font-medium">
               <Calendar className="w-4 h-4" />
               <span className="tracking-wide">
                 {currentDate || formatDate(new Date())}
               </span>
+            </div>
+
+            <div className="flex items-center gap-1">
+              <button
+                onClick={decreaseFontSize}
+                className={`px-2 py-1 text-sm font-medium hover:bg-gray-200 rounded-full transition-colors duration-200 ${
+                  fontSize === "small" ? "bg-blue-100 text-blue-700" : ""
+                }`}
+                title="Decrease font size"
+              >
+                A-
+              </button>
+              <button
+                onClick={resetFontSize}
+                className={`px-2 py-1 text-sm font-medium hover:bg-gray-200 rounded-full transition-colors duration-200 ${
+                  fontSize === "normal" ? "bg-blue-100 text-blue-700" : ""
+                }`}
+                title="Normal font size"
+              >
+                A
+              </button>
+              <button
+                onClick={increaseFontSize}
+                className={`px-2 py-1 text-sm font-medium hover:bg-gray-200 rounded-full transition-colors duration-200 ${
+                  fontSize === "large" ? "bg-blue-100 text-blue-700" : ""
+                }`}
+                title="Increase font size"
+              >
+                A+
+              </button>
             </div>
           </div>
         </div>
@@ -219,7 +348,7 @@ export default function Header({ className = "" }: HeaderProps) {
                 </Link>
               ))}
 
-              {/* Log In Button - Updated to teal theme */}
+              {/* Log In Button */}
               <Link href="/login">
                 <Button
                   variant="outline"
@@ -260,7 +389,7 @@ export default function Header({ className = "" }: HeaderProps) {
           </div>
         </div>
 
-        {/* Mobile Navigation Menu with Enhanced Transitions */}
+        {/* Mobile Navigation Menu */}
         <div
           className={`md:hidden border-t border-gray-100 bg-teal-50/40 backdrop-blur-sm overflow-hidden transition-all duration-300 ease-out ${
             isMobileMenuOpen
@@ -290,7 +419,7 @@ export default function Header({ className = "" }: HeaderProps) {
               </Link>
             ))}
 
-            {/* Mobile Log In Button with Enhanced Animation */}
+            {/* Mobile Log In Button */}
             <Link href="/login" onClick={handleNavigationClick}>
               <Button
                 variant="outline"

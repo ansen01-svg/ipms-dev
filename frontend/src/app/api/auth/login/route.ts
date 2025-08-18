@@ -36,7 +36,7 @@ const MOCK_USERS: User[] = [
     id: "admin123",
     email: "admin@government.in",
     name: "Admin",
-    role: "ADMIN",
+    role: "Administrator",
     department: "Engineering/IT",
   },
   {

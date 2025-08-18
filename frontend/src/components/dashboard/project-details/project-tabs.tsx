@@ -1,7 +1,7 @@
 "use client";
 
 import { Card, CardContent } from "@/components/ui/card";
-import { Project } from "@/types/projects.types";
+import { DbProject } from "@/types/projects.types";
 import {
   BarChart,
   Building,
@@ -22,7 +22,7 @@ import TimelineTab from "./tabs/timeline";
 
 // Interfaces
 interface ProjectTabsProps {
-  project: Project;
+  project: DbProject;
   userRole: string;
   activeTab: string;
 }
@@ -34,7 +34,7 @@ interface TabConfig {
 }
 
 interface ProjectTabsProps {
-  project: Project;
+  project: DbProject;
   userRole: string;
   activeTab: string;
 }

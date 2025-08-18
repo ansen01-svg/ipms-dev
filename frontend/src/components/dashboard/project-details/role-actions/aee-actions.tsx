@@ -1,13 +1,13 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Project } from "@/types/projects.types";
+import { DbProject } from "@/types/projects.types";
 import { PROJECT_STATUSES } from "@/utils/project-details/constants";
 import { FileText } from "lucide-react";
 import { useState } from "react";
 
 interface AEEActionsProps {
-  project: Project;
+  project: DbProject;
 }
 
 export function AEEActions({ project }: AEEActionsProps) {

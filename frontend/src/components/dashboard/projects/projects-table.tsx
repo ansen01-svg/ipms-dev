@@ -17,7 +17,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
-import { Project } from "@/types/projects.types";
+import { DbProject } from "@/types/projects.types";
 import { ArrowDown, ArrowUp, ArrowUpDown, Eye } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useFilters } from "./project-filters";
@@ -26,15 +26,15 @@ import { StatusBadge } from "./status-badge";
 
 // Props interfaces
 interface ProjectsTableProps {
-  projects: Project[];
-  onViewProject: (project: Project) => void;
+  projects: DbProject[];
+  onViewProject: (project: DbProject) => void;
 }
 
 interface SortableTableHeadProps {
   children: React.ReactNode;
-  sortKey: keyof Project;
+  sortKey: keyof DbProject;
   sortConfig: SortConfig;
-  onSort: (key: keyof Project) => void;
+  onSort: (key: keyof DbProject) => void;
   className?: string;
 }
 
@@ -85,7 +85,7 @@ export function ProjectsTable({ projects, onViewProject }: ProjectsTableProps) {
   const ITEMS_PER_PAGE = 5;
 
   // Handle sorting
-  const handleSort = (key: keyof Project) => {
+  const handleSort = (key: keyof DbProject) => {
     setSortConfig((prev) => ({
       key,
       direction: prev.key === key && prev.direction === "asc" ? "desc" : "asc",
@@ -110,10 +110,14 @@ export function ProjectsTable({ projects, onViewProject }: ProjectsTableProps) {
     if (searchQuery.trim()) {
       result = result.filter(
         (project) =>
-          project.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          project.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          project.projectName
+            .toLowerCase()
+            .includes(searchQuery.toLowerCase()) ||
+          project.projectId.toLowerCase().includes(searchQuery.toLowerCase()) ||
           project.district.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          project.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          project.typeOfWork
+            .toLowerCase()
+            .includes(searchQuery.toLowerCase()) ||
           project.status.toLowerCase().includes(searchQuery.toLowerCase()) ||
           project.executingDepartment
             .toLowerCase()
@@ -125,8 +129,8 @@ export function ProjectsTable({ projects, onViewProject }: ProjectsTableProps) {
     // Apply sorting
     if (sortConfig.key) {
       result.sort((a, b) => {
-        const aValue = a[sortConfig.key as keyof Project];
-        const bValue = b[sortConfig.key as keyof Project];
+        const aValue = a[sortConfig.key as keyof DbProject];
+        const bValue = b[sortConfig.key as keyof DbProject];
 
         // Handle undefined values: undefined is considered greater (sorted last)
         if (aValue === undefined && bValue === undefined) return 0;
@@ -200,7 +204,7 @@ export function ProjectsTable({ projects, onViewProject }: ProjectsTableProps) {
                   #
                 </TableHead>
                 <SortableTableHead
-                  sortKey="name"
+                  sortKey="projectName"
                   sortConfig={sortConfig}
                   onSort={handleSort}
                   className="w-80 px-6"
@@ -224,7 +228,7 @@ export function ProjectsTable({ projects, onViewProject }: ProjectsTableProps) {
                   District
                 </SortableTableHead>
                 <SortableTableHead
-                  sortKey="category"
+                  sortKey="typeOfWork"
                   sortConfig={sortConfig}
                   onSort={handleSort}
                   className="w-52 px-6"
@@ -248,7 +252,7 @@ export function ProjectsTable({ projects, onViewProject }: ProjectsTableProps) {
                   Progress
                 </SortableTableHead>
                 <SortableTableHead
-                  sortKey="budget"
+                  sortKey="estimatedCost"
                   sortConfig={sortConfig}
                   onSort={handleSort}
                   className="w-44 px-6"
@@ -284,7 +288,7 @@ export function ProjectsTable({ projects, onViewProject }: ProjectsTableProps) {
                 paginatedProjects.map((project, index) => {
                   return (
                     <TableRow
-                      key={project.id}
+                      key={project.projectId}
                       className="h-20 hover:bg-gray-50"
                     >
                       <TableCell className="px-6 font-medium">
@@ -293,10 +297,10 @@ export function ProjectsTable({ projects, onViewProject }: ProjectsTableProps) {
                       <TableCell className="w-80 px-6">
                         <div className="flex flex-col items-start justify-center gap-2">
                           <div className="font-medium text-gray-900">
-                            {project.name}
+                            {project.projectName}
                           </div>
                           <div className="text-sm text-gray-500">
-                            {project.id}
+                            {project.projectId}
                           </div>
                         </div>
                       </TableCell>
@@ -314,7 +318,7 @@ export function ProjectsTable({ projects, onViewProject }: ProjectsTableProps) {
                         {project.district}
                       </TableCell>
                       <TableCell className="w-52 px-6">
-                        {project.category}
+                        {project.typeOfWork}
                       </TableCell>
                       <TableCell className="w-44 px-6">
                         <StatusBadge status={project.status} />
@@ -331,7 +335,7 @@ export function ProjectsTable({ projects, onViewProject }: ProjectsTableProps) {
                         </div>
                       </TableCell>
                       <TableCell className="w-44 px-6">
-                        ₹{formatToLakhsWithSuffix(project.budget)}
+                        ₹{formatToLakhsWithSuffix(project.estimatedCost)}
                       </TableCell>
                       <TableCell className="w-64 px-6">
                         {project.executingDepartment}
@@ -412,7 +416,7 @@ export function ProjectsTable({ projects, onViewProject }: ProjectsTableProps) {
                 paginatedProjects.map((project, index) => {
                   return (
                     <TableRow
-                      key={project.id}
+                      key={project.projectId}
                       className="h-20 hover:bg-gray-50"
                     >
                       <TableCell className="px-6 font-medium">
@@ -421,10 +425,10 @@ export function ProjectsTable({ projects, onViewProject }: ProjectsTableProps) {
                       <TableCell className="px-6">
                         <div className="flex flex-col items-start justify-center gap-2">
                           <div className="font-medium text-gray-900 text-sm">
-                            {project.name}
+                            {project.projectName}
                           </div>
                           <div className="text-xs text-gray-500">
-                            {project.id}
+                            {project.projectId}
                           </div>
                         </div>
                       </TableCell>
@@ -432,7 +436,7 @@ export function ProjectsTable({ projects, onViewProject }: ProjectsTableProps) {
                         {project.district}
                       </TableCell>
                       <TableCell className="px-6 text-sm">
-                        {project.category}
+                        {project.typeOfWork}
                       </TableCell>
                       <TableCell className="px-6">
                         <StatusBadge status={project.status} />
@@ -449,7 +453,7 @@ export function ProjectsTable({ projects, onViewProject }: ProjectsTableProps) {
                         </div>
                       </TableCell>
                       <TableCell className="px-6 font-medium text-sm">
-                        ₹{formatToLakhsWithSuffix(project.budget)}
+                        ₹{formatToLakhsWithSuffix(project.estimatedCost)}
                       </TableCell>
                       <TableCell className="px-6">
                         <div className="flex flex-col gap-1">

@@ -12,7 +12,8 @@ const publicRoutes = [
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  const token = request.cookies.get("auth-token")?.value;
+  // const token = request.cookies.get("auth-token")?.value;
+  const token = request.cookies.get("token")?.value;
 
   const isPublicRoute = publicRoutes.includes(pathname);
 
@@ -93,6 +94,7 @@ function getRoleDashboardPath(role: string): string {
     MD: "/dashboard/md",
     EXECUTOR: "/dashboard/executor",
     VIEWER: "/dashboard/viewer",
+    Administrator: "/dashboard/administrator",
   };
 
   return (

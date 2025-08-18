@@ -208,7 +208,7 @@ const getNavigationItems = (role: string) => {
         // },
       ];
 
-    case "ADMIN":
+    case "Administrator":
       return [
         ...commonItems,
         {
@@ -220,7 +220,7 @@ const getNavigationItems = (role: string) => {
         {
           id: "users",
           label: "Users",
-          href: `/dashboard/admin/users`,
+          href: `/dashboard/administrator/users`,
           icon: Users,
         },
       ];

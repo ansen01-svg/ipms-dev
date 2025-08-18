@@ -1,6 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Project } from "@/types/projects.types";
+import { DbProject } from "@/types/projects.types";
 import { User } from "@/types/user.types";
 import {
   Building,
@@ -18,7 +18,7 @@ import {
 } from "lucide-react";
 
 interface ProjectHeaderProps {
-  project: Project;
+  project: DbProject;
   user: User;
 }
 
@@ -47,11 +47,11 @@ export function ProjectHeader({ project }: ProjectHeaderProps) {
           <div className="flex-1">
             <div className="flex items-center gap-3 mb-2">
               <h1 className="text-lg sm:text-xl font-semibold text-white">
-                {project.name}
+                {project.projectName}
               </h1>
             </div>
             <p className="text-gray-200 text-sm mb-1">
-              Project ID: {project.id}
+              Project ID: {project.projectId}
             </p>
             <p className="text-white/90 text-sm leading-relaxed max-w-4xl">
               {project.description}
@@ -64,7 +64,7 @@ export function ProjectHeader({ project }: ProjectHeaderProps) {
                 project.status
               )} font-medium px-3 py-1 text-xs`}
             >
-              {project.status.replace("_", " ")}
+              {project?.status?.replace("_", " ")}
             </Badge>
           </div>
         </div>
@@ -102,7 +102,7 @@ export function ProjectHeader({ project }: ProjectHeaderProps) {
 
           <div className="bg-blue-100 rounded-lg p-4">
             <div className="text-3xl font-bold text-gray-900 mb-2">
-              {project.subProjects}
+              {project.subProjects.length}
             </div>
             <div className="flex items-center gap-2 mb-1">
               <Building className="h-4 w-4 text-blue-500" />
@@ -203,7 +203,7 @@ export function ProjectHeader({ project }: ProjectHeaderProps) {
                 <div>
                   <p className="text-sm text-gray-500">Locality</p>
                   <p className="text-sm font-medium text-gray-900">
-                    {project.locality}
+                    {project.district}
                   </p>
                 </div>
               </div>
@@ -214,7 +214,7 @@ export function ProjectHeader({ project }: ProjectHeaderProps) {
                 <div>
                   <p className="text-sm text-gray-500">Ward/ULB</p>
                   <p className="text-sm font-medium text-gray-900">
-                    Ward {project.ward}, ULB {project.ulb}
+                    Ward {project.block}, ULB {project.gramPanchayat}
                   </p>
                 </div>
               </div>
@@ -225,8 +225,8 @@ export function ProjectHeader({ project }: ProjectHeaderProps) {
                 <div>
                   <p className="text-sm text-gray-500">Coordinates</p>
                   <p className="text-sm font-medium text-gray-900 font-mono">
-                    Lat: {project.latitude.toFixed(4)}, Long:{" "}
-                    {project.longitude.toFixed(4)}
+                    Lat: {project.geoLocation.coordinates[0].toFixed(4)}, Long:{" "}
+                    {project.geoLocation.coordinates[1].toFixed(4)}
                   </p>
                 </div>
               </div>
@@ -280,7 +280,7 @@ export function ProjectHeader({ project }: ProjectHeaderProps) {
                 <div>
                   <p className="text-sm text-gray-500">Mode of Execution</p>
                   <p className="text-sm font-medium text-gray-900">
-                    {project.modeOfExecution}
+                    {project.recommendedModeOfExecution}
                   </p>
                 </div>
               </div>

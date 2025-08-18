@@ -3,7 +3,8 @@ import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
 import { NextRequest } from "next/server";
 
-const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET!);
+const JWT_SECRET_STRING = process.env.JWT_SECRET;
+const JWT_SECRET: Uint8Array = new TextEncoder().encode(JWT_SECRET_STRING);
 const JWT_ALGORITHM = "HS256";
 
 export async function createToken(user: User): Promise<string> {
@@ -22,7 +23,9 @@ export async function createToken(user: User): Promise<string> {
 
 export async function verifyToken(token: string): Promise<User> {
   try {
-    const { payload } = await jwtVerify(token, JWT_SECRET);
+    const { payload } = await jwtVerify(token, JWT_SECRET, {
+      algorithms: [JWT_ALGORITHM],
+    });
     return payload as unknown as User;
   } catch (error) {
     console.error("Error verifying token:", error);
@@ -33,7 +36,7 @@ export async function verifyToken(token: string): Promise<User> {
 export async function getCurrentUser(): Promise<User | null> {
   try {
     const cookieStore = await cookies();
-    const token = cookieStore.get("auth-token")?.value;
+    const token = cookieStore.get("token")?.value;
 
     if (!token) {
       return null;

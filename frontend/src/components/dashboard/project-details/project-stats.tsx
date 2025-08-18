@@ -1,13 +1,14 @@
 import { Card, CardContent } from "@/components/ui/card";
-import { Project } from "@/types/projects.types";
+import { DbProject } from "@/types/projects.types";
 import { BarChart3, Building, Clock, DollarSign } from "lucide-react";
 
 interface ProjectStatsProps {
-  project: Project;
+  project: DbProject;
 }
 
 export function ProjectStats({ project }: ProjectStatsProps) {
-  const budgetPercentage = (project.budgetUtilized / project.budget) * 100;
+  const budgetPercentage =
+    (project.budgetUtilized / project.estimatedCost) * 100;
 
   return (
     // Design 1
@@ -70,7 +71,7 @@ export function ProjectStats({ project }: ProjectStatsProps) {
             <div className="flex justify-between text-sm text-blue-100 group-hover:text-white transition-colors duration-300">
               <span>Total budget</span>
               <span className="font-medium">
-                ₹{(project.budget / 10000000).toFixed(1)}Cr
+                ₹{(project.estimatedCost / 10000000).toFixed(1)}Cr
               </span>
             </div>
             <div className="w-full bg-blue-300 group-hover:bg-blue-200 rounded-full h-2 transition-colors duration-300">
@@ -132,7 +133,7 @@ export function ProjectStats({ project }: ProjectStatsProps) {
           <div className="flex items-start justify-between mb-4">
             <div>
               <div className="text-3xl font-bold text-white mb-1 transition-all duration-300 group-hover:scale-110">
-                {project.subProjects}
+                {project.subProjects.length}
               </div>
               <div className="text-sm text-purple-100 transition-all duration-300 group-hover:text-white">
                 Sub-projects

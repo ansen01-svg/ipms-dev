@@ -1,14 +1,15 @@
 "use server";
 
 import {
-  fundOptions,
-  functionOptions,
   budgetHeadOptions,
   departmentOptions,
-  typeOfWorkOptions,
-  subTypeOfWorkOptions,
-  natureOfWorkOptions,
+  districtOptions,
+  functionOptions,
+  fundOptions,
   modeOfExecutionOptions,
+  natureOfWorkOptions,
+  subTypeOfWorkOptions,
+  typeOfWorkOptions,
 } from "@/utils/create-project/constants";
 
 // Types for API response
@@ -21,6 +22,7 @@ export interface DropdownOptions {
   subTypeOfWorkOptions: string[];
   natureOfWorkOptions: string[];
   modeOfExecutionOptions: string[];
+  districtOptions: string[];
 }
 
 export interface ApiResponse {
@@ -34,6 +36,7 @@ export interface ApiResponse {
     subTypeOfWork?: string[];
     natureOfWork?: string[];
     modeOfExecution?: string[];
+    districts?: string[];
   };
   message?: string;
 }
@@ -49,6 +52,7 @@ function getFallbackOptions(): DropdownOptions {
     subTypeOfWorkOptions,
     natureOfWorkOptions,
     modeOfExecutionOptions,
+    districtOptions,
   };
 }
 
@@ -114,6 +118,7 @@ export async function fetchDropdownOptions(): Promise<DropdownOptions> {
         budgetHeadOptions: apiData.data.budgetHeads || budgetHeadOptions,
         departmentOptions: apiData.data.departments || departmentOptions,
         typeOfWorkOptions: apiData.data.typeOfWork || typeOfWorkOptions,
+        districtOptions: apiData.data.districts || districtOptions,
         subTypeOfWorkOptions:
           apiData.data.subTypeOfWork || subTypeOfWorkOptions,
         natureOfWorkOptions: apiData.data.natureOfWork || natureOfWorkOptions,

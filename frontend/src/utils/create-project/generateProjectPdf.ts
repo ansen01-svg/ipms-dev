@@ -687,9 +687,9 @@ export const generateProjectPDF = async (
     doc.setFont("helvetica", "normal");
 
     const locationInfo = [
-      [`Locality:`, projectData.locality],
-      [`Ward:`, projectData.ward],
-      [`ULB:`, projectData.ulb],
+      [`District:`, projectData.district],
+      [`Block:`, projectData.block],
+      [`Gram Panchayat:`, projectData.gramPanchayat],
     ];
 
     // Add basic location info

@@ -1,8 +1,8 @@
 import { Badge } from "@/components/ui/badge";
-import { MOCK_PROJECT } from "@/utils/project-details/constants";
+import { DbProject } from "@/types/projects.types";
 
 interface TabProps {
-  project: typeof MOCK_PROJECT;
+  project: DbProject;
 }
 
 export default function ProgressTab({ project }: TabProps) {
