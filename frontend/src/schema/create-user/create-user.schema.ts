@@ -1,6 +1,14 @@
 import { z } from "zod";
 
-export const designation = ["Administrator", "JE", "AEE", "CE", "MD", "MLA"];
+export const designation = [
+  "ADMIN",
+  "JE",
+  "AEE",
+  "CE",
+  "MD",
+  "VIEWER",
+  "EXECUTOR",
+];
 
 const createuserFormSchema = z.object({
   fullName: z.string(),

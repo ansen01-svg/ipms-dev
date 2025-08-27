@@ -227,7 +227,7 @@ export const MOCK_PROJECTS: Project[] = [
     progress: 67,
     budget: 15000000,
     budgetUtilized: 10050000,
-    createdBy: "Dr. Priya Sharma",
+    createdBy: "Priyam Sharma",
     createdByName: "Health Department",
     createdAt: "2024-12-15",
     updatedAt: "2025-08-06",

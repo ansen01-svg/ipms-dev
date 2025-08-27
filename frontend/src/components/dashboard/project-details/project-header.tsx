@@ -25,20 +25,38 @@ interface ProjectHeaderProps {
 export function ProjectHeader({ project }: ProjectHeaderProps) {
   const getStatusColor = (status: string) => {
     const colors = {
-      DRAFT: "bg-gray-50 text-gray-600 border-gray-200",
-      SUBMITTED: "bg-blue-50 text-blue-600 border-blue-200",
-      UNDER_REVIEW: "bg-yellow-50 text-yellow-600 border-yellow-200",
-      APPROVED: "bg-green-50 text-green-600 border-green-200",
-      PENDING_APPROVAL: "bg-teal-50 text-teal-600 border-teal-200",
-      REJECTED: "bg-red-50 text-red-600 border-red-200",
-      IN_PROGRESS: "bg-purple-50 text-purple-600 border-purple-200",
-      COMPLETED: "bg-green-50 text-green-600 border-green-200",
+      Draft: "bg-gray-50 text-gray-600 border-gray-200",
+      "Submitted to AEE": "bg-blue-50 text-blue-600 border-blue-200",
+      "Rejected by AEE": "bg-red-50 text-red-600 border-red-200",
+      "Submitted to CE": "bg-yellow-50 text-yellow-600 border-yellow-200",
+      "Rejected by CE": "bg-red-50 text-red-600 border-red-200",
+      "Submitted to MD": "bg-purple-50 text-purple-600 border-purple-200",
+      "Rejected by MD": "bg-red-50 text-red-600 border-red-200",
+      "Submitted to Executing Department":
+        "bg-orange-50 text-orange-600 border-orange-200",
+      "Rejected by Executing Department":
+        "bg-red-50 text-red-600 border-red-200",
+      Approved: "bg-green-50 text-green-600 border-green-200",
+      Ongoing: "bg-blue-50 text-blue-600 border-blue-200",
+      Pending: "bg-yellow-50 text-yellow-600 border-yellow-200",
+      Completed: "bg-green-50 text-green-600 border-green-200",
     };
     return (
       colors[status as keyof typeof colors] ||
       "bg-gray-50 text-gray-600 border-gray-200"
     );
   };
+
+  // Calculate days remaining
+  const calculateDaysRemaining = (endDate: string): number => {
+    const end = new Date(endDate);
+    const today = new Date();
+    const diffTime = end.getTime() - today.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays > 0 ? diffDays : 0;
+  };
+
+  const daysRemaining = calculateDaysRemaining(project.projectEndDate);
 
   return (
     <Card className="bg-white border border-gray-100 shadow-sm rounded-xl">
@@ -54,7 +72,7 @@ export function ProjectHeader({ project }: ProjectHeaderProps) {
               Project ID: {project.projectId}
             </p>
             <p className="text-white/90 text-sm leading-relaxed max-w-4xl">
-              {project.description}
+              {project.description || "No description available"}
             </p>
           </div>
 
@@ -64,7 +82,7 @@ export function ProjectHeader({ project }: ProjectHeaderProps) {
                 project.status
               )} font-medium px-3 py-1 text-xs`}
             >
-              {project?.status?.replace("_", " ")}
+              {project.status}
             </Badge>
           </div>
         </div>
@@ -88,7 +106,7 @@ export function ProjectHeader({ project }: ProjectHeaderProps) {
 
           <div className="bg-orange-100 rounded-lg p-4">
             <div className="text-3xl font-bold text-gray-900 mb-2">
-              {Math.ceil(project.daysRemaining / 365)}
+              {Math.ceil(daysRemaining / 365)}
             </div>
             <div className="flex items-center gap-2 mb-1">
               <Clock className="h-4 w-4 text-orange-500" />
@@ -116,7 +134,7 @@ export function ProjectHeader({ project }: ProjectHeaderProps) {
 
           <div className="bg-green-100 rounded-lg p-4">
             <div className="text-3xl font-bold text-gray-900 mb-2">
-              {project.beneficiary}
+              {project.beneficiary || "Public"}
             </div>
             <div className="flex items-center gap-2 mb-1">
               <Users className="h-4 w-4 text-green-500" />
@@ -134,7 +152,6 @@ export function ProjectHeader({ project }: ProjectHeaderProps) {
           {/* Project Details */}
           <div>
             <h3 className="text-sm font-medium text-gray-900 mb-4 flex items-center gap-2">
-              {/* <FileText className="h-4 w-4 text-teal-600" /> */}
               Project Details
             </h3>
             <div className="space-y-4">
@@ -145,7 +162,7 @@ export function ProjectHeader({ project }: ProjectHeaderProps) {
                 <div>
                   <p className="text-sm text-gray-500">Created by</p>
                   <p className="text-sm font-medium text-gray-900">
-                    {project.createdByName}
+                    {project.createdBy.name}
                   </p>
                 </div>
               </div>
@@ -181,7 +198,6 @@ export function ProjectHeader({ project }: ProjectHeaderProps) {
           {/* Location Details */}
           <div>
             <h3 className="text-sm font-medium text-gray-900 mb-4 flex items-center gap-2">
-              {/* <MapPin className="h-4 w-4 text-teal-600" /> */}
               Location Details
             </h3>
             <div className="space-y-4">
@@ -196,47 +212,52 @@ export function ProjectHeader({ project }: ProjectHeaderProps) {
                   </p>
                 </div>
               </div>
-              <div className="flex items-center gap-3 bg-gray-50 p-2 rounded-md">
-                <span className="p-2 rounded-md">
-                  <MapPin className="h-4 w-4 text-teal-600" />
-                </span>
-                <div>
-                  <p className="text-sm text-gray-500">Locality</p>
-                  <p className="text-sm font-medium text-gray-900">
-                    {project.district}
-                  </p>
+              {project.block && (
+                <div className="flex items-center gap-3 bg-gray-50 p-2 rounded-md">
+                  <span className="p-2 rounded-md">
+                    <MapPin className="h-4 w-4 text-teal-600" />
+                  </span>
+                  <div>
+                    <p className="text-sm text-gray-500">Block</p>
+                    <p className="text-sm font-medium text-gray-900">
+                      {project.block}
+                    </p>
+                  </div>
                 </div>
-              </div>
-              <div className="flex items-center gap-3 bg-gray-50 p-2 rounded-md">
-                <span className="p-2 rounded-md">
-                  <Globe className="h-4 w-4 text-teal-600" />
-                </span>
-                <div>
-                  <p className="text-sm text-gray-500">Ward/ULB</p>
-                  <p className="text-sm font-medium text-gray-900">
-                    Ward {project.block}, ULB {project.gramPanchayat}
-                  </p>
+              )}
+              {project.gramPanchayat && (
+                <div className="flex items-center gap-3 bg-gray-50 p-2 rounded-md">
+                  <span className="p-2 rounded-md">
+                    <Globe className="h-4 w-4 text-teal-600" />
+                  </span>
+                  <div>
+                    <p className="text-sm text-gray-500">Gram Panchayat</p>
+                    <p className="text-sm font-medium text-gray-900">
+                      {project.gramPanchayat}
+                    </p>
+                  </div>
                 </div>
-              </div>
-              <div className="flex items-center gap-3 bg-gray-50 p-2 rounded-md">
-                <span className="p-2 rounded-md">
-                  <Landmark className="h-4 w-4 text-teal-600" />
-                </span>
-                <div>
-                  <p className="text-sm text-gray-500">Coordinates</p>
-                  <p className="text-sm font-medium text-gray-900 font-mono">
-                    Lat: {project.geoLocation.coordinates[0].toFixed(4)}, Long:{" "}
-                    {project.geoLocation.coordinates[1].toFixed(4)}
-                  </p>
+              )}
+              {project.geoLocation && (
+                <div className="flex items-center gap-3 bg-gray-50 p-2 rounded-md">
+                  <span className="p-2 rounded-md">
+                    <Landmark className="h-4 w-4 text-teal-600" />
+                  </span>
+                  <div>
+                    <p className="text-sm text-gray-500">Coordinates</p>
+                    <p className="text-sm font-medium text-gray-900 font-mono">
+                      Lat: {project.geoLocation.coordinates[1].toFixed(4)},
+                      Long: {project.geoLocation.coordinates[0].toFixed(4)}
+                    </p>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           </div>
 
           {/* Administration Details */}
           <div>
             <h3 className="text-sm font-medium text-gray-900 mb-4 flex items-center gap-2">
-              {/* <Building2 className="h-4 w-4 text-teal-600" /> */}
               Administration
             </h3>
             <div className="space-y-4">
@@ -245,9 +266,9 @@ export function ProjectHeader({ project }: ProjectHeaderProps) {
                   <Building2 className="h-4 w-4 text-teal-600" />
                 </span>
                 <div>
-                  <p className="text-sm text-gray-500">Owning Department</p>
+                  <p className="text-sm text-gray-500">Sanction Department</p>
                   <p className="text-sm font-medium text-gray-900">
-                    {project.owningDepartment}
+                    {project.sanctionAndDepartment}
                   </p>
                 </div>
               </div>
@@ -267,9 +288,9 @@ export function ProjectHeader({ project }: ProjectHeaderProps) {
                   <FileText className="h-4 w-4 text-teal-600" />
                 </span>
                 <div>
-                  <p className="text-sm text-gray-500">Letter Reference</p>
+                  <p className="text-sm text-gray-500">Work Order Number</p>
                   <p className="text-sm font-medium text-gray-900 font-mono">
-                    {project.letterReference}
+                    {project.workOrderNumber}
                   </p>
                 </div>
               </div>
@@ -278,9 +299,9 @@ export function ProjectHeader({ project }: ProjectHeaderProps) {
                   <Globe className="h-4 w-4 text-teal-600" />
                 </span>
                 <div>
-                  <p className="text-sm text-gray-500">Mode of Execution</p>
+                  <p className="text-sm text-gray-500">Fund Source</p>
                   <p className="text-sm font-medium text-gray-900">
-                    {project.recommendedModeOfExecution}
+                    {project.fund}
                   </p>
                 </div>
               </div>

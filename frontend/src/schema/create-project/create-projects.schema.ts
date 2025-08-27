@@ -1,9 +1,9 @@
 import { z } from "zod";
 
-// Validation schemas for different parts of the project
+// Validation schema for sub-projects matching backend
 const subProjectSchema = z
   .object({
-    name: z
+    projectName: z
       .string()
       .min(3, "Sub-project name must be at least 3 characters")
       .max(200, "Sub-project name must be less than 200 characters"),
@@ -12,8 +12,6 @@ const subProjectSchema = z
       .min(0.01, "Estimated amount must be greater than 0")
       .max(9999999999.99, "Estimated amount is too large"),
     typeOfWork: z.string().min(1, "Type of work is required"),
-    subTypeOfWork: z.string().min(1, "Sub-type of work is required"),
-    natureOfWork: z.string().min(1, "Nature of work is required"),
     projectStartDate: z
       .string()
       .min(1, "Start date is required")
@@ -32,6 +30,7 @@ const subProjectSchema = z
         const endDate = new Date(date);
         return endDate >= today;
       }, "End date cannot be in the past"),
+    extensionPeriodForCompletion: z.string().optional(),
   })
   .refine(
     (data) => {
@@ -47,55 +46,43 @@ const subProjectSchema = z
 
 export const createProjectSchema = z
   .object({
-    // Basic Project Information
-    dateOfProposal: z
+    // Core project fields matching backend
+    dateOfIssueOfWorkOrder: z
       .string()
-      .min(1, "Date of proposal is required")
+      .min(1, "Date of issue of work order is required")
       .refine((date) => {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
-        const proposalDate = new Date(date);
-        return proposalDate >= today;
-      }, "Date of proposal cannot be in the past"),
+        const orderDate = new Date(date);
+        return orderDate >= today;
+      }, "Date of issue cannot be in the past"),
     projectName: z
       .string()
-      .min(3, "Project name must be at least 3 characters")
-      .max(200, "Project name must be less than 200 characters"),
+      .min(5, "Project name must be at least 5 characters")
+      .max(100, "Project name must be less than 100 characters"),
     description: z
       .string()
-      .min(10, "Description must be at least 10 characters")
-      .max(1000, "Description must be less than 1000 characters"),
-    hasSubProjects: z.enum(["yes", "no"]),
-
-    // Financial Details
+      .max(1000, "Description must be less than 1000 characters")
+      .optional(),
+    hasSubProjects: z.boolean(),
     fund: z.string().min(1, "Fund is required"),
-    function: z.string().min(1, "Function is required"),
-    budgetHead: z.string().min(1, "Budget head is required"),
-    scheme: z
+    sanctionAndDepartment: z
       .string()
-      .min(3, "Scheme name must be at least 3 characters")
-      .max(200, "Scheme name must be less than 200 characters"),
-    subScheme: z
+      .min(1, "Sanction & Department is required"),
+    budgetHead: z
       .string()
-      .min(3, "Sub scheme name must be at least 3 characters")
-      .max(200, "Sub scheme name must be less than 200 characters"),
-
-    // Department Information
-    owningDepartment: z.string().min(1, "Owning department is required"),
-    executingDepartment: z.string().min(1, "Executing department is required"),
+      .max(100, "Budget head must be less than 100 characters")
+      .optional(),
+    executingDepartment: z.string(),
     beneficiary: z
       .string()
-      .min(3, "Beneficiary name must be at least 3 characters")
-      .max(200, "Beneficiary name must be less than 200 characters"),
-    letterReference: z.string(),
+      .max(200, "Beneficiary must be less than 200 characters")
+      .optional(),
+    workOrderNumber: z.string().min(1, "Work order number is required"),
     estimatedCost: z
       .number()
-      .min(0.01, "Estimated cost must be greater than 0")
-      .max(9999999999.99, "Estimated cost is too large"),
-
-    // Work Details
+      .min(0.01, "Estimated cost must be greater than 0"),
     typeOfWork: z.string().min(1, "Type of work is required"),
-    subTypeOfWork: z.string().min(1, "Sub-type of work is required"),
     natureOfWork: z.string().min(1, "Nature of work is required"),
     projectStartDate: z
       .string()
@@ -115,42 +102,41 @@ export const createProjectSchema = z
         const endDate = new Date(date);
         return endDate >= today;
       }, "Project end date cannot be in the past"),
-    recommendedModeOfExecution: z
-      .string()
-      .min(1, "Recommended mode is required"),
-
-    // Location Details
-    // locality: z
-    //   .string()
-    //   .min(3, "Locality name must be at least 3 characters")
-    //   .max(200, "Locality name must be less than 200 characters"),
-    // ward: z.string().min(1, "Ward is required"),
-    // ulb: z.string().min(1, "ULB is required"),
+    extensionPeriodForCompletion: z.string().optional(),
     district: z.string().min(1, "District is required"),
-    block: z.string().min(1, "Blog is required"),
-    gramPanchayat: z.string().min(1, "Gram Panchayat is required"),
+    block: z
+      .string()
+      .max(50, "Block name must be less than 50 characters")
+      .optional(),
+    gramPanchayat: z
+      .string()
+      .max(50, "Gram Panchayat name must be less than 50 characters")
+      .optional(),
+
+    // Geo location matching backend format [longitude, latitude]
     geoLocation: z
       .object({
-        latitude: z.number().min(-90).max(90).optional().or(z.literal("")),
-        longitude: z.number().min(-180).max(180).optional().or(z.literal("")),
+        latitude: z.union([z.number().min(-90).max(90), z.string()]).optional(),
+        longitude: z
+          .union([z.number().min(-180).max(180), z.string()])
+          .optional(),
       })
       .optional(),
 
-    // Sub-projects (conditional)
-    subProjects: z.array(subProjectSchema).optional(),
-
-    // Documents
-    uploadedFiles: z.array(z.string()).optional(),
+    // Sub-projects and documents - always arrays, never undefined
+    subProjects: z.array(subProjectSchema),
+    uploadedFiles: z.array(z.string()),
   })
-  // Validation 1: Project start date cannot be before date of proposal
+  // Project start date cannot be before date of issue
   .refine(
     (data) => {
-      const proposalDate = new Date(data.dateOfProposal);
+      const issueDate = new Date(data.dateOfIssueOfWorkOrder);
       const projectStartDate = new Date(data.projectStartDate);
-      return projectStartDate >= proposalDate;
+      return projectStartDate >= issueDate;
     },
     {
-      message: "Project start date cannot be before the date of proposal",
+      message:
+        "Project start date cannot be before the date of issue of work order",
       path: ["projectStartDate"],
     }
   )
@@ -169,7 +155,7 @@ export const createProjectSchema = z
   // Sub-projects required when enabled
   .refine(
     (data) => {
-      if (data.hasSubProjects === "yes") {
+      if (data.hasSubProjects) {
         return data.subProjects && data.subProjects.length > 0;
       }
       return true;
@@ -180,16 +166,19 @@ export const createProjectSchema = z
       path: ["subProjects"],
     }
   )
-  // FIXED: Sub project start dates cannot be before main project start date
+  // Sub project validation
   .superRefine((data, ctx) => {
     if (!data.subProjects || data.subProjects.length === 0) {
       return;
     }
 
     const mainProjectStartDate = new Date(data.projectStartDate);
+    const mainProjectEndDate = new Date(data.projectEndDate);
 
     data.subProjects.forEach((subProject, index) => {
       const subProjectStartDate = new Date(subProject.projectStartDate);
+      const subProjectEndDate = new Date(subProject.projectEndDate);
+
       if (subProjectStartDate < mainProjectStartDate) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
@@ -198,18 +187,7 @@ export const createProjectSchema = z
           path: ["subProjects", index, "projectStartDate"],
         });
       }
-    });
-  })
-  // FIXED: Sub project end dates cannot be after main project end date
-  .superRefine((data, ctx) => {
-    if (!data.subProjects || data.subProjects.length === 0) {
-      return;
-    }
 
-    const mainProjectEndDate = new Date(data.projectEndDate);
-
-    data.subProjects.forEach((subProject, index) => {
-      const subProjectEndDate = new Date(subProject.projectEndDate);
       if (subProjectEndDate > mainProjectEndDate) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,

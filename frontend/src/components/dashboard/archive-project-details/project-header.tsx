@@ -1,0 +1,265 @@
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { DbArchiveProject } from "@/types/archive-projects.types";
+import { User } from "@/types/user.types";
+import {
+  Building,
+  Building2,
+  Calendar,
+  Clock,
+  DollarSign,
+  FileText,
+  MapPin,
+  User as UserIcon,
+} from "lucide-react";
+
+interface ArchiveProjectHeaderProps {
+  project: DbArchiveProject;
+  user: User;
+}
+
+export function ArchiveProjectHeader({ project }: ArchiveProjectHeaderProps) {
+  const getStatusColor = (status: string) => {
+    const colors = {
+      "Not Started": "bg-gray-50 text-gray-600 border-gray-200",
+      "Just Started": "bg-blue-50 text-blue-600 border-blue-200",
+      "In Progress": "bg-yellow-50 text-yellow-600 border-yellow-200",
+      "Halfway Complete": "bg-orange-50 text-orange-600 border-orange-200",
+      "Near Completion": "bg-green-50 text-green-600 border-green-200",
+      Completed: "bg-green-50 text-green-600 border-green-200",
+    };
+    return (
+      colors[status as keyof typeof colors] ||
+      "bg-gray-50 text-gray-600 border-gray-200"
+    );
+  };
+
+  const formatCurrency = (amount: number) => {
+    if (amount >= 10000000) {
+      return `₹${(amount / 10000000).toFixed(1)} Cr`;
+    }
+    return `₹${(amount / 100000).toFixed(1)}L`;
+  };
+
+  return (
+    <Card className="bg-white border border-gray-100 shadow-sm rounded-xl">
+      <CardHeader className="py-5 bg-teal-600 rounded-tl-xl rounded-tr-xl">
+        <div className="flex items-start justify-between mb-6">
+          <div className="flex-1">
+            <div className="flex items-center gap-3 mb-2">
+              <h1 className="text-lg sm:text-xl font-semibold text-white">
+                {project.nameOfWork}
+              </h1>
+            </div>
+            <p className="text-gray-200 text-sm mb-1">
+              AA Number: {project.AANumber}
+            </p>
+            <p className="text-white/90 text-sm leading-relaxed max-w-4xl">
+              Financial Year: {project.financialYear} • Work Value:{" "}
+              {formatCurrency(project.workValue)}
+            </p>
+          </div>
+
+          <div className="flex flex-col gap-2 items-end">
+            <Badge
+              className={`${getStatusColor(
+                project.progressStatus
+              )} font-medium px-3 py-1 text-xs`}
+            >
+              {project.progressStatus}
+            </Badge>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent className="p-6">
+        {/* Key Metrics Section */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          <div className="bg-red-100 rounded-lg p-4">
+            <div className="text-3xl font-bold text-gray-900 mb-2">
+              {formatCurrency(project.AAAmount)}
+            </div>
+            <div className="flex items-center gap-2 mb-1">
+              <DollarSign className="h-4 w-4 text-red-500" />
+            </div>
+            <p className="text-sm text-gray-600 leading-tight">
+              AA Amount
+              <br />
+              Sanctioned
+            </p>
+          </div>
+
+          <div className="bg-orange-100 rounded-lg p-4">
+            <div className="text-3xl font-bold text-gray-900 mb-2">
+              {formatCurrency(project.workValue)}
+            </div>
+            <div className="flex items-center gap-2 mb-1">
+              <Clock className="h-4 w-4 text-orange-500" />
+            </div>
+            <p className="text-sm text-gray-600 leading-tight">
+              Work Value
+              <br />
+              Contract Amount
+            </p>
+          </div>
+
+          <div className="bg-blue-100 rounded-lg p-4">
+            <div className="text-3xl font-bold text-gray-900 mb-2">
+              {project.progress}%
+            </div>
+            <div className="flex items-center gap-2 mb-1">
+              <Building className="h-4 w-4 text-blue-500" />
+            </div>
+            <p className="text-sm text-gray-600 leading-tight">
+              Physical
+              <br />
+              Progress
+            </p>
+          </div>
+
+          <div className="bg-green-100 rounded-lg p-4">
+            <div className="text-3xl font-bold text-gray-900 mb-2">
+              {project.location}
+            </div>
+            <div className="flex items-center gap-2 mb-1">
+              <MapPin className="h-4 w-4 text-green-500" />
+            </div>
+            <p className="text-sm text-gray-600 leading-tight">
+              Project
+              <br />
+              Location
+            </p>
+          </div>
+        </div>
+
+        {/* Detailed Information Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Project Details */}
+          <div>
+            <h3 className="text-sm font-medium text-gray-900 mb-4 flex items-center gap-2">
+              Project Details
+            </h3>
+            <div className="space-y-4">
+              <div className="flex items-center gap-3 bg-gray-50 p-2 rounded-md">
+                <span className="p-2 rounded-md">
+                  <UserIcon className="h-4 w-4 text-teal-600" />
+                </span>
+                <div>
+                  <p className="text-sm text-gray-500">Concerned Engineer</p>
+                  <p className="text-sm font-medium text-gray-900">
+                    {project.concernedEngineer}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 bg-gray-50 p-2 rounded-md">
+                <span className="p-2 rounded-md">
+                  <Calendar className="h-4 w-4 text-teal-600" />
+                </span>
+                <div>
+                  <p className="text-sm text-gray-500">AA Date</p>
+                  <p className="text-sm font-medium text-gray-900">
+                    {new Date(project.AADated).toLocaleDateString("en-IN")}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 bg-gray-50 p-2 rounded-md">
+                <span className="p-2 rounded-md">
+                  <Calendar className="h-4 w-4 text-teal-600" />
+                </span>
+                <div>
+                  <p className="text-sm text-gray-500">FWO Date</p>
+                  <p className="text-sm font-medium text-gray-900">
+                    {new Date(project.FWODate).toLocaleDateString("en-IN")}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Contract Details */}
+          <div>
+            <h3 className="text-sm font-medium text-gray-900 mb-4 flex items-center gap-2">
+              Contract Details
+            </h3>
+            <div className="space-y-4">
+              <div className="flex items-center gap-3 bg-gray-50 p-2 rounded-md">
+                <span className="p-2 rounded-md">
+                  <Building2 className="h-4 w-4 text-teal-600" />
+                </span>
+                <div>
+                  <p className="text-sm text-gray-500">Contractor</p>
+                  <p className="text-sm font-medium text-gray-900">
+                    {project.nameOfContractor}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 bg-gray-50 p-2 rounded-md">
+                <span className="p-2 rounded-md">
+                  <FileText className="h-4 w-4 text-teal-600" />
+                </span>
+                <div>
+                  <p className="text-sm text-gray-500">FWO Number</p>
+                  <p className="text-sm font-medium text-gray-900">
+                    {project.FWONumberAndDate}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 bg-gray-50 p-2 rounded-md">
+                <span className="p-2 rounded-md">
+                  <MapPin className="h-4 w-4 text-teal-600" />
+                </span>
+                <div>
+                  <p className="text-sm text-gray-500">Location</p>
+                  <p className="text-sm font-medium text-gray-900">
+                    {project.location}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Financial Details */}
+          <div>
+            <h3 className="text-sm font-medium text-gray-900 mb-4 flex items-center gap-2">
+              Financial Details
+            </h3>
+            <div className="space-y-4">
+              <div className="flex items-center gap-3 bg-gray-50 p-2 rounded-md">
+                <span className="p-2 rounded-md">
+                  <DollarSign className="h-4 w-4 text-teal-600" />
+                </span>
+                <div>
+                  <p className="text-sm text-gray-500">Bill Submitted</p>
+                  <p className="text-sm font-medium text-gray-900">
+                    {formatCurrency(project.billSubmittedAmount)}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 bg-gray-50 p-2 rounded-md">
+                <span className="p-2 rounded-md">
+                  <FileText className="h-4 w-4 text-teal-600" />
+                </span>
+                <div>
+                  <p className="text-sm text-gray-500">Bill Number</p>
+                  <p className="text-sm font-medium text-gray-900 font-mono">
+                    {project.billNumber}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 bg-gray-50 p-2 rounded-md">
+                <span className="p-2 rounded-md">
+                  <DollarSign className="h-4 w-4 text-teal-600" />
+                </span>
+                <div>
+                  <p className="text-sm text-gray-500">Remaining Work Value</p>
+                  <p className="text-sm font-medium text-gray-900">
+                    {formatCurrency(project.remainingWorkValue)}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}

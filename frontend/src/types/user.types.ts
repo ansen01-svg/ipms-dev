@@ -1,5 +1,5 @@
 export type UserRole =
-  | "Administrator"
+  | "ADMIN"
   | "JE"
   | "AEE"
   | "CE"
@@ -9,6 +9,7 @@ export type UserRole =
 
 export interface User {
   id: string;
+  userId: string;
   email: string;
   name: string;
   role: UserRole;

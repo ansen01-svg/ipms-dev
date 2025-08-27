@@ -1,5 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import { DbProject } from "@/types/projects.types";
+
 interface OverviewTabProps {
   project: DbProject;
 }
@@ -26,7 +27,7 @@ function OverviewTab({ project }: OverviewTabProps) {
             </span>
             <div className="text-right ml-4">
               <p className="text-sm text-gray-600 text-left max-w-md ml-auto">
-                {project.description}
+                {project.description || "No description available"}
               </p>
             </div>
           </div>
@@ -36,47 +37,138 @@ function OverviewTab({ project }: OverviewTabProps) {
         <div className="px-4 py-4 border-b border-gray-100">
           <div className="flex justify-between items-center">
             <span className="text-sm font-medium text-gray-900">
-              Current Stage
+              Current Status
             </span>
-            <span className="text-sm text-gray-600">
-              {project.currentStage}
-            </span>
+            <span className="text-sm text-gray-600">{project.status}</span>
           </div>
         </div>
 
-        {/* Date of Proposal */}
+        {/* Date of Work Order Issue */}
         <div className="px-4 py-4 border-b border-gray-100">
           <div className="flex justify-between items-center">
             <span className="text-sm font-medium text-gray-900">
-              Date of Proposal
+              Work Order Date
             </span>
             <span className="text-sm text-gray-600">
-              {formatDate(project.dateOfProposal)}
+              {formatDate(project.dateOfIssueOfWorkOrder)}
             </span>
           </div>
         </div>
 
-        {/* Category */}
+        {/* Type of Work */}
         <div className="px-4 py-4 border-b border-gray-100">
           <div className="flex justify-between items-center">
-            <span className="text-sm font-medium text-gray-900">Category</span>
+            <span className="text-sm font-medium text-gray-900">
+              Type of Work
+            </span>
             <Badge variant="outline" className="text-xs">
               {project.typeOfWork}
             </Badge>
           </div>
         </div>
 
-        {/* Sub-Projects */}
-        <div className="px-4 py-4">
+        {/* Nature of Work */}
+        <div className="px-4 py-4 border-b border-gray-100">
           <div className="flex justify-between items-center">
             <span className="text-sm font-medium text-gray-900">
-              Sub-Projects
+              Nature of Work
             </span>
-            <span className="text-sm text-gray-600 font-medium">
-              {project.subTypeOfWork} Active
+            <span className="text-sm text-gray-600">
+              {project.natureOfWork}
             </span>
           </div>
         </div>
+
+        {/* Fund Source */}
+        <div className="px-4 py-4 border-b border-gray-100">
+          <div className="flex justify-between items-center">
+            <span className="text-sm font-medium text-gray-900">
+              Fund Source
+            </span>
+            <span className="text-sm text-gray-600">{project.fund}</span>
+          </div>
+        </div>
+
+        {/* Budget Head */}
+        {project.budgetHead && (
+          <div className="px-4 py-4 border-b border-gray-100">
+            <div className="flex justify-between items-center">
+              <span className="text-sm font-medium text-gray-900">
+                Budget Head
+              </span>
+              <span className="text-sm text-gray-600">
+                {project.budgetHead}
+              </span>
+            </div>
+          </div>
+        )}
+
+        {/* Sub-Projects */}
+        <div className="px-4 py-4 border-b border-gray-100">
+          <div className="flex justify-between items-center">
+            <span className="text-sm font-medium text-gray-900">
+              Has Sub-Projects
+            </span>
+            <span className="text-sm text-gray-600 font-medium">
+              {project.hasSubProjects
+                ? `Yes (${project.subProjects.length})`
+                : "No"}
+            </span>
+          </div>
+        </div>
+
+        {/* Progress */}
+        <div className="px-4 py-4 border-b border-gray-100">
+          <div className="flex justify-between items-center">
+            <span className="text-sm font-medium text-gray-900">Progress</span>
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-gray-600 font-medium">
+                {project.progressPercentage}%
+              </span>
+              <div className="w-16 h-2 bg-gray-200 rounded-full">
+                <div
+                  className="h-2 bg-teal-500 rounded-full"
+                  style={{ width: `${project.progressPercentage}%` }}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Extension Period */}
+        {project.extensionPeriodForCompletion && (
+          <div className="px-4 py-4 border-b border-gray-100">
+            <div className="flex justify-between items-center">
+              <span className="text-sm font-medium text-gray-900">
+                Extension Period
+              </span>
+              <span className="text-sm text-gray-600">
+                {project.extensionPeriodForCompletion}
+              </span>
+            </div>
+          </div>
+        )}
+
+        {/* Last Modified */}
+        {project.lastModifiedBy && (
+          <div className="px-4 py-4">
+            <div className="flex justify-between items-center">
+              <span className="text-sm font-medium text-gray-900">
+                Last Modified By
+              </span>
+              <div className="text-right">
+                <p className="text-sm text-gray-600">
+                  {project.lastModifiedBy.name} ({project.lastModifiedBy.role})
+                </p>
+                {project.lastModifiedBy.modifiedAt && (
+                  <p className="text-xs text-gray-500">
+                    {formatDate(project.lastModifiedBy.modifiedAt.toString())}
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

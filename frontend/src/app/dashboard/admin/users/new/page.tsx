@@ -18,6 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { getAuthToken } from "@/lib/rbac-config.ts/auth-local";
 import createuserFormSchema, {
   designation,
 } from "@/schema/create-user/create-user.schema";
@@ -60,23 +61,26 @@ const CreateUserPage = () => {
       officeLocation: "",
     },
   });
-  console.log("User created successfully", successMsg);
+
   const onSubmit = async (values: z.infer<typeof createuserFormSchema>) => {
     setIsSubmittingForm(true);
     setError("");
     setSuccessMsg("");
+    const token = getAuthToken();
 
     console.log("Form submitted with values:", values);
     try {
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_PROD_API_URL}/users/create`,
+        `${process.env.NEXT_PUBLIC_PROD_API_URL}/user`,
+        // `${process.env.NEXT_PUBLIC_DEV_API_URL}/user`,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer token`,
+            Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify(values),
+          // credentials: "include",
         }
       );
 
