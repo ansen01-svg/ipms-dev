@@ -21,7 +21,7 @@ export function RoleActionSelector({ user, project }: RoleActionSelectorProps) {
       {user.role === "MD" && <MDActions project={project} />}
       {user.role === "EXECUTOR" && <ExecutorActions project={project} />}
       {user.role === "VIEWER" && <ViewerActions />}
-      {user.role === "Administrator" && <ViewerActions />}
+      {user.role === "ADMIN" && <ViewerActions />}
     </div>
   );
 }

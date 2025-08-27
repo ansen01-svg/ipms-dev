@@ -3,7 +3,7 @@
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
 import type { User } from "@/types/user.types";
-import { FolderOpen, LayoutDashboard, Users } from "lucide-react";
+import { FolderOpen, LayoutDashboard, Package, Users } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import Breadcrumbs from "./breadcrumbs";
@@ -37,18 +37,30 @@ const getNavigationItems = (role: string) => {
       href: `/dashboard/${baseRole}`,
       icon: LayoutDashboard,
     },
+    {
+      id: "projects",
+      label: "Projects",
+      href: `/dashboard/projects`,
+      icon: FolderOpen,
+    },
+    {
+      id: "archived-projects",
+      label: "Archived Projects",
+      href: `/dashboard/archived-projects`,
+      icon: Package,
+    },
   ];
 
   switch (role) {
     case "JE":
       return [
         ...commonItems,
-        {
-          id: "my-projects",
-          label: "Projects",
-          href: `/dashboard/projects`,
-          icon: FolderOpen,
-        },
+        // {
+        //   id: "users",
+        //   label: "Users",
+        //   href: `/dashboard/admin/users`,
+        //   icon: Users,
+        // },
         // {
         //   id: "create-project",
         //   label: "Create Project",
@@ -66,12 +78,6 @@ const getNavigationItems = (role: string) => {
     case "AEE":
       return [
         ...commonItems,
-        {
-          id: "my-projects",
-          label: "Projects",
-          href: `/dashboard/projects`,
-          icon: FolderOpen,
-        },
         // {
         //   id: "review-queue",
         //   label: "Review Queue",
@@ -95,12 +101,6 @@ const getNavigationItems = (role: string) => {
     case "CE":
       return [
         ...commonItems,
-        {
-          id: "my-projects",
-          label: "Projects",
-          href: `/dashboard/projects`,
-          icon: FolderOpen,
-        },
         // {
         //   id: "approval-queue",
         //   label: "Approval Queue",
@@ -124,12 +124,6 @@ const getNavigationItems = (role: string) => {
     case "MD":
       return [
         ...commonItems,
-        {
-          id: "my-projects",
-          label: "Projects",
-          href: `/dashboard/projects`,
-          icon: FolderOpen,
-        },
         // {
         //   id: "sanction-queue",
         //   label: "Sanction Queue",
@@ -153,12 +147,6 @@ const getNavigationItems = (role: string) => {
     case "EXECUTOR":
       return [
         ...commonItems,
-        {
-          id: "my-projects",
-          label: "Projects",
-          href: `/dashboard/projects`,
-          icon: FolderOpen,
-        },
         // {
         //   id: "implementation",
         //   label: "Implementation",
@@ -182,12 +170,6 @@ const getNavigationItems = (role: string) => {
     case "VIEWER":
       return [
         ...commonItems,
-        {
-          id: "my-projects",
-          label: "Projects",
-          href: `/dashboard/projects`,
-          icon: FolderOpen,
-        },
         // {
         //   id: "all-projects",
         //   label: "All Projects",
@@ -208,19 +190,13 @@ const getNavigationItems = (role: string) => {
         // },
       ];
 
-    case "Administrator":
+    case "ADMIN":
       return [
         ...commonItems,
         {
-          id: "my-projects",
-          label: "Projects",
-          href: `/dashboard/projects`,
-          icon: FolderOpen,
-        },
-        {
           id: "users",
           label: "Users",
-          href: `/dashboard/administrator/users`,
+          href: `/dashboard/admin/users`,
           icon: Users,
         },
       ];
@@ -240,7 +216,6 @@ export default function DashboardLayout({
 
   const pathname = usePathname();
   const router = useRouter();
-
   const navigationItems = getNavigationItems(user.role);
 
   const handleMobileMenuClick = () => {

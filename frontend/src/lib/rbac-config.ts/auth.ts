@@ -1,25 +1,11 @@
 import { User, UserRole } from "@/types/user.types";
-import { SignJWT, jwtVerify } from "jose";
+import { jwtVerify } from "jose";
 import { cookies } from "next/headers";
 import { NextRequest } from "next/server";
 
 const JWT_SECRET_STRING = process.env.JWT_SECRET;
 const JWT_SECRET: Uint8Array = new TextEncoder().encode(JWT_SECRET_STRING);
 const JWT_ALGORITHM = "HS256";
-
-export async function createToken(user: User): Promise<string> {
-  return await new SignJWT({
-    id: user.id,
-    email: user.email,
-    role: user.role,
-    name: user.name,
-    department: user.department,
-  })
-    .setProtectedHeader({ alg: JWT_ALGORITHM })
-    .setIssuedAt()
-    .setExpirationTime("24h")
-    .sign(JWT_SECRET);
-}
 
 export async function verifyToken(token: string): Promise<User> {
   try {
@@ -61,6 +47,7 @@ export function getUserFromHeaders(request: NextRequest): User | null {
 
   return {
     id: userId,
+    userId: userId,
     role: userRole as UserRole,
     name: userName,
     department: userDepartment || undefined,

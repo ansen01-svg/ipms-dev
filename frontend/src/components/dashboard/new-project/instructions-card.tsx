@@ -90,20 +90,32 @@ export default function InstructionsCard() {
 
             <div>
               <p className="font-semibold text-white mb-3">
-                2. Project Details Requirements:
+                2. Project Details Requirements (Updated):
               </p>
               <ul className="text-sm text-white space-y-2 ml-4">
                 <li>
-                  • Project name should be descriptive and meaningful (minimum 3
-                  characters, maximum 200 characters).
+                  • Project name should be descriptive and meaningful (minimum 5
+                  characters, maximum 100 characters).
                 </li>
                 <li>
-                  • Description must provide comprehensive project details
-                  (minimum 10 characters, maximum 1000 characters).
+                  • Description is optional but recommended for clarity (maximum
+                  1000 characters).
                 </li>
                 <li>
-                  • Select appropriate owning and executing departments
-                  accurately from the dropdown options.
+                  • Date of Issue of Work Order is required and must be today or
+                  in the future.
+                </li>
+                <li>
+                  • Work Order Number is mandatory and must be unique for each
+                  project.
+                </li>
+                <li>
+                  • Select appropriate Sanction & Department from the dropdown
+                  options.
+                </li>
+                <li>
+                  {`• Executing Department is automatically set to "APTDCL" as per
+                  organizational requirements.`}
                 </li>
                 <li>
                   • Enter estimated cost in Indian Rupees only using decimal
@@ -119,15 +131,15 @@ export default function InstructionsCard() {
               <ul className="text-sm text-white space-y-2 ml-4">
                 <li>
                   {`• Select the correct fund source based on your project's
-                    funding mechanism.`}
+                  funding mechanism from the available options.`}
                 </li>
                 <li>
-                  • Choose appropriate function and budget head as per
-                  government financial classifications.
+                  • Budget Head is optional but recommended for better financial
+                  tracking.
                 </li>
                 <li>
-                  • Enter scheme and sub-scheme names exactly as mentioned in
-                  official documentation.
+                  • Beneficiary field helps identify who will benefit from the
+                  project (optional, max 200 characters).
                 </li>
                 <li>
                   • Ensure all financial amounts are entered in valid decimal
@@ -138,12 +150,12 @@ export default function InstructionsCard() {
 
             <div>
               <p className="font-semibold text-white mb-3">
-                4. Document Upload Requirements (IMPORTANT UPDATE):
+                4. Document Upload Requirements (CRITICAL):
               </p>
               <ul className="text-sm text-white space-y-2 ml-4">
                 <li>
                   • <strong>ONLY PDF and Image files</strong> are accepted for
-                  upload (PDF, JPG, JPEG, PNG).
+                  upload (PDF, JPG, JPEG, PNG) as per system security policies.
                 </li>
                 <li>
                   • Maximum file size allowed is 10MB per document. Ensure all
@@ -155,39 +167,72 @@ export default function InstructionsCard() {
                   drawings, etc.
                 </li>
                 <li>
-                  • Word documents (.doc, .docx) and Excel files (.xls, .xlsx)
-                  are no longer supported - please convert to PDF format.
+                  • Word documents (.doc, .docx), Excel files (.xls, .xlsx), and
+                  other formats are NOT supported - please convert to PDF format
+                  before uploading.
                 </li>
               </ul>
             </div>
 
             <div>
               <p className="font-semibold text-white mb-3">
-                5. Location and Sub-Project Guidelines:
+                5. Location and Work Classification Guidelines:
               </p>
               <ul className="text-sm text-white space-y-2 ml-4">
                 <li>
-                  {`• Provide complete and accurate locality, ward, and Urban Local
-                  Body (ULB) information for precise project location identification.`}
+                  • District selection is mandatory - choose from the available
+                  Assam districts.
                 </li>
                 <li>
-                  • Geo-location coordinates should be in standard
-                  latitude/longitude format if available (optional field).
+                  • Block and Gram Panchayat are optional but recommended for
+                  precise location identification.
                 </li>
                 <li>
-                  • Sub-project details, if enabled, must include complete
-                  information for each sub-project component.
+                  • Geo-location coordinates are optional but helpful for
+                  mapping (latitude: -90 to 90, longitude: -180 to 180).
                 </li>
                 <li>
-                  • Each sub-project must have valid dates, proper work
-                  classification, and accurate cost estimates.
+                  • Type of Work and Nature of Work are mandatory fields -
+                  select appropriate options from dropdowns.
+                </li>
+                <li>
+                  • Extension Period for Completion is optional and should only
+                  be used if needed.
                 </li>
               </ul>
             </div>
 
             <div>
               <p className="font-semibold text-white mb-3">
-                6. Step-by-Step Process Important Notes:
+                6. Sub-Project Guidelines (If Enabled):
+              </p>
+              <ul className="text-sm text-white space-y-2 ml-4">
+                <li>
+                  • Each sub-project must have a unique and descriptive name
+                  (5-200 characters).
+                </li>
+                <li>
+                  • Estimated amount for each sub-project must be greater than
+                  zero.
+                </li>
+                <li>
+                  • Sub-project dates must fall within the main project
+                  timeline.
+                </li>
+                <li>
+                  • Type of work for sub-projects can be different from the main
+                  project.
+                </li>
+                <li>
+                  • Extension periods for sub-projects are optional and
+                  independent.
+                </li>
+              </ul>
+            </div>
+
+            <div>
+              <p className="font-semibold text-white mb-3">
+                7. Step-by-Step Process Important Notes:
               </p>
               <ul className="text-sm text-white space-y-2 ml-4">
                 <li>
@@ -199,18 +244,50 @@ export default function InstructionsCard() {
                   will appear in the system and allows for corrections.
                 </li>
                 <li>
-                  • Use the review step to make final reviews before submission
-                  - once submitted, modifications may require additional
+                  • Use the review step to make final checks before submission -
+                  once submitted, modifications may require additional
                   approvals.
                 </li>
                 <li>
                   • The final submission step will create the project in the
-                  system and notify relevant departments.
+                  system and automatically forward it to AEE for processing.
+                </li>
+                <li>
+                  • After successful submission, you can download a PDF summary
+                  of your project for your records.
                 </li>
                 <li>
                   • For technical assistance or clarifications, contact the
                   system administrator or concerned department before
                   submission.
+                </li>
+              </ul>
+            </div>
+
+            <div>
+              <p className="font-semibold text-white mb-3">
+                8. System Integration Notes:
+              </p>
+              <ul className="text-sm text-white space-y-2 ml-4">
+                <li>
+                  • This system is integrated with the backend project
+                  management system.
+                </li>
+                <li>
+                  • All project data is validated according to organizational
+                  standards.
+                </li>
+                <li>
+                  • Projects are automatically assigned unique IDs upon
+                  successful creation.
+                </li>
+                <li>
+                  • The system maintains audit trails for all project
+                  activities.
+                </li>
+                <li>
+                  • Role-based access ensures proper project workflow
+                  management.
                 </li>
               </ul>
             </div>

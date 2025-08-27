@@ -6,6 +6,8 @@ import logo from "@/assets/images/logo4.png";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Toaster } from "@/components/ui/sonner";
+import { useAuth } from "@/contexts/auth-context";
+import { setAuthToken, setUserData } from "@/lib/rbac-config.ts/auth-local";
 import { ROLE_DASHBOARD_PATHS } from "@/lib/rbac-config.ts/constants";
 import { LoginFormData, loginSchema } from "@/schema/auth/loginSchema";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -17,8 +19,8 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
 const LoginPage = () => {
-  // const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
+  const { login } = useAuth();
 
   const {
     register,
@@ -35,12 +37,67 @@ const LoginPage = () => {
     },
   });
 
+  // const onSubmit = async (loginData: LoginFormData) => {
+  //   try {
+  //     const response = await fetch(
+  //       // `${process.env.NEXT_PUBLIC_PROD_API_URL}/login`,
+  //       `${process.env.NEXT_PUBLIC_DEV_API_URL}/auth/login`,
+  //       {
+  //         method: "POST",
+  //         headers: {
+  //           "Content-Type": "application/json",
+  //         },
+  //         body: JSON.stringify(loginData),
+  //         credentials: "include",
+  //       }
+  //     );
+
+  //     // Parse response data first
+  //     const data = await response.json();
+  //     console.log(data);
+
+  //     if (!response.ok) {
+  //       // Handle HTTP error responses
+  //       throw new Error(data.error || data.message || "Login failed");
+  //     }
+
+  //     console.log("Login successful:", data);
+
+  //     // Reset form on successful login
+  //     reset();
+
+  //     // Redirect to role-specific dashboard
+  //     const dashboardPath =
+  //       ROLE_DASHBOARD_PATHS[
+  //         data.user.role as keyof typeof ROLE_DASHBOARD_PATHS
+  //       ];
+
+  //     if (dashboardPath) {
+  //       console.log("Redirecting to:", dashboardPath);
+  //       window.location.replace(dashboardPath);
+  //     } else {
+  //       throw new Error("Invalid user role or dashboard path not found");
+  //     }
+  //   } catch (error) {
+  //     // Proper error handling for fetch API
+  //     if (error instanceof Error) {
+  //       toast.error(error.message);
+  //     } else if (error instanceof TypeError) {
+  //       // Network errors or fetch failures
+  //       toast.error("Network error. Please check your connection.");
+  //     } else {
+  //       toast.error("Something went wrong. Please try again.");
+  //     }
+
+  //     console.error("Login error:", error);
+  //   }
+  // };
+
   const onSubmit = async (loginData: LoginFormData) => {
     try {
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_PROD_API_URL}/login`,
+        `${process.env.NEXT_PUBLIC_PROD_API_URL}/auth/login`,
         // `${process.env.NEXT_PUBLIC_DEV_API_URL}/auth/login`,
-        // `http://localhost:5000/api/login`,
         {
           method: "POST",
           headers: {
@@ -51,42 +108,82 @@ const LoginPage = () => {
         }
       );
 
-      // Parse response data first
       const data = await response.json();
 
       if (!response.ok) {
-        // Handle HTTP error responses
         throw new Error(data.error || data.message || "Login failed");
       }
 
-      console.log("Login successful:", data);
+      console.log("Login: API success", {
+        hasUser: !!data.user,
+        hasToken: !!(data.token || data.accessToken),
+        userRole: data.user?.role,
+      });
 
-      // Reset form on successful login
+      const token = data.token || data.accessToken;
+      if (!token) {
+        throw new Error("No token received from server");
+      }
+
+      // Store with error handling
+      try {
+        // Store in localStorage first
+        setAuthToken(token);
+        setUserData(data.user);
+
+        // Verify storage before proceeding
+        const storedToken = localStorage.getItem("auth-token");
+        const storedData = localStorage.getItem("user-data");
+
+        if (!storedToken || !storedData) {
+          throw new Error(
+            "Failed to store authentication data in localStorage"
+          );
+        }
+
+        console.log("Login: Storage verification passed");
+
+        // Update auth context
+        login(data.user, token);
+
+        // Small delay to ensure all operations complete
+        await new Promise((resolve) => setTimeout(resolve, 100));
+      } catch (storageError) {
+        console.error("Login: Storage failed:", storageError);
+        toast.error("Failed to save authentication data. Please try again.");
+        return;
+      }
+
+      // Reset form
       reset();
 
-      // Redirect to role-specific dashboard
+      // Determine redirect path
       const dashboardPath =
         ROLE_DASHBOARD_PATHS[
           data.user.role as keyof typeof ROLE_DASHBOARD_PATHS
         ];
 
-      if (dashboardPath) {
-        window.location.replace(dashboardPath);
-      } else {
+      if (!dashboardPath) {
         throw new Error("Invalid user role or dashboard path not found");
       }
+
+      window.location.href = dashboardPath;
     } catch (error) {
-      // Proper error handling for fetch API
+      console.error("Login: Error:", error);
+
+      // Clear any partially stored data on error
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("auth-token");
+        localStorage.removeItem("user-data");
+      }
+
       if (error instanceof Error) {
         toast.error(error.message);
       } else if (error instanceof TypeError) {
-        // Network errors or fetch failures
         toast.error("Network error. Please check your connection.");
       } else {
         toast.error("Something went wrong. Please try again.");
       }
-
-      console.error("Login error:", error);
     }
   };
 
@@ -210,7 +307,7 @@ const LoginPage = () => {
             {/* Login Form Container */}
             <div className="p-8">
               <h2 className="text-center text-xl font-semibold text-gray-800 mb-6">
-                Welcome back
+                Login
               </h2>
 
               <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">

@@ -1,16 +1,5 @@
-import type { User } from "@/types/user.types";
-
-// Dummy user for testing purposes
-export const dummyUser: User = {
-  id: "123",
-  email: "dummy@gmail,com",
-  name: "Guest User",
-  role: "JE" as UserRole,
-  department: "PWD",
-};
-
 export const USER_ROLES = {
-  Administrator: "Administrator",
+  ADMIN: "ADMIN",
   JE: "JE",
   AEE: "AEE",
   CE: "CE",
@@ -22,7 +11,7 @@ export const USER_ROLES = {
 export type UserRole = keyof typeof USER_ROLES;
 
 export const ROLE_LABELS = {
-  Administrator: "Administrator",
+  ADMIN: "Admin",
   JE: "Junior Engineer",
   AEE: "Assistant Executive Engineer",
   CE: "Chief Engineer",
@@ -32,7 +21,7 @@ export const ROLE_LABELS = {
 } as const;
 
 export const ROLE_DASHBOARD_PATHS = {
-  Administrator: "/dashboard/administrator",
+  ADMIN: "/dashboard/admin",
   JE: "/dashboard/je",
   AEE: "/dashboard/aee",
   CE: "/dashboard/ce",
@@ -42,7 +31,7 @@ export const ROLE_DASHBOARD_PATHS = {
 } as const;
 
 export const ROLE_NAVIGATION_LABELS = {
-  Administrator: "Projects",
+  ADMIN: "Projects",
   JE: "My Projects",
   AEE: "Projects",
   CE: "Approval Queue",
