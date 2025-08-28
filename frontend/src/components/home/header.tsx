@@ -28,6 +28,11 @@ const navigationItems = [
     href: "#about",
     type: "scroll" as const,
   },
+  {
+    label: "TINDER CLONE",
+    href: "/tinder",
+    type: "link" as const,
+  },
 ];
 
 /**
@@ -237,6 +242,9 @@ export default function Header({ className = "" }: HeaderProps) {
     } else if (item.type === "scroll-top") {
       e.preventDefault();
       smoothScrollToTop();
+      handleNavigationClick();
+    } else if (item.type === "link") {
+      // Let Next.js handle the navigation
       handleNavigationClick();
     }
   };
