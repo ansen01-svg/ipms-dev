@@ -6,8 +6,8 @@ import {
   DbArchiveProject,
 } from "@/types/archive-projects.types";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_PROD_API_URL;
-// const API_BASE_URL = process.env.NEXT_PUBLIC_DEV_API_URL;
+// const API_BASE_URL = process.env.NEXT_PUBLIC_PROD_API_URL;
+const API_BASE_URL = process.env.NEXT_PUBLIC_DEV_API_URL;
 
 // Build query string from filters
 const buildQueryString = (filters: ArchiveProjectFilters): string => {
@@ -335,3 +335,31 @@ export const fetchArchiveProjectFilterOptions =
       throw new Error("Failed to fetch filter options");
     }
   };
+
+/**
+ * Fetch archive projects for dropdown/selection purposes
+ * Returns a simplified list suitable for dropdowns
+ */
+export const fetchArchiveProjectsForSelection = async () => {
+  try {
+    const response = await fetchAllArchiveProjects({
+      limit: 200, // Load more for selection
+      page: 1,
+      sortBy: "nameOfWork",
+      sortOrder: "asc",
+    });
+
+    return response.data.map((project) => ({
+      id: project.projectId,
+      name: project.nameOfWork,
+      workOrderNumber: project.FWONumberAndDate,
+      location: project.location,
+      contractor: project.nameOfContractor,
+      workValue: project.workValue,
+      progress: project.progress,
+    }));
+  } catch (error) {
+    console.error("Error fetching projects for selection:", error);
+    throw new Error("Failed to fetch projects for selection");
+  }
+};
