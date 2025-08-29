@@ -3,7 +3,13 @@
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
 import type { User } from "@/types/user.types";
-import { FolderOpen, LayoutDashboard, Package, Users } from "lucide-react";
+import {
+  BookOpen,
+  FolderOpen,
+  LayoutDashboard,
+  Package,
+  Users,
+} from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import Breadcrumbs from "./breadcrumbs";
@@ -48,6 +54,12 @@ const getNavigationItems = (role: string) => {
       label: "Archived Projects",
       href: `/dashboard/archived-projects`,
       icon: Package,
+    },
+    {
+      id: "mb",
+      label: "Measurement Book",
+      href: `/dashboard/mb`,
+      icon: BookOpen,
     },
   ];
 

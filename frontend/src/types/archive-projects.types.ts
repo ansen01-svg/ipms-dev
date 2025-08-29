@@ -109,3 +109,131 @@ export interface ArchiveProjectFilterOptions {
     progressStatuses: ProgressStatus[];
   };
 }
+
+export interface DbArchiveProject {
+  _id: string;
+  projectId: string;
+  financialYear: string;
+  AANumber: string;
+  AAAmount: number;
+  AADated: string;
+  nameOfWork: string;
+  nameOfContractor: string;
+  workValue: number;
+  FWONumberAndDate: string;
+  FWODate: string;
+  progress: number;
+  billSubmittedAmount: number;
+  location: string;
+  billNumber: string;
+  concernedEngineer: string;
+  remarks?: string;
+
+  // New progress-related fields
+  progressUpdates: ProgressUpdate[];
+  lastProgressUpdate: string | null;
+  progressUpdatesEnabled: boolean;
+
+  // Virtual fields
+  remainingWorkValue: number;
+  progressStatus: ProgressStatus;
+  financialProgress: number;
+  totalProgressUpdates: number;
+  latestProgressUpdate: ProgressUpdate | null;
+
+  // Timestamps
+  createdAt: string;
+  updatedAt: string;
+}
+
+// types/progress.types.ts
+export interface ProgressUpdate {
+  _id: string;
+  previousProgress: number;
+  newProgress: number;
+  progressDifference: number;
+  remarks: string;
+  supportingDocuments: SupportingDocument[];
+  updatedBy: {
+    userId: string;
+    userName: string;
+    userDesignation: string;
+  };
+  ipAddress: string;
+  userAgent: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SupportingDocument {
+  _id: string;
+  fileName: string;
+  originalName: string;
+  filePath: string;
+  fileSize: number;
+  mimeType: string;
+  fileType: "document" | "image";
+  uploadedAt: string;
+}
+
+export interface ProgressUpdateRequest {
+  progress: number;
+  remarks?: string;
+  files?: File[];
+}
+
+export interface ProgressUpdateResponse {
+  success: boolean;
+  message: string;
+  data: {
+    project: DbArchiveProject;
+    latestProgressUpdate: ProgressUpdate;
+    progressChange: {
+      from: number;
+      to: number;
+      difference: number;
+      changeType: "increase" | "decrease" | "no change";
+    };
+    filesUploaded: {
+      count: number;
+      totalSize: number;
+      types: Record<string, number>;
+    };
+  };
+  metadata: {
+    updatedAt: string;
+    updatedBy: {
+      userId: string;
+      userName: string;
+      userDesignation: string;
+    };
+    totalProgressUpdates: number;
+  };
+}
+
+export interface ProgressHistoryResponse {
+  success: boolean;
+  message: string;
+  data: {
+    projectId: string;
+    projectName: string;
+    currentProgress: number;
+    progressStatus: string;
+    history: {
+      updates: ProgressUpdate[];
+      totalUpdates: number;
+      currentPage: number;
+      totalPages: number;
+      hasNextPage: boolean;
+      hasPrevPage: boolean;
+    };
+    summary: {
+      totalUpdates: number;
+      totalProgressIncrease: number;
+      totalProgressDecrease: number;
+      totalFilesUploaded: number;
+      avgProgressChange: number;
+      lastUpdateDate: string | null;
+    };
+  };
+}

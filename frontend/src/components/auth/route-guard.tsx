@@ -73,6 +73,7 @@ export default function RouteGuard({
         "reports",
         "settings",
         "archived-projects",
+        "mb",
       ];
       const isSharedRoute = sharedRoutes.includes(roleInPath);
 

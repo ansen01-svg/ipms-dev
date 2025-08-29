@@ -6,15 +6,19 @@ import ViewerActions from "./role-actions/viewer-actions";
 interface ArchiveRoleActionSelectorProps {
   user: User;
   project: DbArchiveProject;
+  onProjectUpdate?: (updatedProject: DbArchiveProject) => void;
 }
 
 export function ArchiveRoleActionSelector({
   user,
   project,
+  onProjectUpdate,
 }: ArchiveRoleActionSelectorProps) {
   return (
     <div className="space-y-4">
-      {user.role === "JE" && <ArchiveJEActions project={project} />}
+      {user.role === "JE" && (
+        <ArchiveJEActions project={project} onProjectUpdate={onProjectUpdate} />
+      )}
       {(user.role === "AEE" ||
         user.role === "CE" ||
         user.role === "MD" ||
