@@ -6,7 +6,8 @@ import {
   UpdateMBData,
 } from "@/types/mb.types";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_DEV_API_URL;
+const API_BASE_URL = process.env.NEXT_PUBLIC_PROD_API_URL;
+// const API_BASE_URL = process.env.NEXT_PUBLIC_DEV_API_URL;
 
 class MeasurementBookApiService {
   private getHeaders(includeAuth = true) {

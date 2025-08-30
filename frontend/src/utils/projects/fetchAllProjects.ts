@@ -19,8 +19,8 @@ import {
   ProjectTimelineResponse,
 } from "@/types/projects.types";
 
-// const API_BASE_URL = process.env.NEXT_PUBLIC_PROD_API_URL;
-const API_BASE_URL = process.env.NEXT_PUBLIC_DEV_API_URL;
+const API_BASE_URL = process.env.NEXT_PUBLIC_PROD_API_URL;
+// const API_BASE_URL = process.env.NEXT_PUBLIC_DEV_API_URL;
 
 // Utility function to format date to "DD MMM YYYY" format
 const formatDate = (dateString: string): string => {
