@@ -21,6 +21,8 @@ export function DocumentViewer({
     useState<SupportingDocument | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
 
+  console.log(documents);
+
   if (!documents || documents.length === 0) {
     return (
       <div className="text-center py-4 text-gray-500 text-sm">
@@ -43,15 +45,17 @@ export function DocumentViewer({
     return "bg-green-50 border-green-200 text-green-700";
   };
 
+  // FIXED: Use Firebase Storage downloadURL directly
   const handleDownload = async (document: SupportingDocument) => {
     try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_DEV_API_URL}/files/download/${document._id}`,
-        {
-          method: "GET",
-          credentials: "include",
-        }
-      );
+      if (!document.downloadURL) {
+        throw new Error("Download URL not available");
+      }
+
+      // For Firebase Storage, we can directly use the downloadURL
+      const response = await fetch(document.downloadURL, {
+        method: "GET",
+      });
 
       if (!response.ok) {
         throw new Error("Download failed");
@@ -68,7 +72,7 @@ export function DocumentViewer({
       window.document.body.removeChild(a);
     } catch (error) {
       console.error("Download error:", error);
-      alert("Failed to download file");
+      alert("Failed to download file. Please try again.");
     }
   };
 
@@ -152,7 +156,7 @@ export function DocumentViewer({
   );
 }
 
-// Document Preview Modal Component (FIXED)
+// FIXED: Document Preview Modal Component for Firebase Storage
 interface DocumentPreviewModalProps {
   document: SupportingDocument;
   onClose: () => void;
@@ -165,8 +169,9 @@ function DocumentPreviewModal({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // FIXED: Use Firebase Storage downloadURL directly
   const getPreviewUrl = () => {
-    return `${process.env.NEXT_PUBLIC_DEV_API_URL}/files/preview/${document._id}`;
+    return document.downloadURL;
   };
 
   const handleImageLoad = () => {
@@ -177,6 +182,53 @@ function DocumentPreviewModal({
     setLoading(false);
     setError("Failed to load image");
   };
+
+  // FIXED: Direct download using Firebase Storage URL
+  const handleDirectDownload = () => {
+    if (!document.downloadURL) {
+      alert("Download URL not available");
+      return;
+    }
+
+    const link = window.document.createElement("a");
+    link.href = document.downloadURL;
+    link.download = document.originalName;
+    link.target = "_blank";
+    link.rel = "noopener noreferrer";
+    window.document.body.appendChild(link);
+    link.click();
+    window.document.body.removeChild(link);
+  };
+
+  // Validate that downloadURL exists
+  if (!document.downloadURL) {
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
+        <div className="bg-white rounded-lg max-w-md w-full p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-medium text-gray-900">Error</h3>
+            <Button
+              onClick={onClose}
+              variant="ghost"
+              size="sm"
+              className="h-8 w-8 p-0"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+          <div className="text-center py-4">
+            <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+            <p className="text-red-600">
+              Download URL not available for this document
+            </p>
+            <p className="text-sm text-gray-500 mt-2">
+              This may be due to a storage configuration issue.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
@@ -196,16 +248,30 @@ function DocumentPreviewModal({
               <p className="text-sm text-gray-500">
                 {formatFileSize(document.fileSize)} • {document.mimeType}
               </p>
+              <p className="text-xs text-gray-400">
+                Stored in Firebase Storage
+              </p>
             </div>
           </div>
-          <Button
-            onClick={onClose}
-            variant="ghost"
-            size="sm"
-            className="h-8 w-8 p-0"
-          >
-            <X className="h-4 w-4" />
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              onClick={handleDirectDownload}
+              variant="outline"
+              size="sm"
+              className="h-8"
+            >
+              <Download className="h-3 w-3 mr-1" />
+              Download
+            </Button>
+            <Button
+              onClick={onClose}
+              variant="ghost"
+              size="sm"
+              className="h-8 w-8 p-0"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
 
         {/* Preview Content */}
@@ -219,6 +285,13 @@ function DocumentPreviewModal({
                 <div className="text-red-600 p-8">
                   <FileText className="h-12 w-12 mx-auto mb-4" />
                   <p>{error}</p>
+                  <Button
+                    onClick={handleDirectDownload}
+                    className="mt-4 bg-blue-600 hover:bg-blue-700"
+                  >
+                    <Download className="h-4 w-4 mr-2" />
+                    Download Instead
+                  </Button>
                 </div>
               )}
               <Image
@@ -229,7 +302,7 @@ function DocumentPreviewModal({
                 onLoad={handleImageLoad}
                 onError={handleImageError}
                 className={`max-w-full h-auto rounded-lg shadow-lg mx-auto ${
-                  loading ? "hidden" : ""
+                  loading || error ? "hidden" : ""
                 }`}
                 unoptimized
               />
@@ -239,13 +312,32 @@ function DocumentPreviewModal({
           {document.mimeType === "application/pdf" && (
             <div className="w-full h-96">
               <iframe
-                src={`${getPreviewUrl()}#toolbar=1`}
+                src={`${getPreviewUrl()}#toolbar=1&navpanes=0&scrollbar=1`}
                 className="w-full h-full border-0 rounded"
                 title={document.originalName}
                 onLoad={() => setLoading(false)}
+                onError={() => {
+                  setLoading(false);
+                  setError("Failed to load PDF");
+                }}
               />
               {loading && (
-                <div className="animate-pulse bg-gray-200 rounded h-96 w-full"></div>
+                <div className="animate-pulse bg-gray-200 rounded h-96 w-full flex items-center justify-center">
+                  <p className="text-gray-500">Loading PDF...</p>
+                </div>
+              )}
+              {error && (
+                <div className="text-center py-12">
+                  <FileText className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                  <p className="text-red-600 mb-4">{error}</p>
+                  <Button
+                    onClick={handleDirectDownload}
+                    className="bg-blue-600 hover:bg-blue-700"
+                  >
+                    <Download className="h-4 w-4 mr-2" />
+                    Download PDF
+                  </Button>
+                </div>
               )}
             </div>
           )}
@@ -262,13 +354,7 @@ function DocumentPreviewModal({
                   files
                 </p>
                 <Button
-                  onClick={() => {
-                    // Trigger download
-                    const link = window.document.createElement("a");
-                    link.href = getPreviewUrl();
-                    link.download = document.originalName;
-                    link.click();
-                  }}
+                  onClick={handleDirectDownload}
                   className="bg-blue-600 hover:bg-blue-700"
                 >
                   <Download className="h-4 w-4 mr-2" />

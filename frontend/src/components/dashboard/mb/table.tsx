@@ -1,11 +1,8 @@
-// frontend/src/components/dashboard/measurement-books/mb-table.tsx
-
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
@@ -30,22 +27,22 @@ import {
   ArrowDown,
   ArrowUp,
   ArrowUpDown,
+  CheckCircle,
   Download,
-  Edit,
   Eye,
   File,
   FileText,
   ImageIcon,
   MoreHorizontal,
-  Trash2,
+  XCircle,
 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
+import { toast } from "sonner";
 import { useMBFilters } from "./filters";
-import { MBStatusBadge } from "./status-badge";
 
 // Types for sorting
 export interface MBSortConfig {
-  key: keyof MeasurementBook | null;
+  key: keyof MeasurementBook | "projectName" | "isApproved" | null;
   direction: "asc" | "desc";
 }
 
@@ -53,16 +50,23 @@ export interface MBSortConfig {
 interface MBTableProps {
   measurementBooks: MeasurementBook[];
   onViewMB: (mb: MeasurementBook) => void;
-  onEditMB: (mb: MeasurementBook) => void;
-  onDeleteMB: (mb: MeasurementBook) => void;
+  pagination?: {
+    currentPage: number;
+    totalPages: number;
+    totalCount: number;
+    hasNextPage: boolean;
+    hasPrevPage: boolean;
+    limit: number;
+  };
+  onPageChange?: (page: number) => void;
   isLoading?: boolean;
 }
 
 interface SortableTableHeadProps {
   children: React.ReactNode;
-  sortKey: keyof MeasurementBook;
+  sortKey: keyof MeasurementBook | "projectName" | "isApproved";
   sortConfig: MBSortConfig;
-  onSort: (key: keyof MeasurementBook) => void;
+  onSort: (key: keyof MeasurementBook | "projectName" | "isApproved") => void;
   className?: string;
 }
 
@@ -105,12 +109,31 @@ function SortableTableHead({
 function FileIcon({ fileType }: { fileType: string }) {
   const lowerType = fileType.toLowerCase();
 
-  if (lowerType === "pdf") {
+  if (lowerType === "document") {
     return <FileText className="w-4 h-4 text-red-500" />;
-  } else if (["jpg", "jpeg", "png"].includes(lowerType)) {
+  } else if (lowerType === "image") {
     return <ImageIcon className="w-4 h-4 text-blue-500" />;
   } else {
     return <File className="w-4 h-4 text-gray-500" />;
+  }
+}
+
+// Approval Status Badge
+function ApprovalBadge({ isApproved }: { isApproved: boolean }) {
+  if (isApproved) {
+    return (
+      <div className="flex items-center space-x-1 text-green-600">
+        <CheckCircle className="w-4 h-4" />
+        <span className="text-xs font-medium">Approved</span>
+      </div>
+    );
+  } else {
+    return (
+      <div className="flex items-center space-x-1 text-gray-500">
+        <XCircle className="w-4 h-4" />
+        <span className="text-xs font-medium">Pending</span>
+      </div>
+    );
   }
 }
 
@@ -118,63 +141,86 @@ function FileIcon({ fileType }: { fileType: string }) {
 export function MBTable({
   measurementBooks,
   onViewMB,
-  onEditMB,
-  onDeleteMB,
+  pagination,
+  onPageChange,
   isLoading = false,
 }: MBTableProps) {
-  const { searchQuery, filters, hasActiveFilters } = useMBFilters();
-  const [currentPage, setCurrentPage] = useState(1);
+  const {
+    searchQuery,
+    selectedCreator,
+    selectedApprovalStatus,
+    selectedFileType,
+    hasActiveFilters,
+  } = useMBFilters();
   const [sortConfig, setSortConfig] = useState<MBSortConfig>({
     key: null,
     direction: "asc",
   });
 
-  const ITEMS_PER_PAGE = 10;
-
   // Handle sorting
-  const handleSort = (key: keyof MeasurementBook) => {
+  const handleSort = (
+    key: keyof MeasurementBook | "projectName" | "isApproved"
+  ) => {
     setSortConfig((prev) => ({
       key,
       direction: prev.key === key && prev.direction === "asc" ? "desc" : "asc",
     }));
   };
 
-  // Filter, search, and sort measurement books
+  // Filter and sort measurement books (client-side filtering)
   const processedMBs = useMemo(() => {
     let result = [...measurementBooks];
 
-    console.log(result);
-
-    // Apply filters
-    if (filters.status && filters.status !== "all") {
-      result = result.filter((mb) => mb.status === filters.status);
-    }
-    if (filters.fileType && filters.fileType !== "all") {
+    // Apply client-side search if present
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
       result = result.filter(
-        (mb) => mb.uploadedFile.fileType === filters.fileType
+        (mb) =>
+          mb.description.toLowerCase().includes(query) ||
+          (mb.remarks || "").toLowerCase().includes(query) ||
+          mb.project.projectName.toLowerCase().includes(query) ||
+          mb.project.workOrderNumber.toLowerCase().includes(query) ||
+          mb.createdBy.name.toLowerCase().includes(query)
       );
     }
 
-    // Apply search
-    if (searchQuery.trim()) {
+    // Apply creator filter
+    if (selectedCreator !== "all") {
+      result = result.filter((mb) => mb.createdBy.userId === selectedCreator);
+    }
+
+    // Apply approval status filter
+    if (selectedApprovalStatus !== "all") {
+      if (selectedApprovalStatus === "approved") {
+        result = result.filter((mb) => mb.approvedBy);
+      } else if (selectedApprovalStatus === "pending") {
+        result = result.filter((mb) => !mb.approvedBy);
+      }
+    }
+
+    // Apply file type filter
+    if (selectedFileType !== "all") {
       result = result.filter(
-        (mb) =>
-          mb.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          mb.mbNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          mb.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          (mb.contractorName || "")
-            .toLowerCase()
-            .includes(searchQuery.toLowerCase()) ||
-          mb.status.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          mb.createdBy.name.toLowerCase().includes(searchQuery.toLowerCase())
+        (mb) => mb.uploadedFile.fileType === selectedFileType
       );
     }
 
     // Apply sorting
     if (sortConfig.key) {
       result.sort((a, b) => {
-        let aValue: unknown = a[sortConfig.key as keyof MeasurementBook];
-        let bValue: unknown = b[sortConfig.key as keyof MeasurementBook];
+        let aValue: unknown;
+        let bValue: unknown;
+
+        if (sortConfig.key === "projectName") {
+          aValue = a.project.projectName;
+          bValue = b.project.projectName;
+        } else if (sortConfig.key === "isApproved") {
+          aValue = !!a.approvedBy;
+          bValue = !!b.approvedBy;
+        } else {
+          aValue = a[sortConfig.key as keyof MeasurementBook];
+          bValue = b[sortConfig.key as keyof MeasurementBook];
+        }
 
         // Handle nested objects
         if (sortConfig.key === "createdBy") {
@@ -188,10 +234,7 @@ export function MBTable({
         if (bValue === undefined) return -1;
 
         // Special handling for date sorting
-        if (
-          sortConfig.key === "createdAt" ||
-          sortConfig.key === "measurementDate"
-        ) {
+        if (sortConfig.key === "createdAt" || sortConfig.key === "updatedAt") {
           const aDate = new Date(aValue as string);
           const bDate = new Date(bValue as string);
           return sortConfig.direction === "asc"
@@ -216,15 +259,14 @@ export function MBTable({
     }
 
     return result;
-  }, [measurementBooks, searchQuery, filters, sortConfig]);
-
-  // Pagination calculations
-  const totalPages = Math.ceil(processedMBs.length / ITEMS_PER_PAGE);
-  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-  const paginatedMBs = processedMBs.slice(
-    startIndex,
-    startIndex + ITEMS_PER_PAGE
-  );
+  }, [
+    measurementBooks,
+    searchQuery,
+    selectedCreator,
+    selectedApprovalStatus,
+    selectedFileType,
+    sortConfig,
+  ]);
 
   // Format date for display
   const formatDate = (dateString: string) => {
@@ -236,10 +278,35 @@ export function MBTable({
     });
   };
 
-  // Reset to first page when filters/search changes
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchQuery, filters]);
+  // Handle file download
+  const handleDownload = (mb: MeasurementBook) => {
+    try {
+      if (!mb || !mb.uploadedFile || !mb.uploadedFile.downloadURL) {
+        console.error("Invalid file data for download");
+        toast.error("File download URL not available");
+        return;
+      }
+
+      const downloadUrl = mb.uploadedFile.downloadURL;
+      const fileName =
+        mb.uploadedFile.originalName || mb.uploadedFile.fileName || "download";
+
+      // Create a temporary link element and trigger download
+      const link = document.createElement("a");
+      link.href = downloadUrl;
+      link.download = fileName;
+      link.target = "_blank";
+      link.rel = "noopener noreferrer";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      toast.success(`Downloading ${fileName}`);
+    } catch (error) {
+      console.error("Error downloading file:", error);
+      toast.error("Failed to download file");
+    }
+  };
 
   if (isLoading) {
     return (
@@ -251,6 +318,8 @@ export function MBTable({
       </div>
     );
   }
+
+  const displayedMBs = pagination ? measurementBooks : processedMBs;
 
   return (
     <>
@@ -264,40 +333,27 @@ export function MBTable({
                   #
                 </TableHead>
                 <SortableTableHead
-                  sortKey="title"
+                  sortKey="projectName"
+                  sortConfig={sortConfig}
+                  onSort={handleSort}
+                  className="w-64 px-6"
+                >
+                  Project
+                </SortableTableHead>
+                <SortableTableHead
+                  sortKey="description"
                   sortConfig={sortConfig}
                   onSort={handleSort}
                   className="w-80 px-6"
                 >
-                  Title & MB Number
+                  Description
                 </SortableTableHead>
-                <SortableTableHead
-                  sortKey="measurementDate"
-                  sortConfig={sortConfig}
-                  onSort={handleSort}
-                  className="w-40 px-6"
-                >
-                  Measurement Date
-                </SortableTableHead>
-                <SortableTableHead
-                  sortKey="contractorName"
-                  sortConfig={sortConfig}
-                  onSort={handleSort}
-                  className="w-48 px-6"
-                >
-                  Contractor
-                </SortableTableHead>
-                <SortableTableHead
-                  sortKey="status"
-                  sortConfig={sortConfig}
-                  onSort={handleSort}
-                  className="w-32 px-6"
-                >
-                  Status
-                </SortableTableHead>
-                <TableHead className="w-32 px-6 font-semibold text-gray-900">
+                {/* <TableHead className="px-6 font-semibold text-gray-900 w-32">
                   File
                 </TableHead>
+                <TableHead className="px-6 font-semibold text-gray-900 w-32">
+                  Status
+                </TableHead> */}
                 <SortableTableHead
                   sortKey="createdAt"
                   sortConfig={sortConfig}
@@ -312,10 +368,10 @@ export function MBTable({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {paginatedMBs.length === 0 ? (
+              {displayedMBs.length === 0 ? (
                 <TableRow>
                   <TableCell
-                    colSpan={8}
+                    colSpan={7}
                     className="text-center py-8 text-gray-500"
                   >
                     {hasActiveFilters
@@ -324,41 +380,52 @@ export function MBTable({
                   </TableCell>
                 </TableRow>
               ) : (
-                paginatedMBs.map((mb, index) => {
-                  console.log(mb.uploadedFile.fileName);
-                  const fileUrl = `http://localhost:5000/${mb.uploadedFile.filePath}`;
+                displayedMBs.map((mb, index) => {
+                  console.log(mb);
                   return (
                     <TableRow key={mb._id} className="h-16 hover:bg-gray-50">
                       <TableCell className="px-6 font-medium">
-                        {startIndex + index + 1}
+                        {pagination
+                          ? (pagination.currentPage - 1) * pagination.limit +
+                            index +
+                            1
+                          : index + 1}
                       </TableCell>
-                      <TableCell className="w-80 px-6">
+                      <TableCell className="w-64 px-6">
                         <div className="flex flex-col items-start justify-center gap-1">
                           <div className="font-medium text-gray-900 text-sm">
-                            {mb.title}
+                            {mb.project._id}
                           </div>
                           <div className="text-xs text-gray-500">
-                            {mb.mbNumber}
+                            {mb.project.projectName}
                           </div>
                         </div>
                       </TableCell>
-                      <TableCell className="w-40 px-6 text-sm">
-                        {formatDate(mb.measurementDate)}
+                      <TableCell className="w-80 px-6">
+                        <div className="text-sm text-gray-900 line-clamp-2">
+                          {mb.description}
+                        </div>
+                        {mb.remarks && (
+                          <div className="text-xs text-gray-500 mt-1 line-clamp-1">
+                            Remarks: {mb.remarks}
+                          </div>
+                        )}
                       </TableCell>
-                      <TableCell className="w-48 px-6 text-sm">
-                        {mb.contractorName || "N/A"}
-                      </TableCell>
-                      <TableCell className="w-32 px-6">
-                        <MBStatusBadge status={mb.status} />
-                      </TableCell>
-                      <TableCell className="w-32 px-6">
+                      {/* <TableCell className="w-32 px-6">
                         <div className="flex items-center space-x-2">
                           <FileIcon fileType={mb.uploadedFile.fileType} />
-                          <div className="text-xs text-gray-500">
-                            {mb.humanReadableFileSize}
-                          </div>
+                          <span className="text-xs text-gray-500">
+                            {mb.humanReadableFileSize ||
+                              `${(
+                                mb.uploadedFile.fileSize /
+                                (1024 * 1024)
+                              ).toFixed(1)}MB`}
+                          </span>
                         </div>
                       </TableCell>
+                      <TableCell className="w-32 px-6">
+                        <ApprovalBadge isApproved={!!mb.approvedBy} />
+                      </TableCell> */}
                       <TableCell className="w-48 px-6">
                         <div className="flex flex-col gap-1">
                           <div className="text-sm text-gray-900">
@@ -382,22 +449,10 @@ export function MBTable({
                               View Details
                             </DropdownMenuItem>
                             <DropdownMenuItem
-                              onClick={() => window.open(fileUrl, "_blank")}
+                              onClick={() => handleDownload(mb)}
                             >
                               <Download className="mr-2 h-4 w-4" />
                               Download File
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem onClick={() => onEditMB(mb)}>
-                              <Edit className="mr-2 h-4 w-4" />
-                              Edit
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() => onDeleteMB(mb)}
-                              className="text-red-600"
-                            >
-                              <Trash2 className="mr-2 h-4 w-4" />
-                              Delete
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
@@ -413,25 +468,25 @@ export function MBTable({
 
       {/* MB Table - Mobile & Tablet */}
       <div className="lg:hidden space-y-4">
-        {paginatedMBs.length === 0 ? (
+        {displayedMBs.length === 0 ? (
           <div className="text-center py-8 text-gray-500 bg-white rounded-lg border">
             {hasActiveFilters
               ? "No measurement books found matching your criteria."
               : "No measurement books available."}
           </div>
         ) : (
-          paginatedMBs.map((mb) => (
+          displayedMBs.map((mb) => (
             <div
               key={mb._id}
               className="bg-white rounded-lg border p-4 space-y-3"
             >
               <div className="flex items-start justify-between">
                 <div className="flex-1">
-                  <div className="font-medium text-gray-900">{mb.title}</div>
-                  <div className="text-sm text-gray-500">{mb.mbNumber}</div>
+                  <div className="font-medium text-gray-900">{mb._id}</div>
+                  <div className="text-sm text-gray-500">{mb.description}</div>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <MBStatusBadge status={mb.status} />
+                  <ApprovalBadge isApproved={!!mb.approvedBy} />
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button variant="ghost" className="h-8 w-8 p-0">
@@ -443,54 +498,46 @@ export function MBTable({
                         <Eye className="mr-2 h-4 w-4" />
                         View Details
                       </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={() => window.open(mb.fileUrl, "_blank")}
-                      >
+                      <DropdownMenuItem onClick={() => handleDownload(mb)}>
                         <Download className="mr-2 h-4 w-4" />
                         Download File
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem onClick={() => onEditMB(mb)}>
-                        <Edit className="mr-2 h-4 w-4" />
-                        Edit
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={() => onDeleteMB(mb)}
-                        className="text-red-600"
-                      >
-                        <Trash2 className="mr-2 h-4 w-4" />
-                        Delete
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </div>
               </div>
 
+              <div className="text-sm text-gray-900 line-clamp-3">
+                {mb.description}
+              </div>
+
+              {mb.remarks && (
+                <div className="text-xs text-gray-500 bg-gray-50 p-2 rounded">
+                  <strong>Remarks:</strong> {mb.remarks}
+                </div>
+              )}
+
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
-                  <span className="text-gray-500">Measurement Date:</span>
-                  <div className="font-medium">
-                    {formatDate(mb.measurementDate)}
-                  </div>
-                </div>
-                <div>
-                  <span className="text-gray-500">Contractor:</span>
-                  <div className="font-medium">
-                    {mb.contractorName || "N/A"}
-                  </div>
-                </div>
-                <div>
                   <span className="text-gray-500">File:</span>
-                  <div className="flex items-center space-x-1">
+                  <div className="flex items-center space-x-1 mt-1">
                     <FileIcon fileType={mb.uploadedFile.fileType} />
                     <span className="font-medium">
-                      {mb.humanReadableFileSize}
+                      {mb.humanReadableFileSize ||
+                        `${(mb.uploadedFile.fileSize / (1024 * 1024)).toFixed(
+                          1
+                        )}MB`}
                     </span>
                   </div>
                 </div>
                 <div>
                   <span className="text-gray-500">Created:</span>
-                  <div className="font-medium">{formatDate(mb.createdAt)}</div>
+                  <div className="font-medium mt-1">
+                    {formatDate(mb.createdAt)}
+                  </div>
+                  <div className="text-xs text-gray-500">
+                    by {mb.createdBy.name}
+                  </div>
                 </div>
               </div>
             </div>
@@ -499,47 +546,56 @@ export function MBTable({
       </div>
 
       {/* Pagination */}
-      {totalPages > 1 && (
+      {pagination && pagination.totalPages > 1 && onPageChange && (
         <div className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
           <p className="text-sm text-gray-700 text-center sm:text-left">
-            Showing {startIndex + 1} to{" "}
-            {Math.min(startIndex + ITEMS_PER_PAGE, processedMBs.length)} of{" "}
-            {processedMBs.length} results
+            Showing {(pagination.currentPage - 1) * pagination.limit + 1} to{" "}
+            {Math.min(
+              pagination.currentPage * pagination.limit,
+              pagination.totalCount
+            )}{" "}
+            of {pagination.totalCount} results
           </p>
           <Pagination className="flex items-center justify-center sm:justify-end">
             <PaginationContent className="flex-wrap">
               <PaginationItem>
                 <PaginationPrevious
                   onClick={() =>
-                    setCurrentPage((prev) => Math.max(prev - 1, 1))
+                    onPageChange(Math.max(pagination.currentPage - 1, 1))
                   }
                   className={
-                    currentPage === 1
+                    pagination.currentPage === 1
                       ? "pointer-events-none opacity-50"
                       : "cursor-pointer"
                   }
                 />
               </PaginationItem>
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map(
-                (page) => (
-                  <PaginationItem key={page}>
-                    <PaginationLink
-                      onClick={() => setCurrentPage(page)}
-                      isActive={currentPage === page}
-                      className="cursor-pointer"
-                    >
-                      {page}
-                    </PaginationLink>
-                  </PaginationItem>
-                )
-              )}
+              {Array.from(
+                { length: pagination.totalPages },
+                (_, i) => i + 1
+              ).map((page) => (
+                <PaginationItem key={page}>
+                  <PaginationLink
+                    onClick={() => onPageChange(page)}
+                    isActive={pagination.currentPage === page}
+                    className="cursor-pointer"
+                  >
+                    {page}
+                  </PaginationLink>
+                </PaginationItem>
+              ))}
               <PaginationItem>
                 <PaginationNext
                   onClick={() =>
-                    setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                    onPageChange(
+                      Math.min(
+                        pagination.currentPage + 1,
+                        pagination.totalPages
+                      )
+                    )
                   }
                   className={
-                    currentPage === totalPages
+                    pagination.currentPage === pagination.totalPages
                       ? "pointer-events-none opacity-50"
                       : "cursor-pointer"
                   }

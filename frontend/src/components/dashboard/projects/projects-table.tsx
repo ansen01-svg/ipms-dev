@@ -870,7 +870,7 @@ export function ProjectsTable({ projects, onViewProject }: ProjectsTableProps) {
                             {project.projectName}
                           </div>
                           <div className="text-sm text-gray-500">
-                            {project.projectId}
+                            Id - {project._id}
                           </div>
                         </div>
                       </TableCell>

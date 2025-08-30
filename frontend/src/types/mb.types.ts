@@ -1,31 +1,26 @@
-// frontend/src/types/measurement-book.types.ts
+// frontend/src/types/mb.types.ts - Updated to match backend schema
 
 export interface MeasurementBook {
   _id: string;
-  projectId: string;
   project: {
     _id: string;
     projectName: string;
     workOrderNumber: string;
     estimatedCost: number;
     district: string;
+    state?: string;
   };
-  title: string;
   description: string;
-  mbNumber: string;
-  measurementDate: string;
-  workOrderNumber?: string;
-  contractorName?: string;
   uploadedFile: {
     fileName: string;
     originalName: string;
-    fileType: string;
-    fileSize: number;
+    downloadURL: string; // Firebase URL
     filePath: string;
+    fileSize: number;
     mimeType: string;
+    fileType: "document" | "image";
+    uploadedAt: string;
   };
-  status: MBStatus;
-  remarks?: string;
   createdBy: {
     userId: string;
     name: string;
@@ -43,71 +38,12 @@ export interface MeasurementBook {
     role: string;
     approvedAt: string;
   };
+  remarks?: string;
   rejectionReason?: string;
   createdAt: string;
   updatedAt: string;
-  fileUrl: string;
-  humanReadableFileSize: string;
-}
-
-export type MBStatus =
-  | "Draft"
-  | "Submitted"
-  | "Under Review"
-  | "Approved"
-  | "Rejected";
-
-export interface CreateMBData {
-  projectId: string;
-  title: string;
-  description: string;
-  mbNumber: string;
-  measurementDate: string;
-  workOrderNumber?: string;
-  contractorName?: string;
-  remarks?: string;
-  mbFile: File;
-}
-
-export interface UpdateMBData {
-  title?: string;
-  description?: string;
-  measurementDate?: string;
-  workOrderNumber?: string;
-  contractorName?: string;
-  remarks?: string;
-  status?: MBStatus;
-}
-
-export interface MBStatistics {
-  overview: {
-    totalMBs: number;
-    statusBreakdown: Record<MBStatus, number>;
-    fileTypeBreakdown: Record<string, number>;
-  };
-  monthlyCreationTrend: Array<{
-    _id: { year: number; month: number };
-    count: number;
-  }>;
-  recentMBs: Array<{
-    _id: string;
-    title: string;
-    mbNumber: string;
-    status: MBStatus;
-    createdAt: string;
-    createdBy: {
-      name: string;
-    };
-  }>;
-}
-
-export interface MBFilterConfig {
-  status: string;
-  fileType: string;
-  dateRange: {
-    start?: string;
-    end?: string;
-  };
+  fileUrl?: string; // Virtual field
+  humanReadableFileSize?: string; // Virtual field
 }
 
 export interface MBPaginationData {
@@ -120,16 +56,54 @@ export interface MBPaginationData {
     hasPrevPage: boolean;
     limit: number;
   };
-  project: {
-    projectId: string;
+  summary: {
+    totalMBs: number;
+    uniqueProjects: number;
+    approvedMBs: number;
+    mbsWithRemarks: number;
+    approvalRate: number;
+    remarksRate: number;
+    totalFileSize: number;
+    avgFileSize: number;
+    humanReadableTotalSize: string;
+    humanReadableAvgSize: string;
+  };
+  projectStats: Array<{
+    _id: string;
+    count: number;
+    totalFileSize: number;
+    approvedCount: number;
+    withRemarksCount: number;
     projectName: string;
     workOrderNumber: string;
+  }>;
+  filters: {
+    search: string | null;
+    dateFrom: string | null;
+    dateTo: string | null;
+    hasRemarks: string | null;
+    isApproved: string | null;
+    projectId: string | null;
   };
-  statusCounts: Record<MBStatus, number>;
 }
 
-export interface BulkUpdateData {
-  mbIds: string[];
-  status: MBStatus;
+export interface MBFilterConfig {
+  search: string;
+  dateFrom: string;
+  dateTo: string;
+  hasRemarks: "all" | "true" | "false";
+  isApproved: "all" | "true" | "false";
+  fileType: string;
+}
+
+export interface CreateMBData {
+  project: string;
+  description: string;
+  remarks?: string;
+  mbFile: File;
+}
+
+export interface UpdateMBData {
+  description?: string;
   remarks?: string;
 }

@@ -1,16 +1,9 @@
 "use client";
 
 import { MBFilterProvider, MBFilters } from "@/components/dashboard/mb/filters";
-import { MBForm } from "@/components/dashboard/mb/mb-form";
 import { MBTable } from "@/components/dashboard/mb/table";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -18,70 +11,44 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { useArchiveProjectsForSelection } from "@/hooks/useArchiveProjects";
-import {
-  CreateMBData,
-  MBPaginationData,
-  MBStatistics,
-  MeasurementBook,
-  UpdateMBData,
-} from "@/types/mb.types";
+import { MBPaginationData, MeasurementBook } from "@/types/mb.types";
 import { mbApiService } from "@/utils/mb/api-service";
 import {
   AlertTriangle,
   CheckCircle,
-  ExternalLink,
-  FileText,
-  FolderOpen,
+  Download,
   Plus,
   RefreshCw,
-  Trash2,
+  XCircle,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 
 export default function MeasurementBooksPage() {
-  const {
-    projects,
-    loading: projectsLoading,
-    error: projectsError,
-  } = useArchiveProjectsForSelection();
-
-  const [selectedProjectId, setSelectedProjectId] = useState<string>("");
+  const router = useRouter();
   const [measurementBooks, setMeasurementBooks] = useState<MeasurementBook[]>(
     []
   );
-  const [statistics, setStatistics] = useState<MBStatistics | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [pagination, setPagination] = useState<
+    MBPaginationData["pagination"] | null
+  >(null);
+  const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
 
-  // Form states
-  const [showCreateForm, setShowCreateForm] = useState(false);
-  const [showEditForm, setShowEditForm] = useState(false);
-  const [editingMB, setEditingMB] = useState<MeasurementBook | null>(null);
-  const [formLoading, setFormLoading] = useState(false);
+  // Project search states
+  const [searchingProject, setSearchingProject] = useState(false);
+  const [currentProjectId, setCurrentProjectId] = useState<string>("");
 
   // Detail view states
   const [showDetailDialog, setShowDetailDialog] = useState(false);
   const [selectedMB, setSelectedMB] = useState<MeasurementBook | null>(null);
 
-  // Delete confirmation state
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [deletingMB, setDeletingMB] = useState<MeasurementBook | null>(null);
-  const [deleteLoading, setDeleteLoading] = useState(false);
-
-  const loadMeasurementBooks = useCallback(
-    async (isRefresh = false) => {
-      if (!selectedProjectId) return;
-
+  // Load all measurement books initially
+  const loadAllMeasurementBooks = useCallback(
+    async (isRefresh = false, page = 1) => {
       try {
         if (isRefresh) {
           setRefreshing(true);
@@ -90,157 +57,180 @@ export default function MeasurementBooksPage() {
         }
         setError(null);
 
-        const data: MBPaginationData = await mbApiService.getMBsForProject(
-          selectedProjectId,
-          {
-            limit: 100, // Load all for client-side filtering
-          }
-        );
+        const data: MBPaginationData = await mbApiService.getAllMBs({
+          page,
+          limit: 20,
+          sortBy: "createdAt",
+          sortOrder: "desc",
+        });
 
-        setMeasurementBooks(data.measurementBooks);
+        // Safely set data with fallbacks
+        setMeasurementBooks(data.measurementBooks || []);
+        setPagination(data.pagination || null);
+        setCurrentProjectId("");
       } catch (err) {
+        console.error("Error loading measurement books:", err);
         const errorMessage =
           err instanceof Error
             ? err.message
             : "Failed to load measurement books";
         setError(errorMessage);
         toast.error(errorMessage);
+
+        // Reset data on error
+        setMeasurementBooks([]);
+        setPagination(null);
       } finally {
         setLoading(false);
         setRefreshing(false);
       }
     },
-    [selectedProjectId]
+    []
   );
 
-  // console.log(projects);
+  // Load measurement books for a specific project
+  const loadProjectMeasurementBooks = useCallback(
+    async (projectId: string, page = 1) => {
+      try {
+        setSearchingProject(true);
+        setError(null);
 
-  // const loadStatistics = useCallback(async () => {
-  //   if (!selectedProjectId) return;
+        const data: MBPaginationData = await mbApiService.getMBsForProject(
+          projectId,
+          {
+            page,
+            limit: 20,
+            sortBy: "createdAt",
+            sortOrder: "desc",
+          }
+        );
 
-  //   try {
-  //     const stats = await mbApiService.getMBStatistics(selectedProjectId);
-  //     setStatistics(stats);
-  //   } catch (err) {
-  //     console.error("Error loading statistics:", err);
-  //     // Don't show error for statistics as it's not critical
-  //   }
-  // }, [selectedProjectId]);
+        // Safely set data with fallbacks
+        setMeasurementBooks(data.measurementBooks || []);
+        setPagination(data.pagination || null);
+        setCurrentProjectId(projectId);
+        setCurrentPage(1);
 
-  // Load MBs when project is selected
+        const mbCount = data.measurementBooks?.length || 0;
+        if (mbCount === 0) {
+          toast.info("No measurement books found for this project");
+        } else {
+          toast.success(`Found ${mbCount} measurement books for project`);
+        }
+      } catch (err) {
+        console.error("Error loading project measurement books:", err);
+        const errorMessage =
+          err instanceof Error
+            ? err.message
+            : "Failed to load measurement books for project";
+        setError(errorMessage);
+        toast.error(errorMessage);
+
+        // If project not found or error, fall back to all MBs
+        if (
+          err instanceof Error &&
+          (err.message.includes("not found") || err.message.includes("Invalid"))
+        ) {
+          loadAllMeasurementBooks();
+        } else {
+          // Reset data on other errors
+          setMeasurementBooks([]);
+          setPagination(null);
+        }
+      } finally {
+        setSearchingProject(false);
+      }
+    },
+    [loadAllMeasurementBooks]
+  );
+
+  // Initial load
   useEffect(() => {
-    if (selectedProjectId) {
-      loadMeasurementBooks();
-      // loadStatistics();
+    loadAllMeasurementBooks();
+  }, [loadAllMeasurementBooks]);
+
+  // Handle project search
+  const handleProjectSearch = useCallback(
+    (projectId: string) => {
+      if (projectId.trim()) {
+        loadProjectMeasurementBooks(projectId.trim());
+      }
+    },
+    [loadProjectMeasurementBooks]
+  );
+
+  // Handle page change
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    if (currentProjectId) {
+      loadProjectMeasurementBooks(currentProjectId, page);
     } else {
-      setMeasurementBooks([]);
-      setStatistics(null);
-    }
-  }, [selectedProjectId, loadMeasurementBooks]);
-
-  const handleCreateMB = async (data: CreateMBData) => {
-    try {
-      setFormLoading(true);
-      await mbApiService.createMB(data);
-      toast.success("Measurement book created successfully");
-      setShowCreateForm(false);
-      loadMeasurementBooks(true);
-      // loadStatistics();
-    } catch (err) {
-      const errorMessage =
-        err instanceof Error
-          ? err.message
-          : "Failed to create measurement book";
-      toast.error(errorMessage);
-      throw err; // Re-throw to prevent dialog from closing
-    } finally {
-      setFormLoading(false);
+      loadAllMeasurementBooks(false, page);
     }
   };
 
-  const handleUpdateMB = async (data: UpdateMBData) => {
-    if (!editingMB) return;
-
-    try {
-      setFormLoading(true);
-      await mbApiService.updateMB(editingMB._id, data);
-      toast.success("Measurement book updated successfully");
-      setShowEditForm(false);
-      setEditingMB(null);
-      loadMeasurementBooks(true);
-      // loadStatistics();
-    } catch (err) {
-      const errorMessage =
-        err instanceof Error
-          ? err.message
-          : "Failed to update measurement book";
-      toast.error(errorMessage);
-      throw err; // Re-throw to prevent dialog from closing
-    } finally {
-      setFormLoading(false);
-    }
-  };
-
-  const handleDeleteMB = async () => {
-    if (!deletingMB) return;
-
-    try {
-      setDeleteLoading(true);
-      await mbApiService.deleteMB(deletingMB._id);
-      toast.success("Measurement book deleted successfully");
-      setShowDeleteDialog(false);
-      setDeletingMB(null);
-      loadMeasurementBooks(true);
-      // loadStatistics();
-    } catch (err) {
-      const errorMessage =
-        err instanceof Error
-          ? err.message
-          : "Failed to delete measurement book";
-      toast.error(errorMessage);
-    } finally {
-      setDeleteLoading(false);
-    }
-  };
-
-  const handleExportMBs = async () => {
-    if (!selectedProjectId) return;
-
-    try {
-      await mbApiService.exportMBData(selectedProjectId);
-      toast.success("Export started successfully");
-    } catch (err) {
-      const errorMessage =
-        err instanceof Error ? err.message : "Failed to export data";
-      toast.error(errorMessage);
-    }
-  };
-
+  // Handle view MB details
   const handleViewMB = (mb: MeasurementBook) => {
     setSelectedMB(mb);
     setShowDetailDialog(true);
   };
 
-  const handleEditMB = (mb: MeasurementBook) => {
-    setEditingMB(mb);
-    setShowEditForm(true);
+  // Handle refresh
+  const handleRefresh = () => {
+    if (currentProjectId) {
+      loadProjectMeasurementBooks(currentProjectId, currentPage);
+    } else {
+      loadAllMeasurementBooks(true, currentPage);
+    }
   };
 
-  const handleDeleteClick = (mb: MeasurementBook) => {
-    setDeletingMB(mb);
-    setShowDeleteDialog(true);
+  // Reset to show all MBs
+  const handleShowAllMBs = () => {
+    loadAllMeasurementBooks();
+    setCurrentPage(1);
   };
 
-  interface ProjectOption {
-    id: string;
-    name: string;
-    workOrderNumber: string;
-    location?: string;
-  }
+  // Navigate to new MB page
+  const handleNewMB = () => {
+    router.push("/dashboard/mb/new");
+  };
 
-  const selectedProject: ProjectOption | undefined = projects.find(
-    (p: ProjectOption) => p.id === selectedProjectId
-  );
+  // Download file helper
+  const handleDownloadFile = useCallback((mb: MeasurementBook) => {
+    try {
+      if (!mb || !mb.uploadedFile || !mb.uploadedFile.downloadURL) {
+        toast.error("File download URL not available");
+        return;
+      }
+
+      const downloadUrl = mb.uploadedFile.downloadURL;
+      const fileName =
+        mb.uploadedFile.originalName || mb.uploadedFile.fileName || "download";
+
+      const link = document.createElement("a");
+      link.href = downloadUrl;
+      link.download = fileName;
+      link.target = "_blank";
+      link.rel = "noopener noreferrer";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (error) {
+      console.error("Error downloading file:", error);
+      toast.error("Failed to download file");
+    }
+  }, []);
+
+  // Format date helper
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString("en-IN", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
 
   return (
     <div className="space-y-6">
@@ -251,407 +241,293 @@ export default function MeasurementBooksPage() {
             Measurement Books
           </h1>
           <p className="text-gray-600">
-            Manage measurement books for your construction projects
+            View and manage measurement books across all projects
           </p>
         </div>
+        <Button onClick={handleNewMB} className="bg-teal-600 hover:bg-teal-700">
+          <Plus className="w-4 h-4 mr-2" />
+          New MB
+        </Button>
       </div>
 
-      {/* Project Selection */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Select Project</CardTitle>
-          <CardDescription>
-            Choose a project to view and manage its measurement books
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
-            <div className="flex-1 min-w-0">
-              <Select
-                value={selectedProjectId}
-                onValueChange={setSelectedProjectId}
-                disabled={projectsLoading}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue
-                    placeholder={
-                      projectsLoading
-                        ? "Loading projects..."
-                        : projectsError
-                        ? "Error loading projects"
-                        : "Select a project"
-                    }
-                  />
-                </SelectTrigger>
-                <SelectContent>
-                  {projects.map((project, index) => (
-                    // <SelectItem key={project.id} value={project.id}>
-                    <SelectItem key={index} value={project.id}>
-                      <div className="flex flex-col">
-                        <span className="font-medium">{project.name}</span>
-                        <span className="text-sm text-gray-500">
-                          {project.location} • {project.workOrderNumber}
-                        </span>
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+      {/* Main Content */}
+      <MBFilterProvider>
+        <div className="space-y-6">
+          {/* Action Bar */}
+          <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+            <div className="flex items-center gap-2">
+              <h2 className="text-lg font-semibold text-gray-900">
+                Measurement Books (
+                {pagination?.totalCount || measurementBooks.length})
+              </h2>
+              {currentProjectId && (
+                <span className="text-sm text-blue-600 bg-blue-50 px-2 py-1 rounded">
+                  Project: {currentProjectId}
+                </span>
+              )}
             </div>
 
-            {selectedProject && (
+            <div className="flex gap-2">
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() =>
-                  window.open(
-                    `/dashboard/archived-projects/${selectedProject.id}`,
-                    "_blank"
-                  )
-                }
-                className="whitespace-nowrap"
+                onClick={handleRefresh}
+                disabled={refreshing || searchingProject}
               >
-                <ExternalLink className="w-4 h-4 mr-2" />
-                View Project
+                <RefreshCw
+                  className={`w-4 h-4 mr-2 ${
+                    refreshing || searchingProject ? "animate-spin" : ""
+                  }`}
+                />
+                Refresh
               </Button>
-            )}
-          </div>
-        </CardContent>
-      </Card>
 
-      {/* Statistics Cards */}
-      {selectedProjectId && statistics && (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total MBs</CardTitle>
-              <FileText className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-teal-600">
-                {statistics.overview.totalMBs}
-              </div>
-              <p className="text-xs text-muted-foreground">
-                All measurement books
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Approved</CardTitle>
-              <CheckCircle className="h-4 w-4 text-green-500" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-green-600">
-                {statistics.overview.statusBreakdown.Approved || 0}
-              </div>
-              <p className="text-xs text-muted-foreground">Approved MBs</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                Under Review
-              </CardTitle>
-              <AlertTriangle className="h-4 w-4 text-yellow-500" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-yellow-600">
-                {statistics.overview.statusBreakdown["Under Review"] || 0}
-              </div>
-              <p className="text-xs text-muted-foreground">Pending review</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Draft</CardTitle>
-              <FolderOpen className="h-4 w-4 text-gray-500" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-gray-600">
-                {statistics.overview.statusBreakdown.Draft || 0}
-              </div>
-              <p className="text-xs text-muted-foreground">Draft MBs</p>
-            </CardContent>
-          </Card>
-        </div>
-      )}
-
-      {/* Main Content */}
-      {selectedProjectId ? (
-        <MBFilterProvider>
-          <div className="space-y-6">
-            {/* Action Bar */}
-            <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-              <div className="flex items-center gap-2">
-                <h2 className="text-lg font-semibold text-gray-900">
-                  Measurement Books ({measurementBooks.length})
-                </h2>
-                {selectedProject && (
-                  <span className="text-sm text-gray-500">
-                    • {selectedProject.name}
-                  </span>
-                )}
-              </div>
-
-              <div className="flex gap-2">
+              {currentProjectId && (
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => loadMeasurementBooks(true)}
-                  disabled={refreshing}
+                  onClick={handleShowAllMBs}
+                  disabled={loading}
                 >
-                  <RefreshCw
-                    className={`w-4 h-4 mr-2 ${
-                      refreshing ? "animate-spin" : ""
-                    }`}
-                  />
-                  Refresh
+                  Show All MBs
                 </Button>
-
-                <Button
-                  onClick={() => setShowCreateForm(true)}
-                  className="bg-teal-600 hover:bg-teal-700"
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  New MB
-                </Button>
-              </div>
+              )}
             </div>
-
-            {/* Filters */}
-            <MBFilters
-              measurementBooks={measurementBooks}
-              onExport={handleExportMBs}
-            />
-
-            {/* Table */}
-            {error ? (
-              <Card>
-                <CardContent className="py-8">
-                  <div className="text-center text-red-600">
-                    <AlertTriangle className="w-12 h-12 mx-auto mb-4" />
-                    <h3 className="text-lg font-medium mb-2">
-                      Failed to load measurement books
-                    </h3>
-                    <p className="text-sm mb-4">{error}</p>
-                    <Button
-                      onClick={() => loadMeasurementBooks(true)}
-                      disabled={refreshing}
-                      variant="outline"
-                    >
-                      <RefreshCw
-                        className={`w-4 h-4 mr-2 ${
-                          refreshing ? "animate-spin" : ""
-                        }`}
-                      />
-                      Try Again
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ) : (
-              <MBTable
-                measurementBooks={measurementBooks}
-                onViewMB={handleViewMB}
-                onEditMB={handleEditMB}
-                onDeleteMB={handleDeleteClick}
-                isLoading={loading}
-              />
-            )}
           </div>
-        </MBFilterProvider>
-      ) : (
-        <Card>
-          <CardContent className="py-12">
-            <div className="text-center text-gray-500">
-              <FolderOpen className="w-12 h-12 mx-auto mb-4" />
-              <h3 className="text-lg font-medium mb-2">No Project Selected</h3>
-              <p className="text-sm">
-                Please select a project above to view and manage its measurement
-                books.
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-      )}
 
-      {/* Create Form Dialog */}
-      {showCreateForm && (
-        <MBForm
-          mode="create"
-          isOpen={showCreateForm}
-          onClose={() => setShowCreateForm(false)}
-          onSubmit={handleCreateMB}
-          projectOptions={projects.map((p) => ({
-            id: p.id,
-            name: p.name,
-            workOrderNumber: p.workOrderNumber,
-          }))}
-          isLoading={formLoading}
-        />
-      )}
+          {/* Filters */}
+          <MBFilters
+            measurementBooks={measurementBooks}
+            onProjectIdSearch={handleProjectSearch}
+            isSearching={searchingProject}
+          />
 
-      {/* Edit Form Dialog */}
-      {showEditForm && editingMB && (
-        <MBForm
-          mode="edit"
-          isOpen={showEditForm}
-          onClose={() => {
-            setShowEditForm(false);
-            setEditingMB(null);
-          }}
-          onSubmit={handleUpdateMB}
-          measurementBook={editingMB}
-          isLoading={formLoading}
-        />
-      )}
+          {/* Table */}
+          {error ? (
+            <Card>
+              <CardContent className="py-8">
+                <div className="text-center text-red-600">
+                  <AlertTriangle className="w-12 h-12 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium mb-2">
+                    Failed to load measurement books
+                  </h3>
+                  <p className="text-sm mb-4">{error}</p>
+                  <Button
+                    onClick={handleRefresh}
+                    disabled={refreshing}
+                    variant="outline"
+                  >
+                    <RefreshCw
+                      className={`w-4 h-4 mr-2 ${
+                        refreshing ? "animate-spin" : ""
+                      }`}
+                    />
+                    Try Again
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          ) : (
+            <MBTable
+              measurementBooks={measurementBooks}
+              onViewMB={handleViewMB}
+              // pagination={pagination}
+              onPageChange={handlePageChange}
+              isLoading={loading}
+            />
+          )}
+        </div>
+      </MBFilterProvider>
 
       {/* Detail View Dialog */}
       {showDetailDialog && selectedMB && (
         <Dialog open={showDetailDialog} onOpenChange={setShowDetailDialog}>
           <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>{selectedMB.title}</DialogTitle>
-              <DialogDescription>Measurement Book Details</DialogDescription>
+              <DialogTitle>Measurement Book Details</DialogTitle>
+              <DialogDescription>
+                Detailed information about the measurement book
+              </DialogDescription>
             </DialogHeader>
 
             <div className="space-y-6">
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div>
-                  <span className="font-medium text-gray-600">MB Number:</span>
-                  <div className="mt-1">{selectedMB.mbNumber}</div>
-                </div>
-                <div>
-                  <span className="font-medium text-gray-600">Status:</span>
-                  <div className="mt-1">
-                    <span
-                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
-                      ${
-                        selectedMB.status === "Approved"
-                          ? "bg-green-100 text-green-800"
-                          : selectedMB.status === "Rejected"
-                          ? "bg-red-100 text-red-800"
-                          : selectedMB.status === "Under Review"
-                          ? "bg-yellow-100 text-yellow-800"
-                          : "bg-gray-100 text-gray-800"
-                      }`}
-                    >
-                      {selectedMB.status}
+              {/* Project Information */}
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <h4 className="font-medium text-gray-900 mb-2">
+                  Project Information
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <span className="font-medium text-gray-600">
+                      Project Name:
                     </span>
+                    <div className="mt-1">{selectedMB.project.projectName}</div>
                   </div>
-                </div>
-                <div>
-                  <span className="font-medium text-gray-600">
-                    Measurement Date:
-                  </span>
-                  <div className="mt-1">
-                    {new Date(selectedMB.measurementDate).toLocaleDateString()}
+                  <div>
+                    <span className="font-medium text-gray-600">
+                      Work Order:
+                    </span>
+                    <div className="mt-1">
+                      {selectedMB.project.workOrderNumber}
+                    </div>
                   </div>
-                </div>
-                <div>
-                  <span className="font-medium text-gray-600">Contractor:</span>
-                  <div className="mt-1">
-                    {selectedMB.contractorName || "N/A"}
+                  <div>
+                    <span className="font-medium text-gray-600">District:</span>
+                    <div className="mt-1">{selectedMB.project.district}</div>
                   </div>
-                </div>
-                <div>
-                  <span className="font-medium text-gray-600">Work Order:</span>
-                  <div className="mt-1">
-                    {selectedMB.workOrderNumber || "N/A"}
-                  </div>
-                </div>
-                <div>
-                  <span className="font-medium text-gray-600">File:</span>
-                  <div className="mt-1">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => window.open(selectedMB.fileUrl, "_blank")}
-                    >
-                      <ExternalLink className="w-4 h-4 mr-2" />
-                      {selectedMB.uploadedFile.originalName}
-                    </Button>
+                  {selectedMB.project.state && (
+                    <div>
+                      <span className="font-medium text-gray-600">State:</span>
+                      <div className="mt-1">{selectedMB.project.state}</div>
+                    </div>
+                  )}
+                  <div>
+                    <span className="font-medium text-gray-600">
+                      Estimated Cost:
+                    </span>
+                    <div className="mt-1">
+                      ₹{selectedMB.project.estimatedCost.toLocaleString()}
+                    </div>
                   </div>
                 </div>
               </div>
 
+              {/* MB Details */}
               <div>
-                <span className="font-medium text-gray-600">Description:</span>
-                <div className="mt-2 p-3 bg-gray-50 rounded-lg text-sm">
+                <h4 className="font-medium text-gray-900 mb-3">Description</h4>
+                <div className="p-3 bg-gray-50 rounded-lg text-sm">
                   {selectedMB.description}
                 </div>
               </div>
 
               {selectedMB.remarks && (
                 <div>
-                  <span className="font-medium text-gray-600">Remarks:</span>
-                  <div className="mt-2 p-3 bg-gray-50 rounded-lg text-sm">
+                  <h4 className="font-medium text-gray-900 mb-3">Remarks</h4>
+                  <div className="p-3 bg-yellow-50 rounded-lg text-sm">
                     {selectedMB.remarks}
                   </div>
                 </div>
               )}
 
+              {/* File Information */}
+              <div>
+                <h4 className="font-medium text-gray-900 mb-3">
+                  File Information
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <span className="font-medium text-gray-600">
+                      File Name:
+                    </span>
+                    <div className="mt-1">
+                      {selectedMB.uploadedFile.originalName}
+                    </div>
+                  </div>
+                  <div>
+                    <span className="font-medium text-gray-600">
+                      File Type:
+                    </span>
+                    <div className="mt-1 capitalize">
+                      {selectedMB.uploadedFile.fileType}
+                    </div>
+                  </div>
+                  <div>
+                    <span className="font-medium text-gray-600">
+                      MIME Type:
+                    </span>
+                    <div className="mt-1">
+                      {selectedMB.uploadedFile.mimeType}
+                    </div>
+                  </div>
+                  <div>
+                    <span className="font-medium text-gray-600">
+                      File Size:
+                    </span>
+                    <div className="mt-1">
+                      {selectedMB.humanReadableFileSize ||
+                        `${(
+                          selectedMB.uploadedFile.fileSize /
+                          (1024 * 1024)
+                        ).toFixed(2)} MB`}
+                    </div>
+                  </div>
+                  <div>
+                    <span className="font-medium text-gray-600">Uploaded:</span>
+                    <div className="mt-1">
+                      {formatDate(selectedMB.uploadedFile.uploadedAt)}
+                    </div>
+                  </div>
+                </div>
+                <div className="mt-3">
+                  <Button
+                    onClick={() => handleDownloadFile(selectedMB)}
+                    className="bg-teal-600 hover:bg-teal-700"
+                    disabled={!selectedMB.uploadedFile.downloadURL}
+                  >
+                    <Download className="w-4 h-4 mr-2" />
+                    Download File
+                  </Button>
+                </div>
+              </div>
+
+              {/* Status Information */}
+              <div>
+                <h4 className="font-medium text-gray-900 mb-3">
+                  Status Information
+                </h4>
+                <div className="space-y-3">
+                  <div className="flex items-center space-x-2">
+                    {selectedMB.approvedBy ? (
+                      <CheckCircle className="w-5 h-5 text-green-500" />
+                    ) : (
+                      <XCircle className="w-5 h-5 text-gray-400" />
+                    )}
+                    <span className="text-sm">
+                      {selectedMB.approvedBy ? "Approved" : "Not Approved"}
+                    </span>
+                  </div>
+
+                  {selectedMB.approvedBy && (
+                    <div className="bg-green-50 p-3 rounded-lg text-sm">
+                      <div>
+                        <strong>Approved by:</strong>{" "}
+                        {selectedMB.approvedBy.name}
+                      </div>
+                      <div>
+                        <strong>Role:</strong> {selectedMB.approvedBy.role}
+                      </div>
+                      <div>
+                        <strong>Approved at:</strong>{" "}
+                        {formatDate(selectedMB.approvedBy.approvedAt)}
+                      </div>
+                    </div>
+                  )}
+
+                  {selectedMB.rejectionReason && (
+                    <div className="bg-red-50 p-3 rounded-lg text-sm">
+                      <div>
+                        <strong>Rejection Reason:</strong>{" "}
+                        {selectedMB.rejectionReason}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Creation Information */}
               <div className="pt-4 border-t text-xs text-gray-500">
                 <div>
-                  Created by {selectedMB.createdBy.name} on{" "}
-                  {new Date(selectedMB.createdAt).toLocaleString()}
+                  Created by {selectedMB.createdBy.name} (
+                  {selectedMB.createdBy.role}) on{" "}
+                  {formatDate(selectedMB.createdAt)}
                 </div>
                 {selectedMB.lastModifiedBy && (
                   <div className="mt-1">
                     Last modified by {selectedMB.lastModifiedBy.name} on{" "}
-                    {new Date(
-                      selectedMB.lastModifiedBy.modifiedAt
-                    ).toLocaleString()}
+                    {formatDate(selectedMB.lastModifiedBy.modifiedAt)}
                   </div>
                 )}
               </div>
-            </div>
-          </DialogContent>
-        </Dialog>
-      )}
-
-      {/* Delete Confirmation Dialog */}
-      {showDeleteDialog && deletingMB && (
-        <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2 text-red-600">
-                <Trash2 className="w-5 h-5" />
-                Delete Measurement Book
-              </DialogTitle>
-              <DialogDescription>
-                Are you sure you want to delete this measurement book? This
-                action cannot be undone.
-              </DialogDescription>
-            </DialogHeader>
-
-            <div className="bg-gray-50 p-3 rounded-lg">
-              <div className="font-medium">{deletingMB.title}</div>
-              <div className="text-sm text-gray-500">{deletingMB.mbNumber}</div>
-            </div>
-
-            <div className="flex justify-end gap-3">
-              <Button
-                variant="outline"
-                onClick={() => setShowDeleteDialog(false)}
-                disabled={deleteLoading}
-              >
-                Cancel
-              </Button>
-              <Button
-                variant="destructive"
-                onClick={handleDeleteMB}
-                disabled={deleteLoading}
-              >
-                {deleteLoading && (
-                  <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                )}
-                Delete
-              </Button>
             </div>
           </DialogContent>
         </Dialog>
