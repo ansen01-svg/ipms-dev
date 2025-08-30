@@ -46,6 +46,9 @@ interface MBFormData {
   remarks: string;
 }
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_PROD_API_URL;
+// const API_BASE_URL = process.env.NEXT_PUBLIC_DEV_API_URL;
+
 const CreateMBPage = () => {
   const router = useRouter();
   const { user } = useAuth();
@@ -267,16 +270,13 @@ const CreateMBPage = () => {
       }));
       formData.append("workItemsReference", JSON.stringify(workItemsData));
 
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_DEV_API_URL}/mb`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-          body: formData,
-        }
-      );
+      const response = await fetch(`${API_BASE_URL}/mb`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      });
 
       const data = await response.json();
 

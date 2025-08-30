@@ -431,6 +431,9 @@ interface ArchiveProjectHeaderProps {
   user: User;
 }
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_PROD_API_URL;
+// const API_BASE_URL = process.env.NEXT_PUBLIC_DEV_API_URL;
+
 export function ArchiveProjectHeader({ project }: ArchiveProjectHeaderProps) {
   const [isDownloading, setIsDownloading] = useState(false);
 
@@ -475,7 +478,7 @@ export function ArchiveProjectHeader({ project }: ArchiveProjectHeaderProps) {
       });
 
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_DEV_API_URL}/archive-project/${project._id}/download-summary-pdf?${params}`,
+        `${API_BASE_URL}/archive-project/${project._id}/download-summary-pdf?${params}`,
         {
           method: "GET",
           headers: {
