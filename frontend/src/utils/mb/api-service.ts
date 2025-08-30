@@ -1,14 +1,11 @@
 import { getAuthToken } from "@/lib/rbac-config.ts/auth-local";
 import {
-  BulkUpdateData,
   CreateMBData,
   MBPaginationData,
-  MBStatistics,
   MeasurementBook,
   UpdateMBData,
 } from "@/types/mb.types";
 
-// const API_BASE_URL = process.env.NEXT_PUBLIC_PROD_API_URL;
 const API_BASE_URL = process.env.NEXT_PUBLIC_DEV_API_URL;
 
 class MeasurementBookApiService {
@@ -47,24 +44,15 @@ class MeasurementBookApiService {
   async createMB(mbData: CreateMBData): Promise<MeasurementBook> {
     const formData = new FormData();
 
-    // Append form fields
-    formData.append("projectId", mbData.projectId);
-    formData.append("title", mbData.title);
+    // Append form fields to match backend expectations
+    formData.append("project", mbData.project);
     formData.append("description", mbData.description);
-    formData.append("mbNumber", mbData.mbNumber);
-    formData.append("measurementDate", mbData.measurementDate);
 
-    if (mbData.workOrderNumber) {
-      formData.append("workOrderNumber", mbData.workOrderNumber);
-    }
-    if (mbData.contractorName) {
-      formData.append("contractorName", mbData.contractorName);
-    }
     if (mbData.remarks) {
       formData.append("remarks", mbData.remarks);
     }
 
-    // Append file
+    // Append file with the correct field name expected by backend
     formData.append("mbFile", mbData.mbFile);
 
     const response = await fetch(`${API_BASE_URL}/mb`, {
@@ -77,27 +65,81 @@ class MeasurementBookApiService {
   }
 
   /**
-   * Get all measurement books for a project
+   * Get all measurement books across all projects with filters
    */
-  async getMBsForProject(
-    projectId: string,
+  async getAllMBs(
     params: {
       page?: number;
       limit?: number;
-      status?: string;
       sortBy?: string;
       sortOrder?: "asc" | "desc";
       search?: string;
+      dateFrom?: string;
+      dateTo?: string;
+      hasRemarks?: string;
+      isApproved?: string;
+      projectId?: string;
     } = {}
   ): Promise<MBPaginationData> {
     const searchParams = new URLSearchParams();
 
     if (params.page) searchParams.append("page", params.page.toString());
     if (params.limit) searchParams.append("limit", params.limit.toString());
-    if (params.status) searchParams.append("status", params.status);
     if (params.sortBy) searchParams.append("sortBy", params.sortBy);
     if (params.sortOrder) searchParams.append("sortOrder", params.sortOrder);
     if (params.search) searchParams.append("search", params.search);
+    if (params.dateFrom) searchParams.append("dateFrom", params.dateFrom);
+    if (params.dateTo) searchParams.append("dateTo", params.dateTo);
+    if (params.hasRemarks && params.hasRemarks !== "all") {
+      searchParams.append("hasRemarks", params.hasRemarks);
+    }
+    if (params.isApproved && params.isApproved !== "all") {
+      searchParams.append("isApproved", params.isApproved);
+    }
+    if (params.projectId) searchParams.append("projectId", params.projectId);
+
+    const url = `${API_BASE_URL}/mb/all?${searchParams.toString()}`;
+
+    const response = await fetch(url, {
+      method: "GET",
+      headers: this.getHeaders(true),
+    });
+
+    return this.handleResponse<MBPaginationData>(response);
+  }
+
+  /**
+   * Get measurement books for a specific project
+   */
+  async getMBsForProject(
+    projectId: string,
+    params: {
+      page?: number;
+      limit?: number;
+      sortBy?: string;
+      sortOrder?: "asc" | "desc";
+      search?: string;
+      dateFrom?: string;
+      dateTo?: string;
+      hasRemarks?: string;
+      isApproved?: string;
+    } = {}
+  ): Promise<MBPaginationData> {
+    const searchParams = new URLSearchParams();
+
+    if (params.page) searchParams.append("page", params.page.toString());
+    if (params.limit) searchParams.append("limit", params.limit.toString());
+    if (params.sortBy) searchParams.append("sortBy", params.sortBy);
+    if (params.sortOrder) searchParams.append("sortOrder", params.sortOrder);
+    if (params.search) searchParams.append("search", params.search);
+    if (params.dateFrom) searchParams.append("dateFrom", params.dateFrom);
+    if (params.dateTo) searchParams.append("dateTo", params.dateTo);
+    if (params.hasRemarks && params.hasRemarks !== "all") {
+      searchParams.append("hasRemarks", params.hasRemarks);
+    }
+    if (params.isApproved && params.isApproved !== "all") {
+      searchParams.append("isApproved", params.isApproved);
+    }
 
     const url = `${API_BASE_URL}/mb/project/${projectId}?${searchParams.toString()}`;
 
@@ -153,85 +195,10 @@ class MeasurementBookApiService {
   }
 
   /**
-   * Get MB statistics for a project
+   * Get Firebase download URL for file
    */
-  async getMBStatistics(projectId: string): Promise<MBStatistics> {
-    const response = await fetch(
-      `${API_BASE_URL}/mb/project/${projectId}/statistics`,
-      {
-        method: "GET",
-        headers: this.getHeaders(true),
-      }
-    );
-
-    return this.handleResponse<MBStatistics>(response);
-  }
-
-  /**
-   * Bulk update MB status
-   */
-  async bulkUpdateStatus(
-    bulkData: BulkUpdateData
-  ): Promise<{ matchedCount: number; modifiedCount: number }> {
-    const response = await fetch(`${API_BASE_URL}/mb/bulk/status`, {
-      method: "PUT",
-      headers: {
-        ...this.getHeaders(true),
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(bulkData),
-    });
-
-    return this.handleResponse<{ matchedCount: number; modifiedCount: number }>(
-      response
-    );
-  }
-
-  /**
-   * Export MB data as CSV
-   */
-  async exportMBData(
-    projectId: string,
-    params: {
-      status?: string;
-      startDate?: string;
-      endDate?: string;
-    } = {}
-  ): Promise<void> {
-    const searchParams = new URLSearchParams();
-
-    if (params.status) searchParams.append("status", params.status);
-    if (params.startDate) searchParams.append("startDate", params.startDate);
-    if (params.endDate) searchParams.append("endDate", params.endDate);
-
-    const url = `${API_BASE_URL}/mb/project/${projectId}/export?${searchParams.toString()}`;
-
-    const response = await fetch(url, {
-      method: "GET",
-      headers: this.getHeaders(true),
-    });
-
-    if (!response.ok) {
-      throw new Error(`Export failed: ${response.status}`);
-    }
-
-    // Handle file download
-    const blob = await response.blob();
-    const downloadUrl = window.URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = downloadUrl;
-    link.download = `measurement-books-${projectId}-${Date.now()}.csv`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    window.URL.revokeObjectURL(downloadUrl);
-  }
-
-  /**
-   * Get file URL for display/download
-   */
-  getFileUrl(fileName: string): string {
-    return `${API_BASE_URL}/mb-files/${fileName}`;
+  getFileDownloadUrl(mb: MeasurementBook): string {
+    return mb.uploadedFile.downloadURL;
   }
 }
 

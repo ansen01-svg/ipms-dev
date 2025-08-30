@@ -1,4 +1,4 @@
-// frontend/src/components/dashboard/measurement-books/mb-form.tsx
+// frontend/src/components/dashboard/mb/mb-form.tsx - Updated for backend schema
 
 import { Button } from "@/components/ui/button";
 import {
@@ -18,70 +18,42 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { CreateMBData, MeasurementBook, UpdateMBData } from "@/types/mb.types";
+import { CreateMBData } from "@/types/mb.types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { File, Loader2, Upload, X } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 
-// Form validation schema
+// Form validation schema matching backend expectations
 const createMBSchema = z.object({
-  projectId: z.string().min(1, "Project is required"),
-  title: z
+  project: z
     .string()
-    .min(5, "Title must be at least 5 characters")
-    .max(200, "Title cannot exceed 200 characters"),
+    .min(1, "Project ID is required")
+    .min(24, "Project ID must be a valid MongoDB ObjectId")
+    .max(24, "Project ID must be a valid MongoDB ObjectId"),
   description: z
     .string()
     .min(10, "Description must be at least 10 characters")
     .max(1000, "Description cannot exceed 1000 characters"),
-  mbNumber: z
-    .string()
-    .min(1, "MB number is required")
-    .max(50, "MB number cannot exceed 50 characters"),
-  measurementDate: z.string().min(1, "Measurement date is required"),
-  workOrderNumber: z.string().optional(),
-  contractorName: z.string().optional(),
   remarks: z
     .string()
     .max(500, "Remarks cannot exceed 500 characters")
     .optional(),
 });
 
-const updateMBSchema = createMBSchema.omit({ projectId: true });
-
 type CreateMBFormData = z.infer<typeof createMBSchema>;
-type UpdateMBFormData = z.infer<typeof updateMBSchema>;
 
 // Props interfaces
 interface MBFormProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (data: CreateMBData) => Promise<void>;
-  projectOptions: Array<{ id: string; name: string; workOrderNumber: string }>;
+  projectOptions?: Array<{ id: string; name: string; workOrderNumber: string }>;
   isLoading?: boolean;
   mode: "create";
 }
-
-interface MBEditFormProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onSubmit: (data: UpdateMBData) => Promise<void>;
-  measurementBook: MeasurementBook;
-  isLoading?: boolean;
-  mode: "edit";
-}
-
-type MBFormUnionProps = MBFormProps | MBEditFormProps;
 
 // File upload component
 function FileUpload({
@@ -172,43 +144,22 @@ function FileUpload({
 }
 
 // Main form component
-export function MBForm(props: MBFormUnionProps) {
-  const { isOpen, onClose, onSubmit, isLoading = false, mode } = props;
+export function MBForm({
+  isOpen,
+  onClose,
+  onSubmit,
+  isLoading = false,
+}: MBFormProps) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [fileError, setFileError] = useState<string>("");
 
-  // Determine which schema and default values to use
-  const isCreateMode = mode === "create";
-  const schema = isCreateMode ? createMBSchema : updateMBSchema;
-
-  const defaultValues = isCreateMode
-    ? {
-        projectId: "",
-        title: "",
-        description: "",
-        mbNumber: "",
-        measurementDate: "",
-        workOrderNumber: "",
-        contractorName: "",
-        remarks: "",
-      }
-    : {
-        title: (props as MBEditFormProps).measurementBook.title,
-        description: (props as MBEditFormProps).measurementBook.description,
-        mbNumber: (props as MBEditFormProps).measurementBook.mbNumber,
-        measurementDate: (
-          props as MBEditFormProps
-        ).measurementBook.measurementDate.split("T")[0],
-        workOrderNumber:
-          (props as MBEditFormProps).measurementBook.workOrderNumber || "",
-        contractorName:
-          (props as MBEditFormProps).measurementBook.contractorName || "",
-        remarks: (props as MBEditFormProps).measurementBook.remarks || "",
-      };
-
-  const form = useForm<CreateMBFormData | UpdateMBFormData>({
-    resolver: zodResolver(schema),
-    defaultValues,
+  const form = useForm<CreateMBFormData>({
+    resolver: zodResolver(createMBSchema),
+    defaultValues: {
+      project: "",
+      description: "",
+      remarks: "",
+    },
   });
 
   const handleFileSelect = (file: File) => {
@@ -221,22 +172,20 @@ export function MBForm(props: MBFormUnionProps) {
     setFileError("");
   };
 
-  const handleSubmit = async (data: CreateMBFormData | UpdateMBFormData) => {
-    if (isCreateMode) {
-      if (!selectedFile) {
-        setFileError("File is required");
-        return;
-      }
-
-      const createData: CreateMBData = {
-        ...(data as CreateMBFormData),
-        mbFile: selectedFile,
-      };
-
-      await onSubmit(createData);
-    } else {
-      await onSubmit(data as UpdateMBData);
+  const handleSubmit = async (data: CreateMBFormData) => {
+    if (!selectedFile) {
+      setFileError("File is required");
+      return;
     }
+
+    const createData: CreateMBData = {
+      project: data.project,
+      description: data.description,
+      remarks: data.remarks,
+      mbFile: selectedFile,
+    };
+
+    await onSubmit(createData);
   };
 
   const handleClose = () => {
@@ -248,134 +197,40 @@ export function MBForm(props: MBFormUnionProps) {
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>
-            {isCreateMode
-              ? "Create New Measurement Book"
-              : "Edit Measurement Book"}
-          </DialogTitle>
+          <DialogTitle>Create New Measurement Book</DialogTitle>
           <DialogDescription>
-            {isCreateMode
-              ? "Upload and create a new measurement book for the selected project."
-              : "Update the measurement book details."}
+            Upload and create a new measurement book for a project.
           </DialogDescription>
         </DialogHeader>
 
         <Form {...form}>
           <form
             onSubmit={form.handleSubmit(handleSubmit)}
-            className="space-y-6"
+            className="space-y-4"
           >
-            {/* Project Selection - only for create mode */}
-            {isCreateMode && (
-              <FormField
-                control={form.control}
-                name="projectId"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Project *</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a project" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {(props as MBFormProps).projectOptions.map(
-                          (project) => (
-                            <SelectItem key={project.id} value={project.id}>
-                              {project.name} ({project.workOrderNumber})
-                            </SelectItem>
-                          )
-                        )}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            )}
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Title */}
-              <FormField
-                control={form.control}
-                name="title"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Title *</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Enter MB title" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {/* MB Number */}
-              <FormField
-                control={form.control}
-                name="mbNumber"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>MB Number *</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Enter MB number" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {/* Measurement Date */}
-              <FormField
-                control={form.control}
-                name="measurementDate"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Measurement Date *</FormLabel>
-                    <FormControl>
-                      <Input type="date" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {/* Work Order Number */}
-              <FormField
-                control={form.control}
-                name="workOrderNumber"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Work Order Number</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Enter work order number" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {/* Contractor Name */}
-              <FormField
-                control={form.control}
-                name="contractorName"
-                render={({ field }) => (
-                  <FormItem className="md:col-span-2">
-                    <FormLabel>Contractor Name</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Enter contractor name" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+            {/* Project ID */}
+            <FormField
+              control={form.control}
+              name="project"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Project ID *</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="Enter MongoDB Project ID (24 characters)"
+                      {...field}
+                      maxLength={24}
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    Enter the exact Project ID from your database
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
             {/* Description */}
             <FormField
@@ -391,6 +246,9 @@ export function MBForm(props: MBFormUnionProps) {
                       {...field}
                     />
                   </FormControl>
+                  <FormDescription>
+                    Provide a clear description of the measurement book contents
+                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -418,20 +276,18 @@ export function MBForm(props: MBFormUnionProps) {
               )}
             />
 
-            {/* File Upload - only for create mode */}
-            {isCreateMode && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Upload File *
-                </label>
-                <FileUpload
-                  onFileSelect={handleFileSelect}
-                  selectedFile={selectedFile}
-                  onFileRemove={handleFileRemove}
-                  error={fileError}
-                />
-              </div>
-            )}
+            {/* File Upload */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Upload File *
+              </label>
+              <FileUpload
+                onFileSelect={handleFileSelect}
+                selectedFile={selectedFile}
+                onFileRemove={handleFileRemove}
+                error={fileError}
+              />
+            </div>
 
             {/* Form Actions */}
             <div className="flex items-center justify-end space-x-3 pt-4 border-t">
@@ -449,7 +305,7 @@ export function MBForm(props: MBFormUnionProps) {
                 className="bg-teal-600 hover:bg-teal-700"
               >
                 {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                {isCreateMode ? "Create MB" : "Update MB"}
+                Create MB
               </Button>
             </div>
           </form>

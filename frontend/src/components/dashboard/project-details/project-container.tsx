@@ -38,7 +38,7 @@ const enrichProjectData = (project: DbProject): DbProject => {
     daysRemaining: calculateDaysRemaining(project.projectEndDate),
     currentStage: project.status,
     lastUpdated: project.updatedAt,
-    totalSubProjects: project.subProjects.length,
+    totalSubProjects: project.subProjects ? project.subProjects.length : 0,
     progress: project.progressPercentage, // Alias for backward compatibility
     budgetUtilized: mockBudgetUtilized,
   };
@@ -66,6 +66,7 @@ export default function ProjectContainer({
         setError(null);
 
         const fetchedProject = await fetchProjectById(projectId);
+        console.log("Fetched project:", projectId, fetchedProject);
 
         if (fetchedProject) {
           // Enrich the project data with calculated fields
@@ -86,6 +87,9 @@ export default function ProjectContainer({
 
     loadProject();
   }, [projectId]);
+
+  console.log("id:", projectId);
+  console.log("currentProject:", currentProject);
 
   // Retry function
   const retryLoadProject = () => {

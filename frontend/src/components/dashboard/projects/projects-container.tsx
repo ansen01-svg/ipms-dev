@@ -281,6 +281,7 @@ export function ProjectsContainer() {
   };
 
   const handleViewProject = (project: DbProject) => {
+    console.log("Navigating to project:", project);
     router.push(`/dashboard/projects/${project.projectId}`);
   };
 
