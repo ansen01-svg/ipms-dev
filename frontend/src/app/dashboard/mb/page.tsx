@@ -11,6 +11,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { useAuth } from "@/contexts/auth-context";
 import { MBPaginationData, MeasurementBook } from "@/types/mb.types";
 import { mbApiService } from "@/utils/mb/api-service";
 import {
@@ -45,6 +46,8 @@ export default function MeasurementBooksPage() {
   // Detail view states
   const [showDetailDialog, setShowDetailDialog] = useState(false);
   const [selectedMB, setSelectedMB] = useState<MeasurementBook | null>(null);
+
+  const { user } = useAuth();
 
   // Load all measurement books initially
   const loadAllMeasurementBooks = useCallback(
@@ -233,7 +236,7 @@ export default function MeasurementBooksPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="w-full mb-5 space-y-4 sm:space-y-6 bg-white p-4 sm:p-6 rounded-xl shadow">
       {/* Header */}
       <div className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
         <div>
@@ -244,15 +247,20 @@ export default function MeasurementBooksPage() {
             View and manage measurement books across all projects
           </p>
         </div>
-        <Button onClick={handleNewMB} className="bg-teal-600 hover:bg-teal-700">
-          <Plus className="w-4 h-4 mr-2" />
-          New MB
-        </Button>
+        {user?.role === "JE" && (
+          <Button
+            onClick={handleNewMB}
+            className="bg-teal-600 hover:bg-teal-700"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            New MB
+          </Button>
+        )}
       </div>
 
       {/* Main Content */}
       <MBFilterProvider>
-        <div className="space-y-6">
+        <div className="w-full space-y-4 sm:space-y-6">
           {/* Action Bar */}
           <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
             <div className="flex items-center gap-2">
