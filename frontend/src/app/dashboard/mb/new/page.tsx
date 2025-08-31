@@ -7,16 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/contexts/auth-context";
 import { getAuthToken } from "@/lib/rbac-config.ts/auth-local";
-import {
-  ArrowLeft,
-  Calculator,
-  File,
-  Plus,
-  Save,
-  Trash2,
-  Upload,
-  X,
-} from "lucide-react";
+import { Calculator, File, Plus, Save, Trash2, Upload, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -435,27 +426,16 @@ const CreateMBPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="w-full mb-5 space-y-4">
       {/* Header */}
-      <div className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="">
+        <div className="">
           <div className="flex justify-between items-center py-4">
             <div className="flex items-center space-x-4">
-              <Button
-                variant="ghost"
-                onClick={() => router.push("/dashboard/mb")}
-                className="text-gray-600 hover:text-gray-900"
-              >
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back to MB List
-              </Button>
               <div>
                 <h1 className="text-2xl font-bold text-gray-900">
                   Create New Measurement Book
                 </h1>
-                <p className="text-sm text-gray-600">
-                  Upload and create measurement book with work items
-                </p>
               </div>
             </div>
             <div className="flex space-x-2">
@@ -489,7 +469,7 @@ const CreateMBPage = () => {
       </div>
 
       {/* Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+      <div className="py-6 space-y-6">
         {/* MB Information Card */}
         <Card>
           <CardHeader>
@@ -667,23 +647,6 @@ const CreateMBPage = () => {
                     </div>
                   </div>
 
-                  {/* File Upload for Work Item */}
-                  <div className="mb-4">
-                    <Label className="text-sm font-medium">
-                      Work Item File (Optional)
-                    </Label>
-                    <div className="mt-2">
-                      <FileUpload
-                        file={item.uploadedFile}
-                        onFileSelect={(file) =>
-                          handleWorkItemFileSelect(itemIndex, file)
-                        }
-                        onFileRemove={() => removeWorkItemFile(itemIndex)}
-                        label="Upload Work Item File"
-                      />
-                    </div>
-                  </div>
-
                   {/* Measurements Table */}
                   <div className="border-t pt-4">
                     <div className="flex justify-between items-center mb-4">
@@ -846,6 +809,23 @@ const CreateMBPage = () => {
                           {item.unit}
                         </span>
                       </div>
+                    </div>
+                  </div>
+
+                  {/* File Upload for Work Item */}
+                  <div className="mb-4">
+                    <Label className="text-sm font-medium">
+                      Work Item File
+                    </Label>
+                    <div className="mt-2">
+                      <FileUpload
+                        file={item.uploadedFile}
+                        onFileSelect={(file) =>
+                          handleWorkItemFileSelect(itemIndex, file)
+                        }
+                        onFileRemove={() => removeWorkItemFile(itemIndex)}
+                        label="Upload Work Item File"
+                      />
                     </div>
                   </div>
                 </div>

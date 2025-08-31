@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { DbProject } from "@/types/projects.types";
 import { PROJECT_STATUSES } from "@/utils/project-details/constants";
-import { Edit, Trash2 } from "lucide-react";
+import { Edit } from "lucide-react";
 import { useState } from "react";
 
 interface JEActionsProps {
@@ -28,10 +28,6 @@ export function JEActions({ project }: JEActionsProps) {
     project.status === PROJECT_STATUSES.APPROVED ||
     project.status === PROJECT_STATUSES.ONGOING;
 
-  const canDelete =
-    project.status === PROJECT_STATUSES.REJECTED_BY_AEE ||
-    project.status === PROJECT_STATUSES.DRAFT;
-
   return (
     <div className="space-y-4">
       <div className="bg-white rounded-xl p-4 shadow-sm">
@@ -50,18 +46,7 @@ export function JEActions({ project }: JEActionsProps) {
             className="flex items-center gap-2 text-teal-600 border-teal-600 hover:bg-teal-50 hover:text-teal-700 hover:border-teal-700 active:bg-teal-100 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 ease-in-out transform hover:scale-105 active:scale-95"
           >
             <Edit className="h-4 w-4 transition-transform duration-200" />
-            {loading === "Edit Project" ? "Editing..." : "Edit Project"}
-          </Button>
-
-          {/* Delete button */}
-          <Button
-            onClick={() => handleAction("Delete Project")}
-            disabled={!canDelete || loading === "Delete Project"}
-            variant="destructive"
-            className="flex items-center gap-2 bg-red-600 hover:bg-red-700 active:bg-red-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 ease-in-out transform hover:scale-105 active:scale-95 shadow-md hover:shadow-lg"
-          >
-            <Trash2 className="h-4 w-4 transition-transform duration-200" />
-            {loading === "Delete Project" ? "Deleting..." : "Delete Project"}
+            {loading === "Edit Project" ? "Editing..." : "Update Progress"}
           </Button>
 
           {/* Draft button */}
