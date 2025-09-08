@@ -268,7 +268,7 @@ export function ProjectHeader({ project }: ProjectHeaderProps) {
                 <div>
                   <p className="text-sm text-gray-500">Sanction Department</p>
                   <p className="text-sm font-medium text-gray-900">
-                    {project.sanctionAndDepartment}
+                    {project.sanctioningDepartment}
                   </p>
                 </div>
               </div>
