@@ -16,21 +16,23 @@
 
 "use client";
 
-import RouteGuard from "@/components/auth/route-guard";
 import DashboardLayout from "@/components/dashboard/layout-components/layout";
 import { useAuth } from "@/contexts/auth-context";
 import { User } from "@/types/user.types";
+import { useRouter } from "next/navigation";
 
 export default function DashboardRootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const router = useRouter();
   const { user } = useAuth();
 
-  return (
-    <RouteGuard requireAuth={true}>
-      <DashboardLayout user={user as User}>{children}</DashboardLayout>
-    </RouteGuard>
-  );
+  if (!user) {
+    router.replace("/login");
+    return;
+  }
+
+  return <DashboardLayout user={user as User}>{children}</DashboardLayout>;
 }

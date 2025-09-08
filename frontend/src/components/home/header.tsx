@@ -245,8 +245,8 @@ export default function Header({ className = "" }: HeaderProps) {
     <header className={`w-full bg-white border-b border-gray-100 ${className}`}>
       {/* Date Display Section */}
       <div className="bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 py-2">
-          <div className="flex justify-between items-center py-2">
+        <div className="max-w-7xl mx-auto px-4 py-1">
+          <div className="flex justify-between items-center py-1">
             <div className="flex items-center gap-2 text-sm font-medium">
               <Calendar className="w-4 h-4" />
               <span className="tracking-wide">
@@ -297,8 +297,8 @@ export default function Header({ className = "" }: HeaderProps) {
               <Image
                 src={logo}
                 alt="Government of Assam Logo"
-                width={60}
-                height={60}
+                width={70}
+                height={70}
                 className="object-cover"
                 priority
               />
@@ -309,21 +309,24 @@ export default function Header({ className = "" }: HeaderProps) {
               {/* Desktop Version (Extra Large screens) - Hierarchical approach */}
               <div className="hidden xl:block">
                 <h1 className="text-xl font-bold text-gray-900 tracking-wide leading-tight">
-                  INTEGRATED PROJECT MONITORING SYSTEM
+                  ASSAM PLAINS TRIBES DEVELOPMENT CORPORATION LIMITED
                 </h1>
               </div>
 
               {/* Tablet Version (Medium to Large screens) */}
               <h1 className="hidden sm:block xl:hidden text-lg font-bold text-gray-900 tracking-wide leading-tight">
-                INTEGRATED PROJECT MONITORING SYSTEM
+                ASSAM PLAINS TRIBES DEVELOPMENT
               </h1>
+              <h2 className="hidden sm:block xl:hidden text-lg font-bold text-gray-900 tracking-wide leading-tight">
+                CORPORATION LIMITED
+              </h2>
 
               {/* Mobile Version (Small screens) */}
               <h1 className="sm:hidden text-sm font-bold text-gray-900 tracking-wide leading-tight">
-                INTEGRATED PROJECT
+                ASSAM PLAINS TRIBES DEVELOPMENT
               </h1>
               <h2 className="sm:hidden text-sm font-bold text-gray-900 tracking-wide leading-tight">
-                MONITORING SYSTEM
+                CORPORATION LIMITED
               </h2>
 
               {/* Subtitle */}

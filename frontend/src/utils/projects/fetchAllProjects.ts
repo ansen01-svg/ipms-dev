@@ -2,11 +2,14 @@ import { clearAuthData, getAuthToken } from "@/lib/rbac-config.ts/auth-local";
 import {
   CombinedProgressUpdateRequest,
   CompletionStatusResponse,
+  ContractorWiseProjectsSummaryResponse,
   DbProject,
+  DistrictWiseProjectsSummaryResponse,
   FinancialProgressHistoryResponse,
   FinancialProgressUpdate,
   FinancialProgressUpdateRequest,
   FinancialProgressUpdateResponse,
+  FundDetails,
   ProgressHistoryResponse,
   ProgressStatus,
   ProgressSummary,
@@ -17,6 +20,7 @@ import {
   ProjectStatus,
   ProjectSummaryResponse,
   ProjectTimelineResponse,
+  SubFundsListResponse,
 } from "@/types/projects.types";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_PROD_API_URL;
@@ -128,14 +132,18 @@ interface BackendProject {
   description?: string;
   hasSubProjects: boolean;
   fund: string;
-  sanctionAndDepartment: string;
+  subFund: string; // NEW: Sub fund field
+  sanctioningDepartment: string;
   budgetHead?: string;
   executingDepartment: string;
   beneficiary?: string;
   workOrderNumber: string;
+  // NEW: Contractor fields
+  contractorName: string;
+  contractorAddress: string;
+  contractorPhoneNumber: string;
   estimatedCost: number;
   typeOfWork: string;
-  natureOfWork: string;
   projectStartDate: string;
   projectEndDate: string;
   extensionPeriodForCompletion?: string;
@@ -185,7 +193,7 @@ interface BackendProject {
   status: ProjectStatus;
   progressPercentage: number;
 
-  // NEW: Progress and Financial Tracking Fields
+  // Progress and Financial Tracking Fields
   financialProgress: number;
   billSubmittedAmount: number;
   progressUpdates: ProgressUpdate[];
@@ -206,6 +214,13 @@ interface BackendProject {
   latestFinancialProgressUpdate?: FinancialProgressUpdate;
   projectDurationDays?: number;
   totalSubProjectsCost?: number;
+  // NEW: Virtual fields for contractor and fund details
+  contractorContact?: {
+    name: string;
+    address: string;
+    phone: string;
+  };
+  fundDetails?: FundDetails;
 
   createdAt: string;
   updatedAt: string;
@@ -288,9 +303,24 @@ const getAuthHeaders = () => {
 };
 
 // Main fetch function - gets all projects from backend
-const fetchAllProjects = async (): Promise<DbProject[]> => {
+const fetchAllProjects = async (
+  filters?: Record<string, string>
+): Promise<DbProject[]> => {
   try {
-    const response = await fetch(`${API_BASE_URL}/project`, {
+    const queryParams = new URLSearchParams();
+    if (filters) {
+      Object.entries(filters).forEach(([key, value]) => {
+        if (value) {
+          queryParams.append(key, value);
+        }
+      });
+    }
+
+    const url = `${API_BASE_URL}/project${
+      queryParams.toString() ? `?${queryParams.toString()}` : ""
+    }`;
+
+    const response = await fetch(url, {
       method: "GET",
       headers: getAuthHeaders(),
     });
@@ -633,6 +663,127 @@ const getProjectSummary = async (
   }
 };
 
+// NEW: Get district-wise project summary
+const getDistrictWiseProjectsSummary = async (
+  filters?: Record<string, string>
+): Promise<DistrictWiseProjectsSummaryResponse> => {
+  try {
+    const queryParams = new URLSearchParams();
+    if (filters) {
+      Object.entries(filters).forEach(([key, value]) => {
+        if (value) {
+          queryParams.append(key, value);
+        }
+      });
+    }
+
+    const url = `${API_BASE_URL}/project/summary/districts${
+      queryParams.toString() ? `?${queryParams.toString()}` : ""
+    }`;
+
+    const response = await fetch(url, {
+      method: "GET",
+      headers: getAuthHeaders(),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      handleApiError(response, errorText);
+    }
+
+    const data: DistrictWiseProjectsSummaryResponse = await response.json();
+
+    if (!data.success) {
+      throw new Error(data.message || "Failed to fetch district-wise summary");
+    }
+
+    return data;
+  } catch (error) {
+    console.error("Error fetching district-wise project summary:", error);
+    throw error;
+  }
+};
+
+// NEW: Get contractor-wise project summary
+const getContractorWiseProjectsSummary = async (
+  filters?: Record<string, string>
+): Promise<ContractorWiseProjectsSummaryResponse> => {
+  try {
+    const queryParams = new URLSearchParams();
+    if (filters) {
+      Object.entries(filters).forEach(([key, value]) => {
+        if (value) {
+          queryParams.append(key, value);
+        }
+      });
+    }
+
+    const url = `${API_BASE_URL}/project/summary/contractors${
+      queryParams.toString() ? `?${queryParams.toString()}` : ""
+    }`;
+
+    const response = await fetch(url, {
+      method: "GET",
+      headers: getAuthHeaders(),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      handleApiError(response, errorText);
+    }
+
+    const data: ContractorWiseProjectsSummaryResponse = await response.json();
+
+    if (!data.success) {
+      throw new Error(
+        data.message || "Failed to fetch contractor-wise summary"
+      );
+    }
+
+    return data;
+  } catch (error) {
+    console.error("Error fetching contractor-wise project summary:", error);
+    throw error;
+  }
+};
+
+// NEW: Get sub funds list
+const getSubFundsList = async (
+  fund?: string
+): Promise<SubFundsListResponse> => {
+  try {
+    const queryParams = new URLSearchParams();
+    if (fund) {
+      queryParams.append("fund", fund);
+    }
+
+    const url = `${API_BASE_URL}/project/subfunds${
+      queryParams.toString() ? `?${queryParams.toString()}` : ""
+    }`;
+
+    const response = await fetch(url, {
+      method: "GET",
+      headers: getAuthHeaders(),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      handleApiError(response, errorText);
+    }
+
+    const data: SubFundsListResponse = await response.json();
+
+    if (!data.success) {
+      throw new Error(data.message || "Failed to fetch sub funds list");
+    }
+
+    return data;
+  } catch (error) {
+    console.error("Error fetching sub funds list:", error);
+    throw error;
+  }
+};
+
 // Get project timeline
 const getProjectTimeline = async (
   projectId: string
@@ -832,6 +983,84 @@ const bulkUpdateProgress = async (
   }
 };
 
+// NEW: Search projects with enhanced filters
+const searchProjects = async (searchParams: {
+  search?: string;
+  page?: number;
+  limit?: number;
+  sortBy?: string;
+  sortOrder?: "asc" | "desc";
+  filters?: {
+    status?: string;
+    district?: string;
+    fund?: string;
+    subFund?: string;
+    contractorName?: string;
+    createdBy?: string;
+    typeOfWork?: string;
+    dateRange?: {
+      start: string;
+      end: string;
+    };
+    progressRange?: {
+      min: number;
+      max: number;
+    };
+    budgetRange?: {
+      min: number;
+      max: number;
+    };
+  };
+}): Promise<ProjectsListResponse> => {
+  try {
+    const queryParams = new URLSearchParams();
+
+    if (searchParams.search) queryParams.append("search", searchParams.search);
+    if (searchParams.page)
+      queryParams.append("page", searchParams.page.toString());
+    if (searchParams.limit)
+      queryParams.append("limit", searchParams.limit.toString());
+    if (searchParams.sortBy) queryParams.append("sortBy", searchParams.sortBy);
+    if (searchParams.sortOrder)
+      queryParams.append("sortOrder", searchParams.sortOrder);
+
+    if (searchParams.filters) {
+      Object.entries(searchParams.filters).forEach(([key, value]) => {
+        if (value && typeof value === "string") {
+          queryParams.append(key, value);
+        } else if (value && typeof value === "object") {
+          queryParams.append(key, JSON.stringify(value));
+        }
+      });
+    }
+
+    const url = `${API_BASE_URL}/project/search${
+      queryParams.toString() ? `?${queryParams.toString()}` : ""
+    }`;
+
+    const response = await fetch(url, {
+      method: "GET",
+      headers: getAuthHeaders(),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      handleApiError(response, errorText);
+    }
+
+    const data: ProjectsListResponse = await response.json();
+
+    if (!data.success) {
+      throw new Error(data.message || "Failed to search projects");
+    }
+
+    return data;
+  } catch (error) {
+    console.error("Error searching projects:", error);
+    throw error;
+  }
+};
+
 // Utility function to format file size
 export const formatFileSize = (bytes: number): string => {
   if (bytes === 0) return "0 Bytes";
@@ -875,6 +1104,23 @@ export const calculateProgressGap = (
   return { gap, isAligned, status };
 };
 
+// NEW: Utility function to format contractor info
+export const formatContractorInfo = (
+  contractorName: string,
+  contractorPhone?: string
+): string => {
+  if (!contractorName) return "Unknown Contractor";
+  if (!contractorPhone) return contractorName;
+  return `${contractorName} (${contractorPhone})`;
+};
+
+// NEW: Utility function to format fund info
+export const formatFundInfo = (fund: string, subFund?: string): string => {
+  if (!fund) return "Unknown Fund";
+  if (!subFund) return fund;
+  return `${fund} - ${subFund}`;
+};
+
 // Export all functions
 export {
   bulkUpdateProgress,
@@ -885,11 +1131,15 @@ export {
   fetchProjectById,
   formatDate,
   getCompletionStatus,
+  getContractorWiseProjectsSummary, // NEW
+  getDistrictWiseProjectsSummary, // NEW
   getFinancialProgressHistory,
   getProgressHistory,
   getProgressStatus,
   getProjectSummary,
   getProjectTimeline,
+  getSubFundsList, // NEW
+  searchProjects, // NEW
   toggleFinancialProgressUpdates,
   toggleProgressUpdates,
   updateCombinedProgress,

@@ -1,6 +1,10 @@
 "use client";
 
+import logo from "@/assets/images/logo4.png";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/contexts/auth-context";
+import { setAuthToken, setUserData } from "@/lib/rbac-config.ts/auth-local";
+import { ROLE_DASHBOARD_PATHS } from "@/lib/rbac-config.ts/constants";
 import {
   VerifyOtpSchema,
   verifyOtpSchema,
@@ -9,13 +13,13 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import axios, { AxiosError } from "axios";
 import { LoaderCircle } from "lucide-react";
 import Image from "next/image";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 
 export default function VerifyOTPForm() {
-  const router = useRouter();
+  const { login } = useAuth();
   const searchParams = useSearchParams();
   const email = searchParams.get("email") || "test@example.com";
 
@@ -23,6 +27,7 @@ export default function VerifyOTPForm() {
     control,
     handleSubmit,
     setValue,
+    reset,
     getValues,
     formState: { errors },
   } = useForm<VerifyOtpSchema>({
@@ -32,7 +37,7 @@ export default function VerifyOTPForm() {
 
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
   const [resendTimer, setResendTimer] = useState(60);
-  const [loading, setLoading] = useState(false);
+  const [loading] = useState(false);
   const [resending, setResending] = useState(false);
 
   useEffect(() => {
@@ -76,19 +81,115 @@ export default function VerifyOTPForm() {
     }
   };
 
-  const onSubmit = async (data: VerifyOtpSchema) => {
-    setLoading(true);
+  const onSubmit = async (otpData: VerifyOtpSchema) => {
     try {
-      await axios.post("/api/auth/verify-otp", { email, otp: data.otp });
-      toast.success("OTP verified successfully");
-      router.push(`/reset-password?email=${encodeURIComponent(email)}`);
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_PROD_API_URL}/auth/verifyotp`,
+        // `${process.env.NEXT_PUBLIC_DEV_API_URL}/auth/verifyotp`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ ...otpData, email }),
+          credentials: "include",
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.error || data.message || "OTP verification failed"
+        );
+      }
+
+      console.log("OTP verification: API success", {
+        hasUser: !!data.user,
+        hasToken: !!(data.token || data.accessToken),
+        userRole: data.user?.role,
+      });
+
+      const token = data.token || data.accessToken;
+      if (!token) {
+        throw new Error("No token received from server");
+      }
+
+      // Store with error handling
+      try {
+        // Store in localStorage first
+        setAuthToken(token);
+        setUserData(data.user);
+
+        // Verify storage before proceeding
+        const storedToken = localStorage.getItem("auth-token");
+        const storedData = localStorage.getItem("user-data");
+
+        if (!storedToken || !storedData) {
+          throw new Error(
+            "Failed to store authentication data in localStorage"
+          );
+        }
+
+        console.log("Login: Storage verification passed");
+
+        // Update auth context
+        login(data.user, token);
+
+        // Small delay to ensure all operations complete
+        await new Promise((resolve) => setTimeout(resolve, 100));
+      } catch (storageError) {
+        console.error("Login: Storage failed:", storageError);
+        toast.error("Failed to save authentication data. Please try again.");
+        return;
+      }
+
+      // Reset form
+      reset();
+
+      // Determine redirect path
+      const dashboardPath =
+        ROLE_DASHBOARD_PATHS[
+          data.user.role as keyof typeof ROLE_DASHBOARD_PATHS
+        ];
+
+      if (!dashboardPath) {
+        throw new Error("Invalid user role or dashboard path not found");
+      }
+
+      window.location.href = dashboardPath;
     } catch (error) {
-      const err = error as AxiosError<{ message?: string }>;
-      toast.error(err.response?.data?.message || "OTP verification failed");
-    } finally {
-      setLoading(false);
+      console.error("Login: Error:", error);
+
+      // Clear any partially stored data on error
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("auth-token");
+        localStorage.removeItem("user-data");
+      }
+
+      if (error instanceof Error) {
+        toast.error(error.message);
+      } else if (error instanceof TypeError) {
+        toast.error("Network error. Please check your connection.");
+      } else {
+        toast.error("Something went wrong. Please try again.");
+      }
     }
   };
+
+  // const onSubmit = async (data: VerifyOtpSchema) => {
+  //   setLoading(true);
+  //   try {
+  //     await axios.post("/api/auth/verify-otp", { email, otp: data.otp });
+  //     toast.success("OTP verified successfully");
+  //     router.push(`/reset-password?email=${encodeURIComponent(email)}`);
+  //   } catch (error) {
+  //     const err = error as AxiosError<{ message?: string }>;
+  //     toast.error(err.response?.data?.message || "OTP verification failed");
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
 
   const handleResend = async () => {
     setResending(true);
@@ -115,7 +216,7 @@ export default function VerifyOTPForm() {
         {/* Logo Section */}
         <div className="flex justify-center">
           <Image
-            src="/assets/images/logo4.png"
+            src={logo}
             width={60}
             height={60}
             alt="Logo"

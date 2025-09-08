@@ -67,18 +67,6 @@ function OverviewTab({ project }: OverviewTabProps) {
           </div>
         </div>
 
-        {/* Nature of Work */}
-        <div className="px-4 py-4 border-b border-gray-100">
-          <div className="flex justify-between items-center">
-            <span className="text-sm font-medium text-gray-900">
-              Nature of Work
-            </span>
-            <span className="text-sm text-gray-600">
-              {project.natureOfWork}
-            </span>
-          </div>
-        </div>
-
         {/* Fund Source */}
         <div className="px-4 py-4 border-b border-gray-100">
           <div className="flex justify-between items-center">

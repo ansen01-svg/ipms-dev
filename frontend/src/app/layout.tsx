@@ -1,3 +1,4 @@
+import RouteGuard from "@/components/auth/route-guard";
 import { AuthProvider } from "@/contexts/auth-context";
 import type { Metadata } from "next";
 import localFont from "next/font/local";
@@ -30,7 +31,9 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <AuthProvider>{children}</AuthProvider>
+        <AuthProvider>
+          <RouteGuard requireAuth={true}>{children}</RouteGuard>
+        </AuthProvider>
       </body>
     </html>
   );
