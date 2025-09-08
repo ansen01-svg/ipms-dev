@@ -130,6 +130,45 @@ export interface ProgressSummary {
   financial: FinancialProgressSummary;
 }
 
+// Fund and Sub Fund interfaces
+export interface SubFund {
+  id: number;
+  name: string;
+  code: string;
+}
+
+export interface Fund {
+  id: number;
+  name: string;
+  code: string;
+  subFunds: SubFund[];
+}
+
+export interface FundDetails {
+  mainFund: {
+    name: string;
+    code: string;
+  };
+  subFund: {
+    name: string;
+    code: string;
+  } | null;
+  fullName: string;
+  fullCode: string;
+}
+
+// Contractor interfaces
+export interface ContractorContact {
+  name: string;
+  address: string;
+  phone: string;
+}
+
+export interface ContractorInfo {
+  name: string;
+  phone: string;
+}
+
 // Project status enum/type - matches backend constants
 export type ProjectStatus =
   | "Submitted to AEE"
@@ -161,14 +200,20 @@ export interface DbProject {
   description?: string;
   hasSubProjects: boolean;
   fund: string;
-  sanctionAndDepartment: string;
+  subFund: string; // NEW: Sub fund field
+  sanctioningDepartment: string;
   budgetHead?: string;
   executingDepartment: string;
   beneficiary?: string;
   workOrderNumber: string;
+
+  // NEW: Contractor fields
+  contractorName: string;
+  contractorAddress: string;
+  contractorPhoneNumber: string;
+
   estimatedCost: number;
   typeOfWork: string;
-  natureOfWork: string;
   projectStartDate: string;
   projectEndDate: string;
   extensionPeriodForCompletion?: string;
@@ -187,7 +232,7 @@ export interface DbProject {
   status: ProjectStatus;
   progressPercentage: number;
 
-  // NEW: Progress and Financial Tracking Fields
+  // Progress and Financial Tracking Fields
   financialProgress: number;
   billSubmittedAmount: number;
   progressUpdates: ProgressUpdate[];
@@ -213,6 +258,10 @@ export interface DbProject {
   projectDurationDays?: number;
   totalSubProjectsCost?: number;
 
+  // NEW: Virtual fields for contractor and fund details
+  contractorContact?: ContractorContact;
+  fundDetails?: FundDetails;
+
   // Frontend-calculated fields
   totalSubProjects?: number;
   daysRemaining?: number;
@@ -224,7 +273,7 @@ export interface DbProject {
   progress?: number; // alias for progressPercentage
 }
 
-// Project API Response interfaces
+// Enhanced Project API Response interfaces
 export interface ProjectResponse {
   success: boolean;
   message: string;
@@ -238,6 +287,60 @@ export interface ProjectResponse {
     lastFinancialProgressUpdate?: Date;
     hasSubProjects: boolean;
     subProjectsCount: number;
+    // NEW: Enhanced metadata
+    contractorInfo?: ContractorInfo;
+    fundInfo?: {
+      fund: string;
+      subFund: string;
+      fundDetails?: FundDetails;
+    };
+  };
+}
+
+// Enhanced project with related projects
+export interface ProjectWithRelatedResponse {
+  success: boolean;
+  message: string;
+  data: {
+    project: DbProject;
+    metrics: {
+      daysFromStartToNow?: number;
+      daysUntilDeadline?: number;
+      daysWithExtension?: number;
+      billSubmissionRate: number;
+      isPhysicallyOverdue: boolean;
+      isFinanciallyOverdue: boolean;
+      projectAge: number;
+      progressGap: number;
+      isFullyComplete: boolean;
+      hasExtension: boolean;
+      isWithinBudget: boolean;
+      budgetUtilization: number;
+    };
+    relatedProjects: {
+      byCreator: DbProject[];
+      byDistrict: DbProject[];
+      byFund: DbProject[];
+      bySubFund: DbProject[]; // NEW: Related projects by sub fund
+      byType: DbProject[];
+      byContractor: DbProject[]; // NEW: Related projects by contractor
+    };
+  };
+  metadata?: {
+    retrievedAt: string;
+    projectId: string;
+    status: ProjectStatus;
+    lastUpdated: string;
+    lastProgressUpdate?: Date;
+    lastFinancialProgressUpdate?: Date;
+    hasSubProjects: boolean;
+    subProjectsCount: number;
+    contractorInfo?: ContractorInfo;
+    fundInfo?: {
+      fund: string;
+      subFund: string;
+      fundDetails?: FundDetails;
+    };
   };
 }
 
@@ -262,6 +365,19 @@ export interface ProjectsListResponse {
     avgFinancialProgress: number;
     completedProjects: number;
     inProgressProjects: number;
+    // NEW: Contractor and fund summaries
+    totalUniqueContractors?: number;
+    topContractors?: Array<{
+      name: string;
+      projectCount: number;
+      totalValue: number;
+    }>;
+    fundDistribution?: Array<{
+      fund: string;
+      subFund?: string;
+      projectCount: number;
+      totalValue: number;
+    }>;
   };
 }
 
@@ -470,7 +586,7 @@ export interface FinancialProgressHistoryResponse {
   };
 }
 
-// Project summary and statistics interfaces
+// Enhanced Project summary and statistics interfaces
 export interface ProjectSummaryResponse {
   success: boolean;
   message: string;
@@ -490,6 +606,9 @@ export interface ProjectSummaryResponse {
       budgetUtilizationRate: number;
       totalRemainingBudget: number;
       avgProjectValue: number;
+      // NEW: Contractor metrics
+      totalUniqueContractors: number;
+      avgProjectsPerContractor: number;
     };
     distribution: {
       byPhysicalProgress: {
@@ -513,6 +632,7 @@ export interface ProjectSummaryResponse {
         avgFinancialProgress: number;
         completedProjects: number;
         completionRate: number;
+        contractorCount: number; // NEW
       }>;
       funds: Array<{
         name: string;
@@ -522,6 +642,38 @@ export interface ProjectSummaryResponse {
         avgFinancialProgress: number;
         completedProjects: number;
         completionRate: number;
+        contractorCount: number; // NEW
+      }>;
+      // NEW: Sub funds analysis
+      subFunds: Array<{
+        fund: string;
+        subFund: string;
+        projectCount: number;
+        totalValue: number;
+        avgPhysicalProgress: number;
+        avgFinancialProgress: number;
+        completedProjects: number;
+        completionRate: number;
+        contractorCount: number;
+      }>;
+      // NEW: Top contractors
+      contractors: Array<{
+        contractorName: string;
+        contractorPhone: string;
+        projectCount: number;
+        totalValue: number;
+        totalBillSubmitted: number;
+        avgPhysicalProgress: number;
+        avgFinancialProgress: number;
+        completedProjects: number;
+        financiallyCompletedProjects: number;
+        ongoingProjects: number;
+        districtCount: number;
+        workTypeCount: number;
+        avgProjectValue: number;
+        budgetUtilization: number;
+        physicalCompletionRate: number;
+        financialCompletionRate: number;
       }>;
     };
     progressMetrics: {
@@ -531,16 +683,140 @@ export interface ProjectSummaryResponse {
       avgUpdatesPerProject: number;
       avgProgressGap: number;
     };
+    // NEW: Contractor metrics
+    contractorMetrics: {
+      totalUniqueContractors: number;
+      avgProjectsPerContractor: number;
+    };
   };
-  filters: Record<string, string | null>;
+  filters: {
+    status?: string | null;
+    district?: string | null;
+    fund?: string | null;
+    subFund?: string | null; // NEW
+    createdBy?: string | null;
+    typeOfWork?: string | null;
+    natureOfWork?: string | null;
+    contractorName?: string | null; // NEW
+  };
   metadata: {
     generatedAt: string;
     dataFreshness: string;
     totalProjectsAnalyzed: number;
+    totalContractorsAnalyzed: number; // NEW
   };
 }
 
-// Project timeline interface
+// NEW: District-wise summary with contractor info
+export interface DistrictWiseProjectsSummaryResponse {
+  success: boolean;
+  message: string;
+  data: {
+    districts: Array<{
+      districtName: string;
+      projectCount: number;
+      totalEstimatedCost: number;
+      totalBillSubmitted: number;
+      remainingBudget: number;
+      avgPhysicalProgress: number;
+      avgFinancialProgress: number;
+      completedProjects: number;
+      financiallyCompletedProjects: number;
+      fullyCompletedProjects: number;
+      ongoingProjects: number;
+      totalUpdates: number;
+      contractorCount: number;
+      uniqueContractors: string[];
+      physicalCompletionRate: number;
+      financialCompletionRate: number;
+      fullCompletionRate: number;
+      budgetUtilizationRate: number;
+      avgProjectValue: number;
+      progressGap: number;
+      avgProjectsPerContractor: number;
+    }>;
+    totalDistricts: number;
+    aggregatedTotals: {
+      totalProjects: number;
+      totalEstimatedCost: number;
+      totalBillSubmitted: number;
+      totalCompletedProjects: number;
+      totalOngoingProjects: number;
+      totalUniqueContractors: number;
+      totalContractorCount: number;
+    };
+  };
+  filters: {
+    status?: string | null;
+    fund?: string | null;
+    timeRange?: string;
+    contractorName?: string | null;
+  };
+}
+
+// NEW: Contractor-wise summary
+export interface ContractorWiseProjectsSummaryResponse {
+  success: boolean;
+  message: string;
+  data: {
+    contractors: Array<{
+      contractorName: string;
+      contractorPhone: string;
+      contractorAddress: string;
+      projectCount: number;
+      totalEstimatedCost: number;
+      totalBillSubmitted: number;
+      remainingBudget: number;
+      avgPhysicalProgress: number;
+      avgFinancialProgress: number;
+      completedProjects: number;
+      financiallyCompletedProjects: number;
+      fullyCompletedProjects: number;
+      ongoingProjects: number;
+      districts: string[];
+      workTypes: string[];
+      funds: string[];
+      districtCount: number;
+      workTypeCount: number;
+      fundCount: number;
+      totalUpdates: number;
+      physicalCompletionRate: number;
+      financialCompletionRate: number;
+      fullCompletionRate: number;
+      budgetUtilizationRate: number;
+      avgProjectValue: number;
+      progressGap: number;
+      diversityScore: number;
+    }>;
+    totalContractors: number;
+    aggregatedTotals: {
+      totalProjects: number;
+      totalEstimatedCost: number;
+      totalBillSubmitted: number;
+      totalCompletedProjects: number;
+      totalOngoingProjects: number;
+    };
+  };
+  filters: {
+    status?: string | null;
+    district?: string | null;
+    fund?: string | null;
+    timeRange?: string;
+  };
+}
+
+// NEW: Sub funds API response
+export interface SubFundsListResponse {
+  success: boolean;
+  message: string;
+  data: {
+    fund?: string;
+    subFunds?: SubFund[];
+    funds?: Fund[];
+  };
+}
+
+// Enhanced Project timeline interface
 export interface ProjectTimelineEvent {
   date: Date;
   event: string;
@@ -555,7 +831,13 @@ export interface ProjectTimelineEvent {
     | "update"
     | "financial_update";
   estimated?: boolean;
-  details?: Record<string, unknown>;
+  details?: {
+    contractor?: string;
+    fund?: string;
+    subFund?: string;
+    fundDetails?: FundDetails;
+    [key: string]: unknown;
+  };
 }
 
 export interface ProjectTimelineResponse {
@@ -564,6 +846,10 @@ export interface ProjectTimelineResponse {
   data: {
     projectId: string;
     projectName: string;
+    contractorName: string; // NEW
+    fund: string; // NEW
+    subFund: string; // NEW
+    fundDetails: FundDetails; // NEW
     timeline: ProjectTimelineEvent[];
     duration: {
       totalDays: number;
@@ -619,6 +905,55 @@ export interface CompletionStatusResponse {
   };
 }
 
+// Enhanced project creation request
+export interface ProjectCreateRequest {
+  dateOfIssueOfWorkOrder: string;
+  projectName: string;
+  description?: string;
+  hasSubProjects: boolean;
+  fund: string;
+  subFund: string; // NEW
+  sanctioningDepartment: string;
+  budgetHead?: string;
+  beneficiary?: string;
+  workOrderNumber: string;
+  contractorName: string; // NEW
+  contractorAddress: string; // NEW
+  contractorPhoneNumber: string; // NEW
+  estimatedCost: number;
+  typeOfWork: string;
+  projectStartDate: string;
+  projectEndDate: string;
+  extensionPeriodForCompletion?: string;
+  district: string;
+  block?: string;
+  gramPanchayat?: string;
+  geoLocation: {
+    latitude: number;
+    longitude: number;
+  };
+  subProjects?: SubProject[];
+  uploadedFiles?: UploadedFile[];
+}
+
+// Enhanced project creation response
+export interface ProjectCreateResponse {
+  success: boolean;
+  message: string;
+  data: {
+    id: string;
+    projectName: string;
+    workOrderNumber: string;
+    fund: string;
+    subFund: string; // NEW
+    fundDetails: FundDetails; // NEW
+    contractorName: string; // NEW
+    contractorPhoneNumber: string; // NEW
+    status: ProjectStatus;
+    createdAt: string;
+  };
+}
+
 // Legacy Project interface for backward compatibility (if needed)
 export interface Project {
   // Basic project information
@@ -649,6 +984,7 @@ export interface Project {
 
   // Financial details
   fund: string;
+  subFund?: string; // NEW
   function: string;
   budgetHead: string;
   scheme: string;
@@ -673,6 +1009,11 @@ export interface Project {
   gramPanchayat: string;
   latitude: number;
   longitude: number;
+
+  // NEW: Contractor details
+  contractorName?: string;
+  contractorAddress?: string;
+  contractorPhoneNumber?: string;
 
   // Related data
   documents: ProjectDocument[];
@@ -716,3 +1057,36 @@ export interface ApiError {
 
 // API response utility type
 export type ApiResponse<T> = T | ApiError;
+
+// NEW: Filter interfaces for enhanced queries
+export interface ProjectFilters {
+  status?: ProjectStatus;
+  district?: string;
+  fund?: string;
+  subFund?: string;
+  contractorName?: string;
+  createdBy?: string;
+  typeOfWork?: string;
+  dateRange?: {
+    start: string;
+    end: string;
+  };
+  progressRange?: {
+    min: number;
+    max: number;
+  };
+  budgetRange?: {
+    min: number;
+    max: number;
+  };
+}
+
+// NEW: Search and pagination interface
+export interface ProjectSearchParams {
+  page?: number;
+  limit?: number;
+  sortBy?: string;
+  sortOrder?: "asc" | "desc";
+  search?: string;
+  filters?: ProjectFilters;
+}

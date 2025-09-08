@@ -281,7 +281,7 @@ export const generateProjectPDF = async (
     doc.setFont("helvetica", "normal");
 
     const deptInfo = [
-      [`Sanction & Department:`, projectData.sanctionAndDepartment],
+      [`Sanction & Department:`, projectData.sanctioningDepartment],
       [`Executing Department:`, projectData.executingDepartment],
     ];
 
@@ -308,7 +308,6 @@ export const generateProjectPDF = async (
 
     const workInfo = [
       [`Type of Work:`, projectData.typeOfWork],
-      [`Nature of Work:`, projectData.natureOfWork],
       [`Project Start Date:`, formatDate(projectData.projectStartDate)],
       [`Project End Date:`, formatDate(projectData.projectEndDate)],
     ];

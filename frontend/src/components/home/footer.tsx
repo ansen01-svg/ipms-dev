@@ -74,8 +74,8 @@ export default function Footer({ className = "" }: FooterProps) {
                 <Image
                   src={logo}
                   alt="iPMS logo"
-                  width={60}
-                  height={60}
+                  width={70}
+                  height={70}
                   className="mr-4"
                 />
                 <span className="text-xl font-bold">iPMS</span>

@@ -616,7 +616,7 @@ export default function CreateArchiveProjectForm() {
       const token = getAuthToken();
 
       const apiUrl = process.env.NEXT_PUBLIC_PROD_API_URL;
-      // const apiUrl = process.env.NEXT_PUBLIC_DEV_API_URL
+      // const apiUrl = process.env.NEXT_PUBLIC_DEV_API_URL;
 
       const response = await fetch(`${apiUrl}/archive-project`, {
         method: "POST",

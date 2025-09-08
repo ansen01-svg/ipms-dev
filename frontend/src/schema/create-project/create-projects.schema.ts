@@ -66,9 +66,10 @@ export const createProjectSchema = z
       .optional(),
     hasSubProjects: z.boolean(),
     fund: z.string().min(1, "Fund is required"),
-    sanctionAndDepartment: z
+    subFund: z.string().min(1, "Sub fund is required"), // NEW: Sub fund field
+    sanctioningDepartment: z
       .string()
-      .min(1, "Sanction & Department is required"),
+      .min(1, "Sanctioning Department is required"),
     budgetHead: z
       .string()
       .max(100, "Budget head must be less than 100 characters")
@@ -79,11 +80,29 @@ export const createProjectSchema = z
       .max(200, "Beneficiary must be less than 200 characters")
       .optional(),
     workOrderNumber: z.string().min(1, "Work order number is required"),
+
+    // NEW: Contractor fields
+    contractorName: z
+      .string()
+      .min(2, "Contractor name must be at least 2 characters")
+      .max(100, "Contractor name must be less than 100 characters"),
+    contractorAddress: z
+      .string()
+      .min(10, "Contractor address must be at least 10 characters")
+      .max(500, "Contractor address must be less than 500 characters"),
+    contractorPhoneNumber: z
+      .string()
+      .min(10, "Phone number must be at least 10 digits")
+      .max(15, "Phone number must be less than 15 digits")
+      .regex(
+        /^(\+91[\s-]?)?[6-9]\d{9}$/,
+        "Please enter a valid Indian phone number (10 digits starting with 6-9)"
+      ),
+
     estimatedCost: z
       .number()
       .min(0.01, "Estimated cost must be greater than 0"),
     typeOfWork: z.string().min(1, "Type of work is required"),
-    natureOfWork: z.string().min(1, "Nature of work is required"),
     projectStartDate: z
       .string()
       .min(1, "Project start date is required")
