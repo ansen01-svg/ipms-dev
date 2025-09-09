@@ -10,13 +10,15 @@ import {
   verifyOtpSchema,
 } from "@/schema/auth/verifyOtpSchema";
 import { zodResolver } from "@hookform/resolvers/zod";
-import axios, { AxiosError } from "axios";
-import { LoaderCircle } from "lucide-react";
+import { CheckCircle, LoaderCircle, XCircle } from "lucide-react";
 import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
+
+// const apiUrl = process.env.NEXT_PUBLIC_PROD_API_URL;
+const apiUrl = process.env.NEXT_PUBLIC_DEV_API_URL;
 
 export default function VerifyOTPForm() {
   const { login } = useAuth();
@@ -37,8 +39,11 @@ export default function VerifyOTPForm() {
 
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
   const [resendTimer, setResendTimer] = useState(60);
-  const [loading] = useState(false);
+  const [loading, setLoading] = useState(false); // Fixed: Now properly managed
   const [resending, setResending] = useState(false);
+  const [verificationStatus, setVerificationStatus] = useState<
+    "idle" | "success" | "error"
+  >("idle");
 
   useEffect(() => {
     if (resendTimer <= 0) return;
@@ -61,6 +66,11 @@ export default function VerifyOTPForm() {
     const value = e.target.value;
     if (!/^\d?$/.test(value)) return;
 
+    // Reset verification status when user starts typing
+    if (verificationStatus !== "idle") {
+      setVerificationStatus("idle");
+    }
+
     const currentOtp = getValues("otp").split("");
     currentOtp[index] = value;
     const newOtp = currentOtp.join("");
@@ -68,6 +78,11 @@ export default function VerifyOTPForm() {
 
     if (value && index < 5) {
       inputRefs.current[index + 1]?.focus();
+    }
+
+    // Auto-submit when all 6 digits are entered
+    if (newOtp.length === 6 && !loading) {
+      handleSubmit(onSubmit)();
     }
   };
 
@@ -82,10 +97,13 @@ export default function VerifyOTPForm() {
   };
 
   const onSubmit = async (otpData: VerifyOtpSchema) => {
+    setLoading(true);
+    setVerificationStatus("idle");
+
     try {
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_PROD_API_URL}/auth/verifyotp`,
-        // `${process.env.NEXT_PUBLIC_DEV_API_URL}/auth/verifyotp`,
+        // `${apiUrl}/auth/verify-otp`,
+        `${apiUrl}/auth/verify-otp`,
         {
           method: "POST",
           headers: {
@@ -99,9 +117,23 @@ export default function VerifyOTPForm() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(
-          data.error || data.message || "OTP verification failed"
-        );
+        setVerificationStatus("error");
+
+        // Handle specific error cases
+        if (response.status === 400) {
+          toast.error(data.message || "Invalid OTP. Please try again.");
+        } else if (response.status === 429) {
+          toast.error("Too many attempts. Please wait before trying again.");
+        } else if (response.status === 410) {
+          toast.error("OTP has expired. Please request a new one.");
+        } else {
+          toast.error(data.error || data.message || "OTP verification failed");
+        }
+
+        // Clear the OTP input on error
+        setValue("otp", "");
+        inputRefs.current[0]?.focus();
+        return;
       }
 
       console.log("OTP verification: API success", {
@@ -112,8 +144,14 @@ export default function VerifyOTPForm() {
 
       const token = data.token || data.accessToken;
       if (!token) {
-        throw new Error("No token received from server");
+        setVerificationStatus("error");
+        toast.error("No token received from server");
+        return;
       }
+
+      // Set success status first
+      setVerificationStatus("success");
+      toast.success("OTP verified successfully! Redirecting...");
 
       // Store with error handling
       try {
@@ -136,10 +174,11 @@ export default function VerifyOTPForm() {
         // Update auth context
         login(data.user, token);
 
-        // Small delay to ensure all operations complete
-        await new Promise((resolve) => setTimeout(resolve, 100));
+        // Small delay to ensure all operations complete and show success state
+        await new Promise((resolve) => setTimeout(resolve, 1500));
       } catch (storageError) {
         console.error("Login: Storage failed:", storageError);
+        setVerificationStatus("error");
         toast.error("Failed to save authentication data. Please try again.");
         return;
       }
@@ -154,12 +193,15 @@ export default function VerifyOTPForm() {
         ];
 
       if (!dashboardPath) {
-        throw new Error("Invalid user role or dashboard path not found");
+        setVerificationStatus("error");
+        toast.error("Invalid user role or dashboard path not found");
+        return;
       }
 
       window.location.href = dashboardPath;
     } catch (error) {
       console.error("Login: Error:", error);
+      setVerificationStatus("error");
 
       // Clear any partially stored data on error
       if (typeof window !== "undefined") {
@@ -168,42 +210,111 @@ export default function VerifyOTPForm() {
       }
 
       if (error instanceof Error) {
-        toast.error(error.message);
-      } else if (error instanceof TypeError) {
-        toast.error("Network error. Please check your connection.");
+        if (error.name === "TypeError") {
+          toast.error("Network error. Please check your connection.");
+        } else {
+          toast.error(error.message);
+        }
       } else {
         toast.error("Something went wrong. Please try again.");
       }
+
+      // Clear OTP and focus first input on error
+      setValue("otp", "");
+      inputRefs.current[0]?.focus();
+    } finally {
+      setLoading(false);
     }
   };
 
-  // const onSubmit = async (data: VerifyOtpSchema) => {
-  //   setLoading(true);
-  //   try {
-  //     await axios.post("/api/auth/verify-otp", { email, otp: data.otp });
-  //     toast.success("OTP verified successfully");
-  //     router.push(`/reset-password?email=${encodeURIComponent(email)}`);
-  //   } catch (error) {
-  //     const err = error as AxiosError<{ message?: string }>;
-  //     toast.error(err.response?.data?.message || "OTP verification failed");
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
-
   const handleResend = async () => {
     setResending(true);
+    setVerificationStatus("idle");
+
     try {
-      await axios.post("/api/auth/resend-otp", { email });
+      const response = await fetch(`${apiUrl}/auth/resend-otp`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email }),
+        credentials: "include",
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to resend OTP");
+      }
+
       toast.success("OTP resent successfully");
       setValue("otp", "");
       inputRefs.current[0]?.focus();
       setResendTimer(60);
     } catch (error) {
-      const err = error as AxiosError<{ message?: string }>;
-      toast.error(err.response?.data?.message || "Failed to resend OTP");
+      console.error("Resend OTP error:", error);
+
+      if (error instanceof Error) {
+        if (error.name === "TypeError") {
+          toast.error("Network error. Please check your connection.");
+        } else {
+          toast.error(error.message);
+        }
+      } else {
+        toast.error("Failed to resend OTP. Please try again.");
+      }
     } finally {
       setResending(false);
+    }
+  };
+
+  const getInputClassName = (index: number) => {
+    const baseClass =
+      "w-10 h-10 sm:w-12 sm:h-12 text-center border rounded-md text-lg focus:outline-none transition-all";
+    const currentOtp = getValues("otp");
+    const hasValue = currentOtp[index];
+
+    if (verificationStatus === "success") {
+      return `${baseClass} border-green-500 bg-green-50 text-green-700`;
+    } else if (verificationStatus === "error") {
+      return `${baseClass} border-red-500 bg-red-50 text-red-700`;
+    } else if (hasValue) {
+      return `${baseClass} border-[#279eab] bg-blue-50 focus:ring-2 focus:ring-[#279eab] focus:border-transparent`;
+    } else {
+      return `${baseClass} border-gray-300 focus:ring-2 focus:ring-[#C5C5C5] focus:border-transparent`;
+    }
+  };
+
+  const getButtonContent = () => {
+    if (verificationStatus === "success") {
+      return (
+        <>
+          <CheckCircle className="w-4 h-4 mr-2" />
+          Verified! Redirecting...
+        </>
+      );
+    } else if (loading) {
+      return (
+        <>
+          <LoaderCircle className="w-4 h-4 mr-2 animate-spin [animation-duration:0.5s]" />
+          Verifying OTP...
+        </>
+      );
+    } else {
+      return "Verify OTP";
+    }
+  };
+
+  const getButtonClassName = () => {
+    const baseClass =
+      "w-full py-3 text-sm font-medium rounded-md transition-all hover:shadow-lg disabled:cursor-not-allowed";
+
+    if (verificationStatus === "success") {
+      return `${baseClass} bg-green-600 text-white hover:bg-green-700`;
+    } else if (verificationStatus === "error") {
+      return `${baseClass} bg-red-600 text-white hover:bg-red-700`;
+    } else {
+      return `${baseClass} bg-[#279eab] text-white hover:bg-[#1c8193] disabled:opacity-50`;
     }
   };
 
@@ -235,6 +346,21 @@ export default function VerifyOTPForm() {
           <span className="font-medium break-all">{email}</span>
         </p>
 
+        {/* Status Message */}
+        {verificationStatus === "success" && (
+          <div className="flex items-center justify-center gap-2 text-green-600 text-sm">
+            <CheckCircle className="w-4 h-4" />
+            <span>OTP verified successfully!</span>
+          </div>
+        )}
+
+        {verificationStatus === "error" && (
+          <div className="flex items-center justify-center gap-2 text-red-600 text-sm">
+            <XCircle className="w-4 h-4" />
+            <span>Please check your OTP and try again</span>
+          </div>
+        )}
+
         {/* OTP Input Section */}
         <div className="space-y-3">
           <Controller
@@ -251,10 +377,11 @@ export default function VerifyOTPForm() {
                     value={field.value[index] || ""}
                     onChange={(e) => handleChange(e, index)}
                     onKeyDown={(e) => handleKeyDown(e, index)}
+                    disabled={loading}
                     ref={(el) => {
                       inputRefs.current[index] = el;
                     }}
-                    className="w-10 h-10 sm:w-12 sm:h-12 text-center border border-gray-300 rounded-md text-lg focus:outline-none focus:ring-2 focus:ring-[#C5C5C5] focus:border-transparent transition-all"
+                    className={getInputClassName(index)}
                   />
                 ))}
               </div>
@@ -284,7 +411,7 @@ export default function VerifyOTPForm() {
             <button
               type="button"
               onClick={handleResend}
-              disabled={resending}
+              disabled={resending || loading}
               className="text-gray-700 underline inline-flex items-center gap-1 hover:text-[#a03454] transition-colors disabled:opacity-50"
             >
               {resending && (
@@ -299,17 +426,10 @@ export default function VerifyOTPForm() {
         <div className="pt-2">
           <Button
             type="submit"
-            disabled={loading}
-            className="w-full py-3 text-sm font-medium rounded-md bg-[#279eab] text-white hover:bg-[#1c8193] disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:shadow-lg"
+            disabled={loading || verificationStatus === "success"}
+            className={getButtonClassName()}
           >
-            {loading ? (
-              <>
-                <LoaderCircle className="w-4 h-4 mr-2 animate-spin [animation-duration:0.5s]" />
-                Verifying...
-              </>
-            ) : (
-              "Verify OTP"
-            )}
+            {getButtonContent()}
           </Button>
         </div>
       </form>
