@@ -1,19 +1,14 @@
 // "use client";
 
 // import { Button } from "@/components/ui/button";
+// import { useAuth } from "@/contexts/auth-context";
 // import { DbProject } from "@/types/projects.types";
-// import { User } from "@/types/user.types";
 // import { fetchAllProjects } from "@/utils/projects/fetchAllProjects";
 // import { Plus, RefreshCw } from "lucide-react";
 // import { useRouter } from "next/navigation";
 // import { useEffect, useState } from "react";
 // import { FilterProvider, ProjectFilters } from "./project-filters";
 // import { ProjectsTable } from "./projects-table";
-
-// // Types and Interface
-// interface ProjectsContainerProps {
-//   user: User;
-// }
 
 // // Filter and Sort types
 // export interface FilterConfig {
@@ -26,12 +21,13 @@
 //   direction: "asc" | "desc";
 // }
 
-// export function ProjectsContainer({ user }: ProjectsContainerProps) {
+// export function ProjectsContainer() {
 //   const [projects, setProjects] = useState<DbProject[]>([]);
 //   const [loading, setLoading] = useState(true);
 //   const [error, setError] = useState<string | null>(null);
 //   const [refreshing, setRefreshing] = useState(false);
 //   const router = useRouter();
+//   const { user } = useAuth();
 
 //   // Function to fetch projects
 //   const loadProjects = async (isRefresh = false) => {
@@ -45,8 +41,13 @@
 
 //       const projectsData = await fetchAllProjects();
 //       setProjects(projectsData);
+
+//       console.log(`Loaded ${projectsData.length} projects successfully`);
 //     } catch (err) {
-//       setError(err instanceof Error ? err.message : "Failed to load projects");
+//       const errorMessage =
+//         err instanceof Error ? err.message : "Failed to load projects";
+//       setError(errorMessage);
+//       console.error("Error loading projects:", err);
 //     } finally {
 //       setLoading(false);
 //       setRefreshing(false);
@@ -68,8 +69,11 @@
 //   };
 
 //   const handleViewProject = (project: DbProject) => {
+//     console.log("Navigating to project:", project);
 //     router.push(`/dashboard/projects/${project.projectId}`);
 //   };
+
+//   console.log(projects);
 
 //   // Loading state
 //   if (loading) {
@@ -80,7 +84,7 @@
 //           <div className="flex items-center space-x-2">
 //             <div className="h-6 bg-gray-200 rounded animate-pulse w-32"></div>
 //           </div>
-//           {user.role === "JE" && (
+//           {user?.role === "JE" && (
 //             <div className="h-10 bg-gray-200 rounded animate-pulse w-32"></div>
 //           )}
 //         </div>
@@ -114,7 +118,7 @@
 //             </h1>
 //           </div>
 //           <div className="flex space-x-2">
-//             {user.role === "JE" && (
+//             {user?.role === "JE" && (
 //               <Button
 //                 onClick={handleNewProject}
 //                 className="bg-teal-600 hover:bg-teal-700 text-white w-full sm:w-auto"
@@ -162,7 +166,7 @@
 //         </div>
 
 //         <div className="flex space-x-2">
-//           {user.role === "JE" && (
+//           {user?.role === "JE" && (
 //             <Button
 //               onClick={handleNewProject}
 //               className="bg-teal-600 hover:bg-teal-700 text-white w-full sm:w-auto"
@@ -181,15 +185,15 @@
 //       <ProjectsTable projects={projects} onViewProject={handleViewProject} />
 
 //       {/* Empty state */}
-//       {/* {projects.length === 0 && !loading && !error && (
+//       {projects.length === 0 && !loading && !error && (
 //         <div className="text-center py-12">
 //           <div className="text-gray-500 text-lg mb-2">No projects found</div>
 //           <div className="text-gray-400 text-sm mb-4">
-//             {user.role === "JE"
+//             {user?.role === "JE"
 //               ? "Create your first project to get started"
 //               : "No projects are available for your role"}
 //           </div>
-//           {user.role === "JE" && (
+//           {user?.role === "JE" && (
 //             <Button
 //               onClick={handleNewProject}
 //               className="bg-teal-600 hover:bg-teal-700 text-white"
@@ -199,7 +203,7 @@
 //             </Button>
 //           )}
 //         </div>
-//       )} */}
+//       )}
 //     </FilterProvider>
 //   );
 // }
@@ -209,23 +213,19 @@
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/auth-context";
 import { DbProject } from "@/types/projects.types";
-// import { User } from "@/types/user.types";
 import { fetchAllProjects } from "@/utils/projects/fetchAllProjects";
-import { Plus, RefreshCw } from "lucide-react";
+import { Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { FilterProvider, ProjectFilters } from "./project-filters";
 import { ProjectsTable } from "./projects-table";
 
-// Types and Interface
-// interface ProjectsContainerProps {
-//   user?: User;
-// }
-
 // Filter and Sort types
 export interface FilterConfig {
   status: string;
   district: string;
+  createdBy: string;
+  sanctioningDepartment: string;
 }
 
 export interface SortConfig {
@@ -237,18 +237,13 @@ export function ProjectsContainer() {
   const [projects, setProjects] = useState<DbProject[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [refreshing, setRefreshing] = useState(false);
   const router = useRouter();
   const { user } = useAuth();
 
   // Function to fetch projects
-  const loadProjects = async (isRefresh = false) => {
+  const loadProjects = async () => {
     try {
-      if (isRefresh) {
-        setRefreshing(true);
-      } else {
-        setLoading(true);
-      }
+      setLoading(true);
       setError(null);
 
       const projectsData = await fetchAllProjects();
@@ -262,7 +257,6 @@ export function ProjectsContainer() {
       console.error("Error loading projects:", err);
     } finally {
       setLoading(false);
-      setRefreshing(false);
     }
   };
 
@@ -270,11 +264,6 @@ export function ProjectsContainer() {
   useEffect(() => {
     loadProjects();
   }, []);
-
-  // Refresh function for manual refresh
-  const handleRefresh = () => {
-    loadProjects(true);
-  };
 
   const handleNewProject = () => {
     router.push("/dashboard/projects/new");
@@ -300,9 +289,14 @@ export function ProjectsContainer() {
         </div>
 
         {/* Filters skeleton */}
-        <div className="flex space-x-4">
-          <div className="h-10 bg-gray-200 rounded animate-pulse w-40"></div>
-          <div className="h-10 bg-gray-200 rounded animate-pulse w-40"></div>
+        <div className="space-y-3">
+          <div className="h-10 bg-gray-200 rounded animate-pulse w-80"></div>
+          <div className="flex space-x-4">
+            <div className="h-10 bg-gray-200 rounded animate-pulse w-40"></div>
+            <div className="h-10 bg-gray-200 rounded animate-pulse w-40"></div>
+            <div className="h-10 bg-gray-200 rounded animate-pulse w-40"></div>
+            <div className="h-10 bg-gray-200 rounded animate-pulse w-40"></div>
+          </div>
         </div>
 
         {/* Table skeleton */}
@@ -349,15 +343,11 @@ export function ProjectsContainer() {
           </div>
           <div className="text-red-600 text-sm mt-1">{error}</div>
           <Button
-            onClick={handleRefresh}
+            onClick={loadProjects}
             variant="outline"
             size="sm"
-            disabled={refreshing}
             className="mt-3"
           >
-            <RefreshCw
-              className={`w-4 h-4 mr-2 ${refreshing ? "animate-spin" : ""}`}
-            />
             Try Again
           </Button>
         </div>
@@ -376,19 +366,6 @@ export function ProjectsContainer() {
         </div>
 
         <div className="flex space-x-2">
-          <Button
-            onClick={handleRefresh}
-            variant="outline"
-            size="sm"
-            disabled={refreshing}
-            className="text-gray-600 border-gray-300"
-          >
-            <RefreshCw
-              className={`w-4 h-4 mr-2 ${refreshing ? "animate-spin" : ""}`}
-            />
-            Refresh
-          </Button>
-
           {user?.role === "JE" && (
             <Button
               onClick={handleNewProject}

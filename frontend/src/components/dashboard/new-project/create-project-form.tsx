@@ -966,48 +966,88 @@ export default function CreateProjectForm() {
     setCurrentStep("form");
   };
 
-  // Form submission
   const onSubmit = async (values: CreateProjectFormValues, status: string) => {
     try {
       setIsSubmittingForm(true);
       const token = getAuthToken();
-      console.log(uploadedFiles);
 
-      // Prepare API payload matching backend schema
-      const apiPayload = {
-        dateOfIssueOfWorkOrder: values.dateOfIssueOfWorkOrder,
-        projectName: values.projectName,
-        description: values.description,
-        hasSubProjects: values.hasSubProjects,
-        fund: values.fund,
-        subFund: values.subFund,
-        sanctioningDepartment: values.sanctioningDepartment,
-        budgetHead: values.budgetHead,
-        executingDepartment: values.executingDepartment,
-        beneficiary: values.beneficiary,
-        workOrderNumber: values.workOrderNumber,
-        contractorName: values.contractorName,
-        contractorAddress: values.contractorAddress,
-        contractorPhoneNumber: values.contractorPhoneNumber,
-        estimatedCost: values.estimatedCost,
-        typeOfWork: values.typeOfWork,
-        projectStartDate: values.projectStartDate,
-        projectEndDate: values.projectEndDate,
-        extensionPeriodForCompletion: values.extensionPeriodForCompletion,
-        district: values.district,
-        block: values.block,
-        gramPanchayat: values.gramPanchayat,
-        geoLocation:
-          values.geoLocation?.latitude && values.geoLocation?.longitude
-            ? {
-                latitude: Number(values.geoLocation.latitude),
-                longitude: Number(values.geoLocation.longitude),
-              }
-            : undefined,
-        subProjects: values.subProjects,
-        uploadedFiles: uploadedFiles,
-        status,
-      };
+      // Create FormData object for multipart upload
+      const formData = new FormData();
+
+      // Append basic form fields
+      formData.append("dateOfIssueOfWorkOrder", values.dateOfIssueOfWorkOrder);
+      formData.append("projectName", values.projectName);
+      formData.append("description", values.description || "");
+      formData.append("hasSubProjects", values.hasSubProjects.toString());
+      formData.append("fund", values.fund);
+      formData.append("subFund", values.subFund);
+      formData.append("sanctioningDepartment", values.sanctioningDepartment);
+      formData.append("budgetHead", values.budgetHead || "");
+      formData.append(
+        "executingDepartment",
+        values.executingDepartment || "APTDCL"
+      );
+      formData.append("beneficiary", values.beneficiary || "");
+      formData.append("workOrderNumber", values.workOrderNumber);
+      formData.append("contractorName", values.contractorName);
+      formData.append("contractorAddress", values.contractorAddress);
+      formData.append("contractorPhoneNumber", values.contractorPhoneNumber);
+      formData.append("estimatedCost", values.estimatedCost.toString());
+      formData.append("typeOfWork", values.typeOfWork);
+      formData.append("projectStartDate", values.projectStartDate);
+      formData.append("projectEndDate", values.projectEndDate);
+
+      // Handle optional fields
+      if (values.extensionPeriodForCompletion) {
+        formData.append(
+          "extensionPeriodForCompletion",
+          values.extensionPeriodForCompletion
+        );
+      }
+
+      formData.append("district", values.district);
+      formData.append("block", values.block || "");
+      formData.append("gramPanchayat", values.gramPanchayat || "");
+      formData.append("status", status);
+
+      // Handle geoLocation object
+      if (values.geoLocation?.latitude && values.geoLocation?.longitude) {
+        const geoLocationData = {
+          latitude: Number(values.geoLocation.latitude),
+          longitude: Number(values.geoLocation.longitude),
+        };
+        formData.append("geoLocation", JSON.stringify(geoLocationData));
+      }
+
+      // Handle subProjects array
+      if (values.subProjects && values.subProjects.length > 0) {
+        formData.append("subProjects", JSON.stringify(values.subProjects));
+      }
+
+      // Append files - this is the key part for your existing middleware
+      if (uploadedFiles && uploadedFiles.length > 0) {
+        console.log(`Appending ${uploadedFiles.length} files to FormData`);
+
+        uploadedFiles.forEach((file, index) => {
+          // Use the field name that matches your existing middleware
+          formData.append("projectFiles", file);
+          console.log(
+            `File ${index + 1}: ${file.name} (${file.size} bytes, ${file.type})`
+          );
+        });
+      } else {
+        console.log("No files to upload");
+      }
+
+      // Log FormData contents for debugging (optional)
+      console.log("FormData contents:");
+      Array.from(formData.entries()).forEach(([key, value]) => {
+        if (value instanceof File) {
+          console.log(`${key}: File - ${value.name} (${value.size} bytes)`);
+        } else {
+          console.log(`${key}: ${value}`);
+        }
+      });
 
       // Generate project data for PDF
       const projectData: ProjectPDFData = {
@@ -1017,8 +1057,8 @@ export default function CreateProjectForm() {
         status: "Created",
       };
 
-      const apiUrl = process.env.NEXT_PUBLIC_PROD_API_URL;
-      // const apiUrl = process.env.NEXT_PUBLIC_DEV_API_URL;
+      // const apiUrl = process.env.NEXT_PUBLIC_PROD_API_URL;
+      const apiUrl = process.env.NEXT_PUBLIC_DEV_API_URL;
 
       if (!apiUrl) {
         throw new Error("API configuration is missing");
@@ -1029,10 +1069,10 @@ export default function CreateProjectForm() {
       const response = await fetch(`${apiUrl}/project`, {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
+          // DO NOT set Content-Type header - let browser set it with boundary for multipart/form-data
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(apiPayload),
+        body: formData, // Send FormData instead of JSON
       });
 
       if (!response.ok) {

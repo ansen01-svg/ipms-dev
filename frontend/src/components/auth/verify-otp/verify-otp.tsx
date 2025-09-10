@@ -198,7 +198,7 @@ export default function VerifyOTPForm() {
         return;
       }
 
-      window.location.href = dashboardPath;
+      window.location.replace(dashboardPath);
     } catch (error) {
       console.error("Login: Error:", error);
       setVerificationStatus("error");
