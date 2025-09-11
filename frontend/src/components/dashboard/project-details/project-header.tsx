@@ -1,5 +1,7 @@
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { getAuthToken } from "@/lib/rbac-config.ts/auth-local";
 import { DbProject } from "@/types/projects.types";
 import { User } from "@/types/user.types";
 import {
@@ -8,21 +10,30 @@ import {
   Calendar,
   Clock,
   DollarSign,
+  Download,
   FileText,
   Globe,
   Landmark,
+  Loader2,
   Map,
   MapPin,
   User as UserIcon,
   Users,
 } from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner"; // Assuming you're using sonner for notifications
 
 interface ProjectHeaderProps {
   project: DbProject;
   user: User;
 }
 
+// const API_BASE_URL = process.env.NEXT_PUBLIC_PROD_API_URL;
+const API_BASE_URL = process.env.NEXT_PUBLIC_DEV_API_URL;
+
 export function ProjectHeader({ project }: ProjectHeaderProps) {
+  const [isDownloading, setIsDownloading] = useState(false);
+
   const getStatusColor = (status: string) => {
     const colors = {
       Draft: "bg-gray-50 text-gray-600 border-gray-200",
@@ -56,6 +67,82 @@ export function ProjectHeader({ project }: ProjectHeaderProps) {
     return diffDays > 0 ? diffDays : 0;
   };
 
+  const handleDownloadPDF = async () => {
+    if (!project._id) {
+      toast.error("Project ID not found");
+      return;
+    }
+
+    try {
+      setIsDownloading(true);
+      const token = getAuthToken();
+
+      // You can customize these parameters based on user preferences
+      const params = new URLSearchParams({
+        includeProgressHistory: "true",
+        includeFinancialHistory: "true",
+        maxProgressUpdates: "10",
+        maxFinancialUpdates: "10",
+      });
+
+      const response = await fetch(
+        `${API_BASE_URL}/project/${project._id}/download-summary-pdf?${params}`,
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to generate PDF");
+      }
+
+      // Check if the response contains a PDF file or a JSON response
+      const contentType = response.headers.get("content-type");
+
+      if (contentType && contentType.includes("application/pdf")) {
+        // If the response is a PDF file, create a download link
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `Project_Summary_${project.projectId}_${
+          new Date().toISOString().split("T")[0]
+        }.pdf`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+
+        toast.success("PDF downloaded successfully");
+      } else {
+        // If the response is JSON (as per your current implementation)
+        const data = await response.json();
+
+        if (data.success) {
+          toast.success("PDF generated successfully");
+          // Note: Since your current backend implementation calls doc.save()
+          // which triggers a client-side download, the PDF should download automatically
+        } else {
+          throw new Error(data.message || "PDF generation failed");
+        }
+      }
+    } catch (error) {
+      console.error("Error downloading PDF:", error);
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Failed to download project summary PDF"
+      );
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
   const daysRemaining = calculateDaysRemaining(project.projectEndDate);
 
   return (
@@ -84,6 +171,27 @@ export function ProjectHeader({ project }: ProjectHeaderProps) {
             >
               {project.status}
             </Badge>
+
+            {/* Download PDF Button */}
+            <Button
+              onClick={handleDownloadPDF}
+              disabled={isDownloading}
+              variant="secondary"
+              size="sm"
+              className="bg-white/10 hover:bg-white/20 text-white border-white/20 hover:border-white/30 transition-all duration-200"
+            >
+              {isDownloading ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Generating...
+                </>
+              ) : (
+                <>
+                  <Download className="h-4 w-4 mr-2" />
+                  Download Report
+                </>
+              )}
+            </Button>
           </div>
         </div>
       </CardHeader>
@@ -120,7 +228,7 @@ export function ProjectHeader({ project }: ProjectHeaderProps) {
 
           <div className="bg-blue-100 rounded-lg p-4">
             <div className="text-3xl font-bold text-gray-900 mb-2">
-              {project.subProjects.length}
+              {project.subProjects?.length || 0}
             </div>
             <div className="flex items-center gap-2 mb-1">
               <Building className="h-4 w-4 text-blue-500" />
@@ -133,7 +241,7 @@ export function ProjectHeader({ project }: ProjectHeaderProps) {
           </div>
 
           <div className="bg-green-100 rounded-lg p-4">
-            <div className="text-3xl font-bold text-gray-900 mb-2">
+            <div className="text-2xl font-bold text-gray-900 mb-2">
               {project.beneficiary || "Public"}
             </div>
             <div className="flex items-center gap-2 mb-1">
@@ -192,6 +300,21 @@ export function ProjectHeader({ project }: ProjectHeaderProps) {
                   </p>
                 </div>
               </div>
+              {project.extensionPeriodForCompletion && (
+                <div className="flex items-center gap-3 bg-orange-50 p-2 rounded-md border border-orange-200">
+                  <span className="p-2 rounded-md">
+                    <Clock className="h-4 w-4 text-orange-600" />
+                  </span>
+                  <div>
+                    <p className="text-sm text-orange-600">Extension Period</p>
+                    <p className="text-sm font-medium text-orange-700">
+                      {new Date(
+                        project.extensionPeriodForCompletion
+                      ).toLocaleDateString("en-IN")}
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
@@ -305,9 +428,55 @@ export function ProjectHeader({ project }: ProjectHeaderProps) {
                   </p>
                 </div>
               </div>
+              {project.budgetHead && (
+                <div className="flex items-center gap-3 bg-gray-50 p-2 rounded-md">
+                  <span className="p-2 rounded-md">
+                    <DollarSign className="h-4 w-4 text-teal-600" />
+                  </span>
+                  <div>
+                    <p className="text-sm text-gray-500">Budget Head</p>
+                    <p className="text-sm font-medium text-gray-900">
+                      {project.budgetHead}
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
+
+        {/* Contractor Details */}
+        {project.contractorName && (
+          <div className="mt-6 bg-blue-50 rounded-lg p-4">
+            <h3 className="text-sm font-medium text-gray-900 mb-4">
+              Contractor Information
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <p className="text-sm text-gray-500">Name</p>
+                <p className="text-sm font-medium text-gray-900">
+                  {project.contractorName}
+                </p>
+              </div>
+              {project.contractorAddress && (
+                <div>
+                  <p className="text-sm text-gray-500">Address</p>
+                  <p className="text-sm font-medium text-gray-900">
+                    {project.contractorAddress}
+                  </p>
+                </div>
+              )}
+              {project.contractorPhoneNumber && (
+                <div>
+                  <p className="text-sm text-gray-500">Phone</p>
+                  <p className="text-sm font-medium text-gray-900 font-mono">
+                    {project.contractorPhoneNumber}
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
