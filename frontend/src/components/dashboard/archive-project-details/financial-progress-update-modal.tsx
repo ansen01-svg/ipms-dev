@@ -6,13 +6,13 @@ import {
   DbArchiveProject,
   FinancialProgressUpdateRequest,
 } from "@/types/archive-projects.types";
+import { formatCurrency } from "@/utils/archive-projects/format-helpers";
 import {
   getFinancialProgressChangeDescription,
   updateFinancialProgress,
   validateFinancialProgressUpdate,
-} from "@/utils/archive-projects/financial-progress";
-import { formatCurrency } from "@/utils/archive-projects/format-helpers";
-import { AlertCircle, CheckCircle, DollarSign, Info, X } from "lucide-react";
+} from "@/utils/archive-projects/progress";
+import { AlertCircle, CheckCircle, IndianRupee, Info, X } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { FileUploadZone } from "./file-upload-zone";
 
@@ -474,7 +474,7 @@ export function FinancialProgressUpdateModal({
                 </>
               ) : (
                 <>
-                  <DollarSign className="h-4 w-4 mr-2" />
+                  <IndianRupee className="h-4 w-4 mr-2" />
                   Update Financial Progress
                 </>
               )}

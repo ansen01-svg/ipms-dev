@@ -3,8 +3,17 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DbProject } from "@/types/projects.types";
-import { AlertCircle, CheckCircle, DollarSign, Info, X } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { updateFinancialProgress } from "@/utils/projects/progress";
+import {
+  AlertCircle,
+  CheckCircle,
+  FileText,
+  ImageIcon,
+  IndianRupeeIcon,
+  Info,
+  X,
+} from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 interface FinancialProgressUpdateRequest {
   newBillAmount: number;
@@ -17,47 +26,14 @@ interface FinancialProgressUpdateRequest {
   supportingFiles?: File[];
 }
 
-interface FinancialProgressUpdateResponse {
-  success: boolean;
-  message: string;
-  data: {
-    project: DbProject;
-    latestFinancialProgressUpdate: unknown;
-    financialProgressChange: {
-      from: {
-        amount: number;
-        percentage: number;
-      };
-      to: {
-        amount: number;
-        percentage: number;
-      };
-      difference: {
-        amount: number;
-        percentage: number;
-      };
-      changeType: "increase" | "decrease" | "no change";
-    };
-    filesUploaded: {
-      count: number;
-      totalSize: number;
-      types: Record<string, number>;
-    };
-  };
-  metadata: {
-    updatedAt: string;
-    updatedBy: unknown;
-    totalFinancialProgressUpdates: number;
-    isFullyComplete: boolean;
-  };
-}
-
 interface FileUploadZoneProps {
   files: File[];
   onFilesChange: (files: File[]) => void;
   required?: boolean;
   error?: string;
   maxFiles?: number;
+  maxFileSize?: number;
+  acceptedTypes?: string[];
 }
 
 function FileUploadZone({
@@ -66,8 +42,18 @@ function FileUploadZone({
   required = false,
   error,
   maxFiles = 5,
+  maxFileSize = 10 * 1024 * 1024, // 10MB
+  acceptedTypes = [
+    "application/pdf",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    "image/jpeg",
+    "image/png",
+    "image/gif",
+  ],
 }: FileUploadZoneProps) {
   const [dragActive, setDragActive] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const formatFileSize = (bytes: number): string => {
     if (bytes === 0) return "0 Bytes";
@@ -81,14 +67,63 @@ function FileUploadZone({
     if (!fileList || fileList.length === 0) return;
 
     const newFiles = Array.from(fileList);
-    const totalFiles = files.length + newFiles.length;
+    const validFiles: File[] = [];
+
+    for (const file of newFiles) {
+      if (acceptedTypes.includes(file.type) && file.size <= maxFileSize) {
+        validFiles.push(file);
+      }
+    }
+
+    const totalFiles = files.length + validFiles.length;
     const filesToAdd =
       totalFiles > maxFiles
-        ? newFiles.slice(0, maxFiles - files.length)
-        : newFiles;
+        ? validFiles.slice(0, maxFiles - files.length)
+        : validFiles;
 
     if (filesToAdd.length > 0) {
       onFilesChange([...files, ...filesToAdd]);
+    }
+
+    // Reset file input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  const handleFileInputChange = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    validateAndAddFiles(event.target.files);
+  };
+
+  const handleDragEnter = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+  };
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+    validateAndAddFiles(e.dataTransfer.files);
+  };
+
+  const handleZoneClick = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
     }
   };
 
@@ -97,33 +132,35 @@ function FileUploadZone({
     onFilesChange(updatedFiles);
   };
 
+  const getFileIcon = (mimeType: string) => {
+    if (mimeType.startsWith("image/")) {
+      return <ImageIcon className="h-4 w-4 text-blue-500 flex-shrink-0" />;
+    }
+    return <FileText className="h-4 w-4 text-green-500 flex-shrink-0" />;
+  };
+
+  const getFileTypeDisplay = (mimeType: string) => {
+    const type = mimeType.split("/")[1];
+    return type ? type.toUpperCase() : "Unknown";
+  };
+
   return (
     <div className="space-y-4">
+      {/* Drag and Drop Zone */}
       <div
         className={`border-2 border-dashed rounded-lg p-6 text-center transition-all duration-200 cursor-pointer ${
           dragActive
-            ? "border-teal-400 bg-teal-50"
+            ? "border-blue-400 bg-blue-50"
             : error
             ? "border-red-300 bg-red-50"
             : "border-gray-300 bg-gray-50 hover:bg-gray-100"
         }`}
-        onDragEnter={(e) => {
-          e.preventDefault();
-          setDragActive(true);
-        }}
-        onDragLeave={(e) => {
-          e.preventDefault();
-          setDragActive(false);
-        }}
-        onDragOver={(e) => e.preventDefault()}
-        onDrop={(e) => {
-          e.preventDefault();
-          setDragActive(false);
-          validateAndAddFiles(e.dataTransfer.files);
-        }}
-        onClick={() => document.getElementById("financial-file-input")?.click()}
+        onDragEnter={handleDragEnter}
+        onDragLeave={handleDragLeave}
+        onDragOver={handleDragOver}
+        onDrop={handleDrop}
+        onClick={handleZoneClick}
       >
-        <DollarSign className="h-8 w-8 mx-auto mb-2 text-gray-400" />
         <p className="text-sm text-gray-600 mb-2">
           {dragActive
             ? "Drop files here"
@@ -131,18 +168,22 @@ function FileUploadZone({
           {required && <span className="text-red-500 ml-1">*</span>}
         </p>
         <p className="text-xs text-gray-500">
-          PDF, Word, Excel, Images (Max 10MB per file, {maxFiles} files max)
+          PDF, Word, Excel, PNG, JPEG, GIF (Max{" "}
+          {Math.floor(maxFileSize / 1024 / 1024)}MB per file, {maxFiles} files
+          max)
         </p>
+
         <input
-          id="financial-file-input"
+          ref={fileInputRef}
           type="file"
           multiple
           accept=".pdf,.docx,.xlsx,.png,.jpg,.jpeg,.gif"
-          onChange={(e) => validateAndAddFiles(e.target.files)}
+          onChange={handleFileInputChange}
           className="hidden"
         />
       </div>
 
+      {/* Error Display */}
       {error && (
         <div className="flex items-center gap-2 text-red-600 text-sm bg-red-50 border border-red-200 rounded p-2">
           <AlertCircle className="h-4 w-4 flex-shrink-0" />
@@ -150,6 +191,7 @@ function FileUploadZone({
         </div>
       )}
 
+      {/* File List */}
       {files.length > 0 && (
         <div className="space-y-2">
           <h5 className="text-sm font-medium text-gray-700">
@@ -159,28 +201,43 @@ function FileUploadZone({
             {files.map((file, index) => (
               <div
                 key={`${file.name}-${file.size}-${index}`}
-                className="flex items-center gap-3 p-3 bg-white border border-gray-200 rounded-lg"
+                className="flex items-center gap-3 p-3 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
               >
+                {getFileIcon(file.type)}
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900 truncate">
+                  <p
+                    className="text-sm font-medium text-gray-900 truncate"
+                    title={file.name}
+                  >
                     {file.name}
                   </p>
                   <p className="text-xs text-gray-500">
-                    {formatFileSize(file.size)}
+                    {formatFileSize(file.size)} •{" "}
+                    {getFileTypeDisplay(file.type)}
                   </p>
                 </div>
                 <Button
                   type="button"
-                  onClick={() => removeFile(index)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    removeFile(index);
+                  }}
                   variant="ghost"
                   size="sm"
-                  className="h-8 w-8 p-0 hover:bg-red-100 text-red-500"
+                  className="h-8 w-8 p-0 hover:bg-red-100 text-red-500 hover:text-red-700 flex-shrink-0"
                 >
                   <X className="h-4 w-4" />
                 </Button>
               </div>
             ))}
           </div>
+        </div>
+      )}
+
+      {/* File Count Warning */}
+      {files.length >= maxFiles && (
+        <div className="text-xs text-orange-600 bg-orange-50 border border-orange-200 rounded p-2">
+          Maximum file limit reached ({maxFiles} files)
         </div>
       )}
     </div>
@@ -290,7 +347,7 @@ export function FinancialProgressUpdateModal({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
 
-  // Get current financial values - these might not exist in DbProject yet, so use fallbacks
+  // Get current financial values - using fallbacks for compatibility
   const currentBillAmount = (project as DbProject).billSubmittedAmount || 0;
   const currentFinancialProgress =
     (project as DbProject).financialProgress || 0;
@@ -364,48 +421,25 @@ export function FinancialProgressUpdateModal({
     setErrors((prev) => ({ ...prev, newBillAmount: "", submit: "" }));
   };
 
+  const handleBillDetailsChange = (field: string, value: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      billDetails: {
+        ...prev.billDetails,
+        [field]: value,
+      },
+    }));
+  };
+
+  const handleFilesChange = (newFiles: File[]) => {
+    setFiles(newFiles);
+    setErrors((prev) => ({ ...prev, files: "", submit: "" }));
+  };
+
   const handleValidation = () => {
     const validationErrors = validateFinancialUpdate();
     setErrors(validationErrors);
     return Object.keys(validationErrors).length === 0;
-  };
-
-  const updateFinancialProgress = async (
-    projectId: string,
-    financialData: FinancialProgressUpdateRequest
-  ): Promise<FinancialProgressUpdateResponse> => {
-    const formData = new FormData();
-    formData.append("newBillAmount", financialData.newBillAmount.toString());
-    if (financialData.remarks) {
-      formData.append("remarks", financialData.remarks);
-    }
-    if (financialData.billDetails) {
-      formData.append("billDetails", JSON.stringify(financialData.billDetails));
-    }
-    if (financialData.supportingFiles) {
-      financialData.supportingFiles.forEach((file) => {
-        formData.append("supportingFiles", file);
-      });
-    }
-
-    const token = localStorage.getItem("token");
-    const response = await fetch(
-      `${process.env.NEXT_PUBLIC_DEV_API_URL}/project/${projectId}/financial-progress`,
-      {
-        method: "PUT",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        body: formData,
-      }
-    );
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`HTTP ${response.status}: ${errorText}`);
-    }
-
-    return response.json();
   };
 
   const handleSubmit = async () => {
@@ -427,6 +461,7 @@ export function FinancialProgressUpdateModal({
         onClose();
       }, 1500);
     } catch (error) {
+      console.error(error);
       const errorMessage =
         error instanceof Error
           ? error.message
@@ -439,6 +474,11 @@ export function FinancialProgressUpdateModal({
 
   const amountDifference = formData.newBillAmount - currentBillAmount;
   const hasAmountChange = Math.abs(amountDifference) >= 0.01;
+
+  const newFinancialProgress =
+    project.estimatedCost > 0
+      ? Math.round((formData.newBillAmount / project.estimatedCost) * 100)
+      : 0;
 
   const currentErrors = validateFinancialUpdate();
   const isFormValid =
@@ -468,6 +508,7 @@ export function FinancialProgressUpdateModal({
         </CardHeader>
 
         <CardContent className="p-6 space-y-6">
+          {/* Success State */}
           {showSuccess && (
             <div className="bg-green-50 border border-green-200 rounded-lg p-4 flex items-center gap-3">
               <CheckCircle className="h-5 w-5 text-green-600" />
@@ -562,6 +603,11 @@ export function FinancialProgressUpdateModal({
                     targetAmount={formData.newBillAmount}
                     totalBudget={project.estimatedCost}
                   />
+                  <div className="mt-2 text-center">
+                    <span className="text-sm font-medium text-blue-600">
+                      New Progress: {newFinancialProgress}%
+                    </span>
+                  </div>
                 </div>
               )}
 
@@ -574,8 +620,7 @@ export function FinancialProgressUpdateModal({
                 <div className="space-y-2">
                   <label className="block text-xs text-gray-600">
                     Bill Number
-                    {(formData.newBillAmount / project.estimatedCost) * 100 ===
-                      100 && (
+                    {newFinancialProgress === 100 && (
                       <span className="text-red-500 ml-1">
                         * Required for completion
                       </span>
@@ -585,13 +630,7 @@ export function FinancialProgressUpdateModal({
                     type="text"
                     value={formData.billDetails?.billNumber || ""}
                     onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        billDetails: {
-                          ...prev.billDetails,
-                          billNumber: e.target.value,
-                        },
-                      }))
+                      handleBillDetailsChange("billNumber", e.target.value)
                     }
                     className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                       errors.billNumber || currentErrors.billNumber
@@ -618,14 +657,9 @@ export function FinancialProgressUpdateModal({
                       type="date"
                       value={formData.billDetails?.billDate || ""}
                       onChange={(e) =>
-                        setFormData((prev) => ({
-                          ...prev,
-                          billDetails: {
-                            ...prev.billDetails,
-                            billDate: e.target.value,
-                          },
-                        }))
+                        handleBillDetailsChange("billDate", e.target.value)
                       }
+                      max={new Date().toISOString().split("T")[0]}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                       disabled={isSubmitting}
                     />
@@ -639,13 +673,7 @@ export function FinancialProgressUpdateModal({
                   <textarea
                     value={formData.billDetails?.billDescription || ""}
                     onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        billDetails: {
-                          ...prev.billDetails,
-                          billDescription: e.target.value,
-                        },
-                      }))
+                      handleBillDetailsChange("billDescription", e.target.value)
                     }
                     rows={2}
                     maxLength={200}
@@ -690,8 +718,7 @@ export function FinancialProgressUpdateModal({
               <div className="space-y-2">
                 <label className="block text-sm font-medium text-gray-700">
                   Supporting Documents
-                  {(formData.newBillAmount / project.estimatedCost) * 100 ===
-                    100 && (
+                  {newFinancialProgress === 100 && (
                     <span className="text-red-500 ml-1">
                       * Required for completion
                     </span>
@@ -699,11 +726,8 @@ export function FinancialProgressUpdateModal({
                 </label>
                 <FileUploadZone
                   files={files}
-                  onFilesChange={setFiles}
-                  required={
-                    (formData.newBillAmount / project.estimatedCost) * 100 ===
-                    100
-                  }
+                  onFilesChange={handleFilesChange}
+                  required={newFinancialProgress === 100}
                   error={errors.files || currentErrors.files}
                   maxFiles={10}
                 />
@@ -732,6 +756,10 @@ export function FinancialProgressUpdateModal({
                     <span>
                       Completion (100%) requires bill number and documents
                     </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
+                    <span>Only Junior Engineers can update progress</span>
                   </div>
                 </div>
               </div>
@@ -813,7 +841,10 @@ export function FinancialProgressUpdateModal({
                   Updated Successfully!
                 </>
               ) : (
-                "Update Financial Progress"
+                <>
+                  <IndianRupeeIcon className="h-4 w-4 mr-2" />
+                  Update Financial Progress
+                </>
               )}
             </Button>
             <Button

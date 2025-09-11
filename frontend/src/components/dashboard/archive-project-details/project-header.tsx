@@ -416,9 +416,9 @@ import {
   Building2,
   Calendar,
   Clock,
-  DollarSign,
   Download,
   FileText,
+  IndianRupeeIcon,
   Loader2,
   MapPin,
   User as UserIcon,
@@ -618,7 +618,7 @@ export function ArchiveProjectHeader({ project }: ArchiveProjectHeaderProps) {
               {formatCurrency(project.AAAmount)}
             </div>
             <div className="flex items-center gap-2 mb-1">
-              <DollarSign className="h-4 w-4 text-red-500" />
+              <IndianRupeeIcon className="h-4 w-4 text-red-500" />
             </div>
             <p className="text-sm text-gray-600 leading-tight">
               AA Amount
@@ -764,7 +764,7 @@ export function ArchiveProjectHeader({ project }: ArchiveProjectHeaderProps) {
             <div className="space-y-4">
               <div className="flex items-center gap-3 bg-gray-50 p-2 rounded-md">
                 <span className="p-2 rounded-md">
-                  <DollarSign className="h-4 w-4 text-teal-600" />
+                  <IndianRupeeIcon className="h-4 w-4 text-teal-600" />
                 </span>
                 <div>
                   <p className="text-sm text-gray-500">Bill Submitted</p>
@@ -786,7 +786,7 @@ export function ArchiveProjectHeader({ project }: ArchiveProjectHeaderProps) {
               </div>
               <div className="flex items-center gap-3 bg-gray-50 p-2 rounded-md">
                 <span className="p-2 rounded-md">
-                  <DollarSign className="h-4 w-4 text-teal-600" />
+                  <IndianRupeeIcon className="h-4 w-4 text-teal-600" />
                 </span>
                 <div>
                   <p className="text-sm text-gray-500">Remaining Work Value</p>

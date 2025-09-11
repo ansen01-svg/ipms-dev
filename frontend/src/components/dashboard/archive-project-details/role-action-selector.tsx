@@ -22,7 +22,6 @@ export function ArchiveRoleActionSelector({
       {(user.role === "AEE" ||
         user.role === "CE" ||
         user.role === "MD" ||
-        user.role === "EXECUTOR" ||
         user.role === "VIEWER" ||
         user.role === "ADMIN") && <ViewerActions />}
     </div>

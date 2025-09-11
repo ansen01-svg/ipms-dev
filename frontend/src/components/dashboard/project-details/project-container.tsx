@@ -3,7 +3,7 @@
 import { DbProject } from "@/types/projects.types";
 import { User, UserRole } from "@/types/user.types";
 import { fetchProjectById } from "@/utils/projects/fetchAllProjects";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import ProjectDetailsSkeleton from "./loading-skeleton";
 import { ProjectNotFound } from "./not-found";
 import { ProjectHeader } from "./project-header";
@@ -32,6 +32,13 @@ const enrichProjectData = (project: DbProject): DbProject => {
   const mockBudgetUtilized =
     project.estimatedCost * (project.progressPercentage / 100) * 0.8;
 
+  // Add financial progress fields if they don't exist
+  const billSubmittedAmount = (project as DbProject).billSubmittedAmount || 0;
+  const financialProgress =
+    project.estimatedCost > 0
+      ? (billSubmittedAmount / project.estimatedCost) * 100
+      : 0;
+
   return {
     ...project,
     // Ensure backward compatibility fields are present
@@ -41,6 +48,9 @@ const enrichProjectData = (project: DbProject): DbProject => {
     totalSubProjects: project.subProjects ? project.subProjects.length : 0,
     progress: project.progressPercentage, // Alias for backward compatibility
     budgetUtilized: mockBudgetUtilized,
+    // Add financial fields
+    billSubmittedAmount,
+    financialProgress,
   };
 };
 
@@ -53,40 +63,48 @@ export default function ProjectContainer({
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const loadProject = async () => {
-      if (!projectId) {
-        setError("Project ID is required");
-        setIsLoading(false);
-        return;
-      }
+  const loadProject = useCallback(async () => {
+    if (!projectId) {
+      setError("Project ID is required");
+      setIsLoading(false);
+      return;
+    }
 
-      try {
-        setIsLoading(true);
-        setError(null);
+    try {
+      setIsLoading(true);
+      setError(null);
 
-        const fetchedProject = await fetchProjectById(projectId);
-        console.log("Fetched project:", projectId, fetchedProject);
+      const fetchedProject = await fetchProjectById(projectId);
+      console.log("Fetched project:", projectId, fetchedProject);
 
-        if (fetchedProject) {
-          // Enrich the project data with calculated fields
-          const enrichedProject = enrichProjectData(fetchedProject);
-          setCurrentProject(enrichedProject);
-        } else {
-          console.log("Project not found");
-          setCurrentProject(null);
-        }
-      } catch (err) {
-        console.error("Error loading project:", err);
-        setError(err instanceof Error ? err.message : "Failed to load project");
+      if (fetchedProject) {
+        // Enrich the project data with calculated fields
+        const enrichedProject = enrichProjectData(fetchedProject);
+        setCurrentProject(enrichedProject);
+      } else {
+        console.log("Project not found");
         setCurrentProject(null);
-      } finally {
-        setIsLoading(false);
       }
-    };
-
-    loadProject();
+    } catch (err) {
+      console.error("Error loading project:", err);
+      setError(err instanceof Error ? err.message : "Failed to load project");
+      setCurrentProject(null);
+    } finally {
+      setIsLoading(false);
+    }
   }, [projectId]);
+
+  useEffect(() => {
+    loadProject();
+  }, [projectId, loadProject]);
+
+  // Handle project updates from child components
+  const handleProjectUpdate = useCallback((updatedProject: DbProject) => {
+    console.log("Project updated:", updatedProject);
+    // Enrich the updated project data and set it
+    const enrichedProject = enrichProjectData(updatedProject);
+    setCurrentProject(enrichedProject);
+  }, []);
 
   console.log("id:", projectId);
   console.log("currentProject:", currentProject);
@@ -95,29 +113,6 @@ export default function ProjectContainer({
   const retryLoadProject = () => {
     setError(null);
     setCurrentProject(null);
-    // Trigger useEffect to reload
-    const loadProject = async () => {
-      try {
-        setIsLoading(true);
-        setError(null);
-
-        const fetchedProject = await fetchProjectById(projectId);
-
-        if (fetchedProject) {
-          const enrichedProject = enrichProjectData(fetchedProject);
-          setCurrentProject(enrichedProject);
-        } else {
-          setCurrentProject(null);
-        }
-      } catch (err) {
-        console.error("Error loading project on retry:", err);
-        setError(err instanceof Error ? err.message : "Failed to load project");
-        setCurrentProject(null);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
     loadProject();
   };
 
@@ -197,7 +192,11 @@ export default function ProjectContainer({
       <ProjectHeader project={currentProject} user={user} />
 
       {/* Role-Based Action Buttons */}
-      <RoleActionSelector user={user} project={currentProject} />
+      <RoleActionSelector
+        user={user}
+        project={currentProject}
+        onProjectUpdate={handleProjectUpdate}
+      />
 
       {/* Project Statistics Cards */}
       <ProjectStats project={currentProject} />

@@ -178,8 +178,8 @@ export function MBTable({
         (mb) =>
           mb.description.toLowerCase().includes(query) ||
           (mb.remarks || "").toLowerCase().includes(query) ||
-          mb.project.projectName.toLowerCase().includes(query) ||
-          mb.project.workOrderNumber.toLowerCase().includes(query) ||
+          (mb.project?.projectName || "").toLowerCase().includes(query) ||
+          (mb.project?.workOrderNumber || "").toLowerCase().includes(query) ||
           mb.createdBy.name.toLowerCase().includes(query)
       );
     }
@@ -212,8 +212,8 @@ export function MBTable({
         let bValue: unknown;
 
         if (sortConfig.key === "projectName") {
-          aValue = a.project.projectName;
-          bValue = b.project.projectName;
+          aValue = a.project?.projectName || "";
+          bValue = b.project?.projectName || "";
         } else if (sortConfig.key === "isApproved") {
           aValue = !!a.approvedBy;
           bValue = !!b.approvedBy;
@@ -394,10 +394,10 @@ export function MBTable({
                       <TableCell className="w-64 px-6">
                         <div className="flex flex-col items-start justify-center gap-1">
                           <div className="font-medium text-gray-900 text-sm">
-                            {mb.project._id}
+                            {mb.project?._id || "No Project ID"}
                           </div>
                           <div className="text-xs text-gray-500">
-                            {mb.project.projectName}
+                            {mb.project?.projectName || "No Project Name"}
                           </div>
                         </div>
                       </TableCell>
@@ -482,7 +482,9 @@ export function MBTable({
             >
               <div className="flex items-start justify-between">
                 <div className="flex-1">
-                  <div className="font-medium text-gray-900">{mb._id}</div>
+                  <div className="font-medium text-gray-900">
+                    {mb.project?._id || "No Project ID"}
+                  </div>
                   <div className="text-sm text-gray-500">{mb.description}</div>
                 </div>
                 <div className="flex items-center space-x-2">

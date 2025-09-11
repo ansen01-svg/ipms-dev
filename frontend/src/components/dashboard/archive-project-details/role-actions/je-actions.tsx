@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { DbArchiveProject } from "@/types/archive-projects.types";
 import { formatCurrency } from "@/utils/archive-projects/format-helpers";
-import { DollarSign, TrendingUp } from "lucide-react";
+import { IndianRupee, TrendingUp } from "lucide-react";
 import { useState } from "react";
 import { FinancialProgressUpdateModal } from "../financial-progress-update-modal";
 import { ProgressUpdateModal } from "../progress-update-modal";
@@ -82,7 +82,7 @@ export default function ArchiveJEActions({
 
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
             <div className="flex items-center gap-2 mb-2">
-              <DollarSign className="h-5 w-5 text-blue-600" />
+              <IndianRupee className="h-5 w-5 text-blue-600" />
               <h5 className="font-medium text-blue-900">Financial Progress</h5>
             </div>
             <div className="text-2xl font-bold text-blue-700 mb-1">
@@ -119,7 +119,7 @@ export default function ArchiveJEActions({
             disabled={!canUpdateFinancialProgress}
             className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 ease-in-out transform hover:scale-105 active:scale-95 shadow-md hover:shadow-lg"
           >
-            <DollarSign className="h-4 w-4 transition-transform duration-200" />
+            <IndianRupee className="h-4 w-4 transition-transform duration-200" />
             Update Financial Progress
           </Button>
         </div>

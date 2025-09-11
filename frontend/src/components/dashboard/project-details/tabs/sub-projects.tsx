@@ -7,6 +7,10 @@ interface SubProjectsTabProps {
 }
 
 function SubProjectsTab({ project }: SubProjectsTabProps) {
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString("en-IN");
+  };
+
   const formatCurrency = (amount: number) => {
     if (amount >= 10000000) {
       return `₹${(amount / 10000000).toFixed(1)} Cr`;
@@ -133,7 +137,9 @@ function SubProjectsTab({ project }: SubProjectsTabProps) {
                           <div className="flex items-center gap-1">
                             <span className="text-orange-600">
                               Extension:{" "}
-                              {subProject.extensionPeriodForCompletion}
+                              {formatDate(
+                                subProject.extensionPeriodForCompletion
+                              )}
                             </span>
                           </div>
                         )}

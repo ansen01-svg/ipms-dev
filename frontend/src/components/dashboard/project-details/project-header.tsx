@@ -162,7 +162,7 @@ export function ProjectHeader({ project }: ProjectHeaderProps) {
                 <div>
                   <p className="text-sm text-gray-500">Created by</p>
                   <p className="text-sm font-medium text-gray-900">
-                    {project.createdBy.name}
+                    {project.createdBy.name} ({project.createdBy.role})
                   </p>
                 </div>
               </div>
@@ -301,7 +301,7 @@ export function ProjectHeader({ project }: ProjectHeaderProps) {
                 <div>
                   <p className="text-sm text-gray-500">Fund Source</p>
                   <p className="text-sm font-medium text-gray-900">
-                    {project.fund}
+                    {project.fund} ({project.subFund})
                   </p>
                 </div>
               </div>

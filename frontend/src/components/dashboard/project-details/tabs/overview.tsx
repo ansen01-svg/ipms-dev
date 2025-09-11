@@ -131,7 +131,7 @@ function OverviewTab({ project }: OverviewTabProps) {
                 Extension Period
               </span>
               <span className="text-sm text-gray-600">
-                {project.extensionPeriodForCompletion}
+                {formatDate(project.extensionPeriodForCompletion)}
               </span>
             </div>
           </div>
@@ -146,7 +146,7 @@ function OverviewTab({ project }: OverviewTabProps) {
               </span>
               <div className="text-right">
                 <p className="text-sm text-gray-600">
-                  {project.lastModifiedBy.name} ({project.lastModifiedBy.role})
+                  {project.createdBy.name} ({project.createdBy.role})
                 </p>
                 {project.lastModifiedBy.modifiedAt && (
                   <p className="text-xs text-gray-500">
