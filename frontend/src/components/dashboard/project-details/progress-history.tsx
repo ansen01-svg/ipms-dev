@@ -3,32 +3,27 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-  FinancialProgressHistoryResponse,
-  FinancialProgressUpdate,
-} from "@/types/archive-projects.types";
-import { formatCurrency } from "@/utils/archive-projects/format-helpers";
-import { getFinancialProgressHistory } from "@/utils/archive-projects/progress";
+  ProgressHistoryResponse,
+  ProgressUpdate,
+} from "@/types/projects.types";
+import { getProgressHistory } from "@/utils/projects/progress";
 import {
   ChevronLeft,
   ChevronRight,
-  DollarSign,
   TrendingDown,
   TrendingUp,
 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { DocumentViewer } from "./docs-viewer";
 
-interface FinancialProgressHistoryProps {
+interface ProgressHistoryProps {
   projectId: string;
-  currentBillAmount: number;
-  workValue: number;
+  currentProgress: number;
 }
 
-export function FinancialProgressHistory({
-  projectId,
-}: FinancialProgressHistoryProps) {
+export function ProgressHistory({ projectId }: ProgressHistoryProps) {
   const [historyData, setHistoryData] = useState<
-    FinancialProgressHistoryResponse["data"] | null
+    ProgressHistoryResponse["data"] | null
   >(null);
   const [loading, setLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
@@ -40,13 +35,11 @@ export function FinancialProgressHistory({
       setError(null);
 
       try {
-        const response = await getFinancialProgressHistory(projectId, page, 10);
+        const response = await getProgressHistory(projectId, page, 10);
         setHistoryData(response.data);
       } catch (err) {
         setError(
-          err instanceof Error
-            ? err.message
-            : "Failed to load financial progress history"
+          err instanceof Error ? err.message : "Failed to load progress history"
         );
       } finally {
         setLoading(false);
@@ -69,13 +62,13 @@ export function FinancialProgressHistory({
     });
   };
 
-  const getAmountChangeIcon = (change: number) => {
+  const getProgressChangeIcon = (change: number) => {
     if (change > 0) return <TrendingUp className="h-4 w-4 text-green-500" />;
     if (change < 0) return <TrendingDown className="h-4 w-4 text-red-500" />;
-    return <DollarSign className="h-4 w-4 text-gray-400" />;
+    return <TrendingUp className="h-4 w-4 text-gray-400" />;
   };
 
-  const getAmountChangeColor = (change: number) => {
+  const getProgressChangeColor = (change: number) => {
     if (change > 0) return "text-green-600";
     if (change < 0) return "text-red-600";
     return "text-gray-600";
@@ -109,8 +102,8 @@ export function FinancialProgressHistory({
   if (!historyData || historyData.history.updates.length === 0) {
     return (
       <div className="text-center py-8">
-        <DollarSign className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-        <p className="text-gray-500">No financial progress updates found</p>
+        <TrendingUp className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+        <p className="text-gray-500">No progress updates found</p>
       </div>
     );
   }
@@ -120,10 +113,10 @@ export function FinancialProgressHistory({
       {/* Summary Stats */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Financial Progress Summary</CardTitle>
+          <CardTitle className="text-lg">Progress Summary</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-center">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
             <div>
               <div className="text-2xl font-bold text-blue-600">
                 {historyData.summary.totalUpdates}
@@ -132,14 +125,13 @@ export function FinancialProgressHistory({
             </div>
             <div>
               <div className="text-2xl font-bold text-green-600">
-                +{formatCurrency(historyData.summary.totalAmountIncrease)}
+                +{historyData.summary.totalProgressIncrease.toFixed(1)}%
               </div>
               <div className="text-xs text-gray-500">Total Increase</div>
             </div>
             <div>
               <div className="text-2xl font-bold text-orange-600">
-                {historyData.summary.avgAmountChange >= 0 ? "+" : ""}
-                {formatCurrency(historyData.summary.avgAmountChange)}
+                {historyData.summary.avgProgressChange.toFixed(1)}%
               </div>
               <div className="text-xs text-gray-500">Avg Change</div>
             </div>
@@ -149,55 +141,46 @@ export function FinancialProgressHistory({
               </div>
               <div className="text-xs text-gray-500">Files Uploaded</div>
             </div>
-            <div>
-              <div className="text-2xl font-bold text-teal-600">
-                {historyData.summary.avgProgressChange.toFixed(1)}%
-              </div>
-              <div className="text-xs text-gray-500">Avg Progress Change</div>
-            </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Financial Progress Updates List */}
+      {/* Progress Updates List */}
       <div className="space-y-4">
-        {historyData.history.updates.map((update: FinancialProgressUpdate) => (
-          <Card key={update._id} className="border-l-4 border-l-blue-500">
+        {historyData.history.updates.map((update: ProgressUpdate) => (
+          <Card key={update._id} className="border-l-4 border-l-teal-500">
             <CardContent className="p-6">
               <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center gap-3">
-                  {getAmountChangeIcon(update.amountDifference)}
+                  {getProgressChangeIcon(update.progressDifference)}
                   <div>
                     <h4 className="font-medium text-gray-900">
-                      Financial Progress Update
+                      Progress Update
                     </h4>
                     <p className="text-xs text-gray-500">
-                      {formatDate(update.createdAt)}
+                      {formatDate(
+                        typeof update.createdAt === "string"
+                          ? update.createdAt
+                          : update.createdAt.toISOString()
+                      )}
                     </p>
                   </div>
                 </div>
                 <div className="text-right">
                   <div
-                    className={`text-lg font-semibold ${getAmountChangeColor(
-                      update.amountDifference
+                    className={`text-lg font-semibold ${getProgressChangeColor(
+                      update.progressDifference
                     )}`}
                   >
-                    {formatCurrency(update.previousBillAmount)} →{" "}
-                    {formatCurrency(update.newBillAmount)}
-                  </div>
-                  <div className="text-sm text-gray-600">
-                    {update.previousFinancialProgress}% →{" "}
-                    {update.newFinancialProgress}%
+                    {update.previousProgress}% → {update.newProgress}%
                   </div>
                   <div
-                    className={`text-xs ${getAmountChangeColor(
-                      update.amountDifference
+                    className={`text-xs ${getProgressChangeColor(
+                      update.progressDifference
                     )}`}
                   >
-                    {update.amountDifference > 0 ? "+" : ""}
-                    {formatCurrency(update.amountDifference)} (
                     {update.progressDifference > 0 ? "+" : ""}
-                    {update.progressDifference.toFixed(1)}%)
+                    {update.progressDifference.toFixed(1)}%
                   </div>
                 </div>
               </div>
@@ -208,51 +191,6 @@ export function FinancialProgressHistory({
                 <span className="font-medium">{update.updatedBy.userName}</span>
                 ({update.updatedBy.userDesignation})
               </div>
-
-              {/* Bill Details */}
-              {(update.billDetails.billNumber ||
-                update.billDetails.billDate ||
-                update.billDetails.billDescription) && (
-                <div className="bg-blue-50 rounded-lg p-4 mb-4">
-                  <h5 className="text-sm font-medium text-blue-900 mb-3">
-                    Bill Details
-                  </h5>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                    {update.billDetails.billNumber && (
-                      <div>
-                        <span className="text-blue-700 font-medium">
-                          Bill Number:
-                        </span>
-                        <div className="text-blue-800 font-mono">
-                          {update.billDetails.billNumber}
-                        </div>
-                      </div>
-                    )}
-                    {update.billDetails.billDate && (
-                      <div>
-                        <span className="text-blue-700 font-medium">
-                          Bill Date:
-                        </span>
-                        <div className="text-blue-800">
-                          {new Date(
-                            update.billDetails.billDate
-                          ).toLocaleDateString("en-IN")}
-                        </div>
-                      </div>
-                    )}
-                    {update.billDetails.billDescription && (
-                      <div className="md:col-span-1">
-                        <span className="text-blue-700 font-medium">
-                          Description:
-                        </span>
-                        <div className="text-blue-800">
-                          {update.billDetails.billDescription}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
 
               {/* Remarks */}
               {update.remarks && (

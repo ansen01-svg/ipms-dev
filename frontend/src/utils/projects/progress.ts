@@ -1,17 +1,12 @@
 import { clearAuthData, getAuthToken } from "@/lib/rbac-config.ts/auth-local";
 import {
-  CombinedProgressUpdateRequest,
-  CombinedProgressUpdateResponse,
   FinancialProgressHistoryResponse,
-  FinancialProgressStatisticsResponse,
   FinancialProgressUpdateRequest,
   FinancialProgressUpdateResponse,
   ProgressHistoryResponse,
-  ProgressStatisticsResponse,
   ProgressUpdateRequest,
   ProgressUpdateResponse,
-  ProjectCompletionStatusResponse,
-} from "@/types/archive-projects.types";
+} from "@/types/projects.types";
 
 // const API_BASE_URL = process.env.NEXT_PUBLIC_PROD_API_URL;
 const API_BASE_URL = process.env.NEXT_PUBLIC_DEV_API_URL;
@@ -41,7 +36,7 @@ const makeAuthenticatedRequest = async (url: string, options: RequestInit) => {
 
 /**
  * Update physical progress of a project
- * PUT /api/archive-project/:id/progress
+ * PUT /api/project/:id/progress
  */
 export const updateProjectProgress = async (
   projectId: string,
@@ -55,8 +50,8 @@ export const updateProjectProgress = async (
   }
 
   // Use "supportingFiles" field name as expected by backend
-  if (progressData.files && progressData.files.length > 0) {
-    progressData.files.forEach((file) => {
+  if (progressData.supportingFiles && progressData.supportingFiles.length > 0) {
+    progressData.supportingFiles.forEach((file) => {
       formData.append("supportingFiles", file);
     });
   }
@@ -76,7 +71,7 @@ export const updateProjectProgress = async (
   });
 
   const response = await makeAuthenticatedRequest(
-    `${API_BASE_URL}/archive-project/${projectId}/progress`,
+    `${API_BASE_URL}/project/${projectId}/progress`,
     {
       method: "PUT",
       body: formData,
@@ -93,7 +88,7 @@ export const updateProjectProgress = async (
 
 /**
  * Update financial progress of a project
- * PUT /api/archive-project/:id/financial-progress
+ * PUT /api/project/:id/financial-progress
  */
 export const updateFinancialProgress = async (
   projectId: string,
@@ -114,21 +109,26 @@ export const updateFinancialProgress = async (
 
   // Add bill details as JSON string if provided
   if (financialProgressData.billDetails) {
-    formData.append(
-      "billDetails",
-      JSON.stringify(financialProgressData.billDetails)
-    );
+    (["billNumber", "billDate", "billDescription"] as const).forEach((key) => {
+      const value = financialProgressData.billDetails?.[key];
+      if (value) {
+        formData.append(`billDetails[${key}]`, value);
+      }
+    });
   }
 
   // Add supporting files using the correct field name from backend
-  if (financialProgressData.files && financialProgressData.files.length > 0) {
-    financialProgressData.files.forEach((file) => {
+  if (
+    financialProgressData.supportingFiles &&
+    financialProgressData.supportingFiles.length > 0
+  ) {
+    financialProgressData.supportingFiles.forEach((file) => {
       formData.append("supportingFiles", file);
     });
   }
 
   const response = await makeAuthenticatedRequest(
-    `${API_BASE_URL}/archive-project/${projectId}/financial-progress`,
+    `${API_BASE_URL}/project/${projectId}/financial-progress`,
     {
       method: "PUT",
       body: formData,
@@ -144,67 +144,8 @@ export const updateFinancialProgress = async (
 };
 
 /**
- * Update both physical and financial progress together
- * PUT /api/archive-project/:id/progress/combined
- */
-export const updateCombinedProgress = async (
-  projectId: string,
-  combinedProgressData: CombinedProgressUpdateRequest
-): Promise<CombinedProgressUpdateResponse> => {
-  const formData = new FormData();
-
-  // Add physical progress if provided
-  if (combinedProgressData.progress !== undefined) {
-    formData.append("progress", combinedProgressData.progress.toString());
-  }
-
-  // Add financial progress (bill amount) if provided
-  if (combinedProgressData.newBillAmount !== undefined) {
-    formData.append(
-      "newBillAmount",
-      combinedProgressData.newBillAmount.toString()
-    );
-  }
-
-  // Add optional remarks
-  if (combinedProgressData.remarks) {
-    formData.append("remarks", combinedProgressData.remarks);
-  }
-
-  // Add bill details as JSON string if provided
-  if (combinedProgressData.billDetails) {
-    formData.append(
-      "billDetails",
-      JSON.stringify(combinedProgressData.billDetails)
-    );
-  }
-
-  // Add supporting files
-  if (combinedProgressData.files && combinedProgressData.files.length > 0) {
-    combinedProgressData.files.forEach((file) => {
-      formData.append("supportingFiles", file);
-    });
-  }
-
-  const response = await makeAuthenticatedRequest(
-    `${API_BASE_URL}/archive-project/${projectId}/progress/combined`,
-    {
-      method: "PUT",
-      body: formData,
-    }
-  );
-
-  if (!response.ok) {
-    const errorData = await response.json();
-    throw new Error(errorData.message || "Failed to update combined progress");
-  }
-
-  return response.json();
-};
-
-/**
  * Get physical progress update history
- * GET /api/archive-project/:id/progress/history
+ * GET /api/project/:id/progress/history
  */
 export const getProgressHistory = async (
   projectId: string,
@@ -212,7 +153,7 @@ export const getProgressHistory = async (
   limit: number = 10
 ): Promise<ProgressHistoryResponse> => {
   const response = await makeAuthenticatedRequest(
-    `${API_BASE_URL}/archive-project/${projectId}/progress/history?page=${page}&limit=${limit}`,
+    `${API_BASE_URL}/project/${projectId}/progress/history?page=${page}&limit=${limit}`,
     {
       method: "GET",
     }
@@ -227,51 +168,15 @@ export const getProgressHistory = async (
 };
 
 /**
- * Get progress statistics across projects
- * GET /api/archive-project/progress/statistics
- */
-export const getProgressStatistics = async (filters?: {
-  financialYear?: string;
-  concernedEngineer?: string;
-  startDate?: string;
-  endDate?: string;
-}): Promise<ProgressStatisticsResponse> => {
-  const params = new URLSearchParams();
-
-  if (filters) {
-    Object.entries(filters).forEach(([key, value]) => {
-      if (value) {
-        params.append(key, value);
-      }
-    });
-  }
-
-  const url = `${API_BASE_URL}/archive-project/progress/statistics${
-    params.toString() ? `?${params.toString()}` : ""
-  }`;
-
-  const response = await makeAuthenticatedRequest(url, {
-    method: "GET",
-  });
-
-  if (!response.ok) {
-    const errorData = await response.json();
-    throw new Error(errorData.message || "Failed to fetch progress statistics");
-  }
-
-  return response.json();
-};
-
-/**
  * Toggle progress updates for a project
- * PATCH /api/archive-project/:id/progress/toggle
+ * PATCH /api/project/:id/progress/toggle
  */
 export const toggleProgressUpdates = async (
   projectId: string,
   enabled: boolean
 ): Promise<{ success: boolean; message: string; data: unknown }> => {
   const response = await makeAuthenticatedRequest(
-    `${API_BASE_URL}/archive-project/${projectId}/progress/toggle`,
+    `${API_BASE_URL}/project/${projectId}/progress/toggle`,
     {
       method: "PATCH",
       headers: {
@@ -471,7 +376,7 @@ export const getFinancialProgressChangeDescription = (
 
 /**
  * Get financial progress update history
- * GET /api/archive-project/:id/financial-progress/history
+ * GET /api/project/:id/financial-progress/history
  */
 export const getFinancialProgressHistory = async (
   projectId: string,
@@ -479,7 +384,7 @@ export const getFinancialProgressHistory = async (
   limit: number = 10
 ): Promise<FinancialProgressHistoryResponse> => {
   const response = await makeAuthenticatedRequest(
-    `${API_BASE_URL}/archive-project/${projectId}/financial-progress/history?page=${page}&limit=${limit}`,
+    `${API_BASE_URL}/project/${projectId}/financial-progress/history?page=${page}&limit=${limit}`,
     {
       method: "GET",
     }
@@ -496,75 +401,15 @@ export const getFinancialProgressHistory = async (
 };
 
 /**
- * Get financial progress statistics across projects
- * GET /api/archive-project/financial-progress/statistics
- */
-export const getFinancialProgressStatistics = async (filters?: {
-  financialYear?: string;
-  concernedEngineer?: string;
-  startDate?: string;
-  endDate?: string;
-}): Promise<FinancialProgressStatisticsResponse> => {
-  const params = new URLSearchParams();
-
-  if (filters) {
-    Object.entries(filters).forEach(([key, value]) => {
-      if (value) {
-        params.append(key, value);
-      }
-    });
-  }
-
-  const url = `${API_BASE_URL}/archive-project/financial-progress/statistics${
-    params.toString() ? `?${params.toString()}` : ""
-  }`;
-
-  const response = await makeAuthenticatedRequest(url, {
-    method: "GET",
-  });
-
-  if (!response.ok) {
-    const errorData = await response.json();
-    throw new Error(
-      errorData.message || "Failed to fetch financial progress statistics"
-    );
-  }
-
-  return response.json();
-};
-
-/**
- * Get project completion status (both physical and financial)
- * GET /api/archive-project/:id/completion-status
- */
-export const getProjectCompletionStatus = async (
-  projectId: string
-): Promise<ProjectCompletionStatusResponse> => {
-  const response = await makeAuthenticatedRequest(
-    `${API_BASE_URL}/archive-project/${projectId}/completion-status`,
-    {
-      method: "GET",
-    }
-  );
-
-  if (!response.ok) {
-    const errorData = await response.json();
-    throw new Error(errorData.message || "Failed to fetch completion status");
-  }
-
-  return response.json();
-};
-
-/**
  * Toggle financial progress updates for a project
- * PATCH /api/archive-project/:id/financial-progress/toggle
+ * PATCH /api/project/:id/financial-progress/toggle
  */
 export const toggleFinancialProgressUpdates = async (
   projectId: string,
   enabled: boolean
 ): Promise<{ success: boolean; message: string; data: unknown }> => {
   const response = await makeAuthenticatedRequest(
-    `${API_BASE_URL}/archive-project/${projectId}/financial-progress/toggle`,
+    `${API_BASE_URL}/project/${projectId}/financial-progress/toggle`,
     {
       method: "PATCH",
       headers: {
@@ -586,7 +431,7 @@ export const toggleFinancialProgressUpdates = async (
 
 /**
  * Toggle both progress update types at once
- * PATCH /api/archive-project/:id/progress/toggle-all
+ * PATCH /api/project/:id/progress/toggle-all
  */
 export const toggleAllProgressUpdates = async (
   projectId: string,
@@ -596,7 +441,7 @@ export const toggleAllProgressUpdates = async (
   }
 ): Promise<{ success: boolean; message: string; data: unknown }> => {
   const response = await makeAuthenticatedRequest(
-    `${API_BASE_URL}/archive-project/${projectId}/progress/toggle-all`,
+    `${API_BASE_URL}/project/${projectId}/progress/toggle-all`,
     {
       method: "PATCH",
       headers: {

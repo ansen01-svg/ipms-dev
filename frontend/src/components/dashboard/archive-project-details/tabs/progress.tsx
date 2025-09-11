@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DbArchiveProject } from "@/types/archive-projects.types";
 import { formatCurrency } from "@/utils/archive-projects/format-helpers";
-import { BarChart3, DollarSign, FileText, TrendingUp } from "lucide-react";
+import { BarChart3, FileText, IndianRupee, TrendingUp } from "lucide-react";
 import { useState } from "react";
 import { FinancialProgressHistory } from "../financial-progress-history";
 import { ProgressHistory } from "../progress-history";
@@ -116,7 +116,7 @@ export default function ArchiveProgressTab({
             <Card>
               <CardHeader className="pb-3">
                 <div className="flex items-center gap-2">
-                  <DollarSign className="h-5 w-5 text-blue-600" />
+                  <IndianRupee className="h-5 w-5 text-blue-600" />
                   <CardTitle className="text-sm">Financial Progress</CardTitle>
                 </div>
               </CardHeader>
@@ -430,7 +430,7 @@ export default function ArchiveProgressTab({
           <Card>
             <CardHeader>
               <div className="flex items-center gap-2">
-                <DollarSign className="h-5 w-5 text-blue-600" />
+                <IndianRupee className="h-5 w-5 text-blue-600" />
                 <CardTitle className="text-lg">
                   Financial Progress Details
                 </CardTitle>

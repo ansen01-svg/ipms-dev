@@ -364,40 +364,55 @@ export default function MeasurementBooksPage() {
                 <h4 className="font-medium text-gray-900 mb-2">
                   Project Information
                 </h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <span className="font-medium text-gray-600">
-                      Project Name:
-                    </span>
-                    <div className="mt-1">{selectedMB.project.projectName}</div>
-                  </div>
-                  <div>
-                    <span className="font-medium text-gray-600">
-                      Work Order:
-                    </span>
-                    <div className="mt-1">
-                      {selectedMB.project.workOrderNumber}
-                    </div>
-                  </div>
-                  <div>
-                    <span className="font-medium text-gray-600">District:</span>
-                    <div className="mt-1">{selectedMB.project.district}</div>
-                  </div>
-                  {selectedMB.project.state && (
+                {selectedMB.project ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                     <div>
-                      <span className="font-medium text-gray-600">State:</span>
-                      <div className="mt-1">{selectedMB.project.state}</div>
+                      <span className="font-medium text-gray-600">
+                        Project Name:
+                      </span>
+                      <div className="mt-1">
+                        {selectedMB.project.projectName}
+                      </div>
                     </div>
-                  )}
-                  <div>
-                    <span className="font-medium text-gray-600">
-                      Estimated Cost:
-                    </span>
-                    <div className="mt-1">
-                      ₹{selectedMB.project.estimatedCost.toLocaleString()}
+                    <div>
+                      <span className="font-medium text-gray-600">
+                        Work Order:
+                      </span>
+                      <div className="mt-1">
+                        {selectedMB.project.workOrderNumber}
+                      </div>
+                    </div>
+                    <div>
+                      <span className="font-medium text-gray-600">
+                        District:
+                      </span>
+                      <div className="mt-1">{selectedMB.project.district}</div>
+                    </div>
+                    {selectedMB.project.state && (
+                      <div>
+                        <span className="font-medium text-gray-600">
+                          State:
+                        </span>
+                        <div className="mt-1">{selectedMB.project.state}</div>
+                      </div>
+                    )}
+                    <div>
+                      <span className="font-medium text-gray-600">
+                        Estimated Cost:
+                      </span>
+                      <div className="mt-1">
+                        ₹
+                        {selectedMB.project.estimatedCost?.toLocaleString() ||
+                          "N/A"}
+                      </div>
                     </div>
                   </div>
-                </div>
+                ) : (
+                  <div className="text-sm text-gray-500 p-3 bg-yellow-50 rounded-lg">
+                    Project information is not available for this measurement
+                    book.
+                  </div>
+                )}
               </div>
 
               {/* MB Details */}

@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DbProject } from "@/types/projects.types";
+import { updateProjectProgress } from "@/utils/projects/progress";
 import { AlertCircle, CheckCircle, Info, X } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 
@@ -10,31 +11,6 @@ interface ProgressUpdateRequest {
   progress: number;
   remarks?: string;
   supportingFiles?: File[];
-}
-
-interface ProgressUpdateResponse {
-  success: boolean;
-  message: string;
-  data: {
-    project: DbProject;
-    latestProgressUpdate: unknown;
-    progressChange: {
-      from: number;
-      to: number;
-      difference: number;
-      changeType: "increase" | "decrease" | "no change";
-    };
-    filesUploaded: {
-      count: number;
-      totalSize: number;
-      types: Record<string, number>;
-    };
-  };
-  metadata: {
-    updatedAt: string;
-    updatedBy: unknown;
-    totalProgressUpdates: number;
-  };
 }
 
 interface FileUploadZoneProps {
@@ -326,41 +302,6 @@ export function ProgressUpdateModal({
     const validationErrors = validateProgressUpdate();
     setErrors(validationErrors);
     return Object.keys(validationErrors).length === 0;
-  };
-
-  const updateProjectProgress = async (
-    projectId: string,
-    progressData: ProgressUpdateRequest
-  ): Promise<ProgressUpdateResponse> => {
-    const formData = new FormData();
-    formData.append("progress", progressData.progress.toString());
-    if (progressData.remarks) {
-      formData.append("remarks", progressData.remarks);
-    }
-    if (progressData.supportingFiles) {
-      progressData.supportingFiles.forEach((file) => {
-        formData.append("supportingFiles", file);
-      });
-    }
-
-    const token = localStorage.getItem("token");
-    const response = await fetch(
-      `${process.env.NEXT_PUBLIC_DEV_API_URL}/project/${projectId}/progress`,
-      {
-        method: "PUT",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        body: formData,
-      }
-    );
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`HTTP ${response.status}: ${errorText}`);
-    }
-
-    return response.json();
   };
 
   const handleSubmit = async () => {

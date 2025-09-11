@@ -5,9 +5,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   FinancialProgressHistoryResponse,
   FinancialProgressUpdate,
-} from "@/types/archive-projects.types";
-import { formatCurrency } from "@/utils/archive-projects/format-helpers";
-import { getFinancialProgressHistory } from "@/utils/archive-projects/progress";
+} from "@/types/projects.types";
+import { formatCurrency } from "@/utils/projects/format-helpers";
+import { getFinancialProgressHistory } from "@/utils/projects/progress";
 import {
   ChevronLeft,
   ChevronRight,
@@ -172,7 +172,11 @@ export function FinancialProgressHistory({
                       Financial Progress Update
                     </h4>
                     <p className="text-xs text-gray-500">
-                      {formatDate(update.createdAt)}
+                      {formatDate(
+                        typeof update.createdAt === "string"
+                          ? update.createdAt
+                          : update.createdAt.toISOString()
+                      )}
                     </p>
                   </div>
                 </div>
@@ -210,9 +214,9 @@ export function FinancialProgressHistory({
               </div>
 
               {/* Bill Details */}
-              {(update.billDetails.billNumber ||
-                update.billDetails.billDate ||
-                update.billDetails.billDescription) && (
+              {(update.billDetails?.billNumber ||
+                update.billDetails?.billDate ||
+                update.billDetails?.billDescription) && (
                 <div className="bg-blue-50 rounded-lg p-4 mb-4">
                   <h5 className="text-sm font-medium text-blue-900 mb-3">
                     Bill Details
