@@ -1,13 +1,19 @@
+"use client";
+
 import { Badge } from "@/components/ui/badge";
+import { DbProject } from "@/types/projects.types";
+import { getProjectStatusHistory } from "@/utils/projects/project-status";
 import {
   AlertCircle,
   CheckCircle,
   ChevronDown,
   ChevronRight,
+  Clock,
+  Loader2,
   Users,
   XCircle,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 interface TimelineComment {
   id: string;
@@ -15,7 +21,7 @@ interface TimelineComment {
   role: string;
   content: string;
   timestamp: string;
-  type: "approval" | "rejection" | "query" | "revision";
+  type: "approval" | "rejection" | "query" | "revision" | "submission";
 }
 
 interface TimelineStep {
@@ -27,17 +33,61 @@ interface TimelineStep {
   completedDate?: string;
   comments: TimelineComment[];
   isCurrentStep?: boolean;
+  statusChange?: {
+    from: string;
+    to: string;
+  };
 }
 
 interface TimelineTabProps {
-  project: {
-    approvalSteps: TimelineStep[];
-    currentApprovalLevel: string;
-  };
+  project: DbProject;
 }
 
 export default function TimelineTab({ project }: TimelineTabProps) {
   const [expandedSteps, setExpandedSteps] = useState<Set<string>>(new Set());
+  interface StatusHistoryItem {
+    newStatus: string;
+    previousStatus: string;
+    changedBy: {
+      name: string;
+      role: string;
+    };
+    createdAt: string;
+    rejectionReason?: string;
+    remarks?: string;
+  }
+
+  const [statusHistory, setStatusHistory] = useState<StatusHistoryItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Fetch status history on component mount
+  useEffect(() => {
+    const fetchStatusHistory = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+        const response = await getProjectStatusHistory(
+          project._id as string,
+          1,
+          50
+        ); // Get all history
+        console.log(response);
+        setStatusHistory(response.data.statusHistory);
+      } catch (err) {
+        console.error("Error fetching status history:", err);
+        setError(
+          err instanceof Error ? err.message : "Failed to load status history"
+        );
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (project._id) {
+      fetchStatusHistory();
+    }
+  }, [project._id]);
 
   const toggleStep = (stepId: string) => {
     const newExpanded = new Set(expandedSteps);
@@ -78,93 +128,154 @@ export default function TimelineTab({ project }: TimelineTabProps) {
     }
   };
 
-  // Mock data for demonstration
-  const mockApprovalSteps: TimelineStep[] = [
-    {
-      id: "1",
-      title: "Initial Proposal Submission",
-      approver: "Rajesh Kumar",
-      role: "JE",
-      status: "completed",
-      completedDate: "2025-01-15",
-      comments: [
-        {
-          id: "c1",
-          author: "Rajesh Kumar",
-          role: "JE",
-          content:
-            "Project proposal submitted with all required documents and initial cost estimates. Technical feasibility confirmed.",
-          timestamp: "15 Jan 25",
-          type: "approval",
-        },
-      ],
-    },
-    {
-      id: "2",
-      title: "AEE Technical Review",
-      approver: "Priya Sharma",
-      role: "AEE",
-      status: "completed",
-      completedDate: "2025-01-22",
-      comments: [
-        {
-          id: "c2",
-          author: "Priya Sharma",
-          role: "AEE",
-          content:
-            "Technical specifications reviewed and approved. Minor revisions needed in cost breakdown.",
-          timestamp: "22 Jan 25",
-          type: "approval",
-        },
-        {
-          id: "c3",
-          author: "Rajesh Kumar",
-          role: "JE",
-          content:
-            "Cost breakdown revised as per AEE feedback. Updated documents submitted.",
-          timestamp: "23 Jan 25",
-          type: "revision",
-        },
-      ],
-    },
-    {
-      id: "3",
-      title: "CE Administrative Review",
-      approver: "Dr. Amit Patel",
-      role: "CE",
-      status: "in_progress",
-      isCurrentStep: true,
-      comments: [
-        {
-          id: "c4",
-          author: "Dr. Amit Patel",
-          role: "CE",
-          content:
-            "Under review for environmental compliance and budget allocation. Expecting completion by end of week.",
-          timestamp: "5 Aug 25",
-          type: "query",
-        },
-      ],
-    },
-    {
-      id: "4",
-      title: "MD Final Approval",
-      approver: "Mrs. Sunita Mehta",
-      role: "MD",
-      status: "pending",
-      comments: [],
-    },
-    {
-      id: "5",
-      title: "Project Execution Assignment",
-      approver: "Contractor Assignment",
-      role: "Executor",
-      status: "pending",
-      comments: [],
-    },
-  ];
+  const getCommentType = (newStatus: string): TimelineComment["type"] => {
+    if (newStatus.includes("Rejected")) return "rejection";
+    if (newStatus === "Ongoing") return "approval";
+    if (newStatus === "Resubmitted for Approval") return "revision";
+    if (newStatus === "Completed") return "approval";
+    return "submission";
+  };
 
-  const approvalSteps = project.approvalSteps || mockApprovalSteps;
+  const getStepStatus = (
+    newStatus: string,
+    isLatest: boolean
+  ): TimelineStep["status"] => {
+    if (newStatus.includes("Rejected")) return "rejected";
+    if (newStatus === "Ongoing" && isLatest) return "in_progress";
+    if (newStatus === "Completed") return "completed";
+    if (
+      isLatest &&
+      (newStatus === "Submitted for Approval" ||
+        newStatus === "Resubmitted for Approval")
+    ) {
+      return "in_progress";
+    }
+    return "completed";
+  };
+
+  const getStepTitle = (newStatus: string, previousStatus: string) => {
+    console.log(previousStatus, "->", newStatus);
+    if (newStatus === "Submitted for Approval")
+      return "Initial Project Submission";
+    if (newStatus === "Resubmitted for Approval") return "Project Resubmission";
+    if (newStatus === "Ongoing") return "Project Approved";
+    if (newStatus === "Completed") return "Project Completed";
+    if (newStatus.includes("Rejected"))
+      return `Rejected by ${newStatus.split(" by ")[1]}`;
+    return `Status Changed to ${newStatus}`;
+  };
+
+  // Transform status history into timeline steps
+  const transformToTimelineSteps = (): TimelineStep[] => {
+    if (!statusHistory.length) return [];
+
+    return statusHistory
+      .map((historyItem, index) => {
+        const isLatest = index === 0; // First item is the latest
+        const commentType = getCommentType(historyItem.newStatus);
+        const stepStatus = getStepStatus(historyItem.newStatus, isLatest);
+
+        const comment: TimelineComment = {
+          id: `comment-${index}`,
+          author: historyItem.changedBy.name,
+          role: historyItem.changedBy.role,
+          content:
+            historyItem.rejectionReason ||
+            historyItem.remarks ||
+            `Status changed to "${historyItem.newStatus}"`,
+          timestamp: new Date(historyItem.createdAt).toLocaleDateString(
+            "en-IN",
+            {
+              day: "numeric",
+              month: "short",
+              year: "2-digit",
+            }
+          ),
+          type: commentType,
+        };
+
+        return {
+          id: `step-${index}`,
+          title: getStepTitle(
+            historyItem.newStatus,
+            historyItem.previousStatus
+          ),
+          approver: historyItem.changedBy.name,
+          role: historyItem.changedBy.role,
+          status: stepStatus,
+          completedDate: historyItem.createdAt,
+          comments: [comment],
+          isCurrentStep: isLatest && stepStatus === "in_progress",
+          statusChange: {
+            from: historyItem.previousStatus,
+            to: historyItem.newStatus,
+          },
+        };
+      })
+      .reverse(); // Reverse to show chronological order
+  };
+
+  const timelineSteps = transformToTimelineSteps();
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <h3 className="text-lg font-semibold text-gray-900">
+            Project Timeline
+          </h3>
+        </div>
+        <div className="flex items-center justify-center py-12">
+          <div className="flex items-center gap-3 text-gray-500">
+            <Loader2 className="h-5 w-5 animate-spin" />
+            <span>Loading project timeline...</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <h3 className="text-lg font-semibold text-gray-900">
+            Project Timeline
+          </h3>
+        </div>
+        <div className="flex items-center justify-center py-12">
+          <div className="text-center">
+            <AlertCircle className="h-8 w-8 text-red-500 mx-auto mb-3" />
+            <p className="text-red-600 font-medium">Failed to load timeline</p>
+            <p className="text-sm text-gray-500 mt-1">{error}</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!timelineSteps.length) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <h3 className="text-lg font-semibold text-gray-900">
+            Project Timeline
+          </h3>
+        </div>
+        <div className="flex items-center justify-center py-12">
+          <div className="text-center">
+            <Clock className="h-8 w-8 text-gray-400 mx-auto mb-3" />
+            <p className="text-gray-600 font-medium">
+              No timeline data available
+            </p>
+            <p className="text-sm text-gray-500 mt-1">
+              Status changes will appear here as they occur.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -174,22 +285,20 @@ export default function TimelineTab({ project }: TimelineTabProps) {
         </h3>
         <div className="flex items-center gap-2">
           <Badge variant="outline" className="text-xs">
-            {approvalSteps.filter((step) => step.status === "completed").length}{" "}
-            of {approvalSteps.length} Steps Complete
+            {timelineSteps.filter((step) => step.status === "completed").length}{" "}
+            of {timelineSteps.length} Changes
           </Badge>
-          {project.currentApprovalLevel && (
-            <Badge className="bg-blue-50 text-blue-600 border-blue-200 text-xs">
-              Currently at: {project.currentApprovalLevel}
-            </Badge>
-          )}
+          <Badge className="bg-blue-50 text-blue-600 border-blue-200 text-xs">
+            Current: {project.status}
+          </Badge>
         </div>
       </div>
 
       <div className="space-y-1">
-        {approvalSteps.map((step, index) => {
+        {timelineSteps.map((step, index) => {
           const isExpanded = expandedSteps.has(step.id);
           const hasComments = step.comments.length > 0;
-          const isLastStep = index === approvalSteps.length - 1;
+          const isLastStep = index === timelineSteps.length - 1;
 
           return (
             <div key={step.id} className="relative">
@@ -201,16 +310,12 @@ export default function TimelineTab({ project }: TimelineTabProps) {
                       ? "bg-green-400"
                       : step.status === "in_progress"
                       ? "bg-blue-400"
+                      : step.status === "rejected"
+                      ? "bg-red-400"
                       : "bg-gray-200"
                   }`}
                 />
               )}
-
-              {/* Rejection return line - shows when step had rejections */}
-              {step.comments.some((comment) => comment.type === "rejection") &&
-                !isLastStep && (
-                  <div className="absolute left-8 top-12 w-0.5 h-16 bg-red-400 opacity-60" />
-                )}
 
               {/* Current step indicator */}
               {step.isCurrentStep && (
@@ -252,13 +357,39 @@ export default function TimelineTab({ project }: TimelineTabProps) {
                         {step.approver} • {step.role}
                         {step.completedDate && (
                           <span className="ml-2">
-                            • Completed on{" "}
+                            •{" "}
                             {new Date(step.completedDate).toLocaleDateString(
-                              "en-IN"
+                              "en-IN",
+                              {
+                                day: "numeric",
+                                month: "short",
+                                year: "numeric",
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              }
                             )}
                           </span>
                         )}
                       </p>
+                      {step.statusChange && (
+                        <p className="text-xs text-gray-400 mt-1">
+                          <span className="px-2 py-0.5 bg-gray-100 rounded text-gray-600">
+                            {step.statusChange.from}
+                          </span>
+                          {" → "}
+                          <span
+                            className={`px-2 py-0.5 rounded ${
+                              step.statusChange.to.includes("Rejected")
+                                ? "bg-red-100 text-red-600"
+                                : step.statusChange.to === "Ongoing"
+                                ? "bg-green-100 text-green-600"
+                                : "bg-blue-100 text-blue-600"
+                            }`}
+                          >
+                            {step.statusChange.to}
+                          </span>
+                        </p>
+                      )}
                     </div>
                     <div className="flex items-center gap-2">
                       {getStatusBadge(step.status)}
@@ -278,8 +409,7 @@ export default function TimelineTab({ project }: TimelineTabProps) {
                           <ChevronRight className="h-4 w-4" />
                         )}
                         <Users className="h-4 w-4" />
-                        {step.comments.length} comment
-                        {step.comments.length !== 1 ? "s" : ""}
+                        View details
                       </button>
 
                       {isExpanded && (
@@ -306,7 +436,9 @@ export default function TimelineTab({ project }: TimelineTabProps) {
                                         ? "bg-red-50 text-red-600 border-red-200"
                                         : comment.type === "query"
                                         ? "bg-yellow-50 text-yellow-600 border-yellow-200"
-                                        : "bg-blue-50 text-blue-600 border-blue-200"
+                                        : comment.type === "revision"
+                                        ? "bg-blue-50 text-blue-600 border-blue-200"
+                                        : "bg-gray-50 text-gray-600 border-gray-200"
                                     }`}
                                   >
                                     {comment.type}
@@ -332,11 +464,11 @@ export default function TimelineTab({ project }: TimelineTabProps) {
                       <div className="flex items-center gap-2">
                         <AlertCircle className="h-4 w-4 text-blue-600" />
                         <span className="text-sm font-medium text-blue-800">
-                          Currently under review
+                          Current Status
                         </span>
                       </div>
                       <p className="text-xs text-blue-600 mt-1">
-                        Project is currently being reviewed at this level
+                        This is the current status of the project
                       </p>
                     </div>
                   )}
@@ -353,15 +485,17 @@ export default function TimelineTab({ project }: TimelineTabProps) {
           <div className="flex items-center gap-2">
             <Users className="h-4 w-4 text-gray-400" />
             <span className="text-sm text-gray-600">
-              {approvalSteps.reduce(
-                (total, step) => total + step.comments.length,
-                0
-              )}{" "}
-              total comments across all stages
+              {timelineSteps.length} status change
+              {timelineSteps.length !== 1 ? "s" : ""} recorded
             </span>
           </div>
           <div className="text-xs text-gray-500">
-            Last updated: {new Date().toLocaleDateString("en-IN")}
+            Last updated:{" "}
+            {timelineSteps.length > 0
+              ? new Date(
+                  timelineSteps[timelineSteps.length - 1].completedDate!
+                ).toLocaleDateString("en-IN")
+              : "Never"}
           </div>
         </div>
       </div>

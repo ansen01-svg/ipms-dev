@@ -153,10 +153,14 @@ function ArchiveProjectsContainerContent({
         </div>
 
         {/* Filters skeleton */}
-        <div className="flex space-x-4">
-          <div className="h-10 bg-gray-200 rounded animate-pulse w-60"></div>
-          <div className="h-10 bg-gray-200 rounded animate-pulse w-40"></div>
-          <div className="h-10 bg-gray-200 rounded animate-pulse w-40"></div>
+        <div className="space-y-4">
+          <div className="h-10 bg-gray-200 rounded animate-pulse w-full sm:w-60"></div>
+          <div className="flex space-x-4">
+            <div className="h-10 bg-gray-200 rounded animate-pulse w-32"></div>
+            <div className="h-10 bg-gray-200 rounded animate-pulse w-32"></div>
+            <div className="h-10 bg-gray-200 rounded animate-pulse w-32"></div>
+            <div className="h-10 bg-gray-200 rounded animate-pulse w-32"></div>
+          </div>
         </div>
 
         {/* Table skeleton */}
@@ -207,7 +211,7 @@ function ArchiveProjectsContainerContent({
         </div>
       )}
 
-      {/* Filters Section */}
+      {/* Filters Section - Now below search and simplified */}
       <FiltersComponent filterOptions={filterOptions} />
 
       {/* Archive Projects Table */}
@@ -217,30 +221,6 @@ function ArchiveProjectsContainerContent({
         loading={refreshing}
         onViewProject={handleViewProject}
       />
-
-      {/* Empty state */}
-      {/* {projects.length === 0 && !loading && !error && (
-        <div className="text-center py-12">
-          <Archive className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-          <div className="text-gray-500 text-lg mb-2">
-            No archive projects found
-          </div>
-          <div className="text-gray-400 text-sm mb-4">
-            {user.role === "JE"
-              ? "Create your first archive project record to get started"
-              : "No archive projects are available"}
-          </div>
-          {user.role === "JE" && (
-            <Button
-              onClick={handleNewArchiveProject}
-              className="bg-teal-600 hover:bg-teal-700 text-white"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Create First Archive Record
-            </Button>
-          )}
-        </div>
-      )} */}
     </div>
   );
 }

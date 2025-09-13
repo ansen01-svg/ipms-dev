@@ -549,8 +549,13 @@ export function ArchiveProjectsTable({
                     </TableCell>
 
                     <TableCell className="px-4">
-                      <div className="text-sm text-gray-900 leading-tight line-clamp-2">
-                        {project.nameOfWork}
+                      <div className="space-y-1">
+                        <div className="text-sm text-gray-900 leading-tight line-clamp-2">
+                          {project.nameOfWork}
+                        </div>
+                        <div className="text-xs text-gray-500 whitespace-nowrap">
+                          ID - {project._id}
+                        </div>
                       </div>
                     </TableCell>
 

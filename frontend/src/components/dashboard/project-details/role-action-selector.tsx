@@ -1,9 +1,7 @@
 import { DbProject } from "@/types/projects.types";
 import { User } from "@/types/user.types";
-import { AEEActions } from "./role-actions/aee-actions";
-import { CEActions } from "./role-actions/ce-actions";
+import { HigherAuthorityActions } from "./role-actions/higher-authority-actions";
 import { JEActions } from "./role-actions/je-actions";
-import { MDActions } from "./role-actions/md-actions";
 import { ViewerActions } from "./role-actions/viewer-actions";
 
 interface RoleActionSelectorProps {
@@ -22,9 +20,15 @@ export function RoleActionSelector({
       {user.role === "JE" && (
         <JEActions project={project} onProjectUpdate={onProjectUpdate} />
       )}
-      {user.role === "AEE" && <AEEActions project={project} />}
-      {user.role === "CE" && <CEActions project={project} />}
-      {user.role === "MD" && <MDActions project={project} />}
+      {user.role === "AEE" && (
+        <HigherAuthorityActions project={project} role={user.role} />
+      )}
+      {user.role === "CE" && (
+        <HigherAuthorityActions project={project} role={user.role} />
+      )}
+      {user.role === "MD" && (
+        <HigherAuthorityActions project={project} role={user.role} />
+      )}
       {user.role === "VIEWER" && <ViewerActions />}
       {user.role === "ADMIN" && <ViewerActions />}
     </div>
