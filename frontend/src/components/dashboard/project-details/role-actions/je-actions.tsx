@@ -1,9 +1,11 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/contexts/auth-context";
 import { DbProject } from "@/types/projects.types";
 import { PROJECT_STATUSES } from "@/utils/project-details/constants";
-import { BarChart3, IndianRupeeIcon, TrendingUp } from "lucide-react";
+import { BarChart3, Edit, IndianRupeeIcon, TrendingUp } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { FinancialProgressUpdateModal } from "../financial-progress-update-modal";
 import { ProgressUpdateModal } from "../physical-progress-update-modal";
@@ -16,6 +18,10 @@ interface JEActionsProps {
 export function JEActions({ project, onProjectUpdate }: JEActionsProps) {
   const [isProgressModalOpen, setIsProgressModalOpen] = useState(false);
   const [isFinancialModalOpen, setIsFinancialModalOpen] = useState(false);
+  const router = useRouter();
+
+  const { user } = useAuth();
+  const isProjectCreator = user?.name === project.createdBy.name;
 
   const handleProgressUpdateSuccess = (updatedProject: DbProject) => {
     // Update the parent component with the new project data
@@ -33,15 +39,23 @@ export function JEActions({ project, onProjectUpdate }: JEActionsProps) {
     setIsFinancialModalOpen(false);
   };
 
+  const handleEditProject = () => {
+    // Navigate to edit page with project ID
+    router.push(`/dashboard/projects/edit/${project._id}`);
+  };
+
   const canUpdatePhysicalProgress =
-    (project.status === PROJECT_STATUSES.APPROVED ||
-      project.status === PROJECT_STATUSES.ONGOING) &&
-    (project.progressPercentage || 0) < 100;
+    project.status === PROJECT_STATUSES.ONGOING &&
+    (project.progressPercentage || 0) < 100 &&
+    isProjectCreator;
 
   const canUpdateFinancialProgress =
-    (project.status === PROJECT_STATUSES.APPROVED ||
-      project.status === PROJECT_STATUSES.ONGOING) &&
-    ((project as DbProject).billSubmittedAmount || 0) < project.estimatedCost;
+    project.status === PROJECT_STATUSES.ONGOING &&
+    ((project as DbProject).billSubmittedAmount || 0) < project.estimatedCost &&
+    isProjectCreator;
+
+  const canEditProject =
+    project.status.includes("Rejected") && isProjectCreator;
 
   // Get current values for display
   const currentBillAmount = (project as DbProject).billSubmittedAmount || 0;
@@ -107,9 +121,20 @@ export function JEActions({ project, onProjectUpdate }: JEActionsProps) {
 
         {/* Action Buttons */}
         <div className="flex flex-wrap gap-3">
+          {/* Edit Project Button - Only for rejected projects */}
+          {canEditProject && (
+            <Button
+              onClick={handleEditProject}
+              className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 transition-all duration-200 ease-in-out transform hover:scale-105 active:scale-95 shadow-md hover:shadow-lg"
+            >
+              <Edit className="h-4 w-4 transition-transform duration-200" />
+              Edit Project
+            </Button>
+          )}
+
           <Button
             onClick={() => setIsProgressModalOpen(true)}
-            disabled={canUpdatePhysicalProgress}
+            disabled={!canUpdatePhysicalProgress}
             className="flex items-center gap-2 bg-teal-600 hover:bg-teal-700 active:bg-teal-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 ease-in-out transform hover:scale-105 active:scale-95 shadow-md hover:shadow-lg"
           >
             <TrendingUp className="h-4 w-4 transition-transform duration-200" />
@@ -118,7 +143,7 @@ export function JEActions({ project, onProjectUpdate }: JEActionsProps) {
 
           <Button
             onClick={() => setIsFinancialModalOpen(true)}
-            disabled={canUpdateFinancialProgress}
+            disabled={!canUpdateFinancialProgress}
             className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 ease-in-out transform hover:scale-105 active:scale-95 shadow-md hover:shadow-lg"
           >
             <IndianRupeeIcon className="h-4 w-4 transition-transform duration-200" />
@@ -137,7 +162,6 @@ export function JEActions({ project, onProjectUpdate }: JEActionsProps) {
                 (project.progressPercentage || 0) >= 100 &&
                 " (Completed)"}
               {!canUpdatePhysicalProgress &&
-                project.status !== PROJECT_STATUSES.APPROVED &&
                 project.status !== PROJECT_STATUSES.ONGOING &&
                 " (Not Ready for Updates)"}
             </div>
@@ -154,12 +178,27 @@ export function JEActions({ project, onProjectUpdate }: JEActionsProps) {
                 currentBillAmount >= project.estimatedCost &&
                 " (Completed)"}
               {!canUpdateFinancialProgress &&
-                project.status !== PROJECT_STATUSES.APPROVED &&
                 project.status !== PROJECT_STATUSES.ONGOING &&
                 " (Not Ready for Updates)"}
             </div>
           </div>
         </div>
+
+        {/* Project Edit Information */}
+        {canEditProject && (
+          <div className="mt-4 bg-orange-50 border border-orange-200 rounded-lg p-3">
+            <div className="flex items-center gap-2 text-orange-700">
+              <Edit className="w-4 h-4" />
+              <span className="text-sm font-medium">
+                Project Rejected - Edit Required
+              </span>
+            </div>
+            <div className="text-xs text-orange-600 mt-1">
+              {`This project has been rejected and can be edited to address the
+              feedback. Click "Edit Project" to make changes and resubmit.`}
+            </div>
+          </div>
+        )}
 
         {/* Progress Bar Visualization */}
         <div className="mt-4 space-y-3">
@@ -214,9 +253,13 @@ export function JEActions({ project, onProjectUpdate }: JEActionsProps) {
           💡 Current Status: {project.status} -{" "}
           {canUpdatePhysicalProgress && canUpdateFinancialProgress
             ? "Editable"
+            : canEditProject
+            ? "Can Edit Project"
             : "Read-only"}
           {canUpdatePhysicalProgress || canUpdateFinancialProgress
             ? " • Progress updates available"
+            : canEditProject
+            ? " • Project editing available"
             : ""}
         </div>
       </div>
