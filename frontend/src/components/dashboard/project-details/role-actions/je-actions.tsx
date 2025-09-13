@@ -41,7 +41,7 @@ export function JEActions({ project, onProjectUpdate }: JEActionsProps) {
 
   const handleEditProject = () => {
     // Navigate to edit page with project ID
-    router.push(`/dashboard/projects/edit/${project._id}`);
+    router.push(`/dashboard/projects/${project.projectId}/edit`);
   };
 
   const canUpdatePhysicalProgress =
