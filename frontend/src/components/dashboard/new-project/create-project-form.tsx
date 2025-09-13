@@ -966,7 +966,7 @@ export default function CreateProjectForm() {
     setCurrentStep("form");
   };
 
-  const onSubmit = async (values: CreateProjectFormValues, status: string) => {
+  const onSubmit = async (values: CreateProjectFormValues) => {
     try {
       setIsSubmittingForm(true);
       const token = getAuthToken();
@@ -1008,7 +1008,6 @@ export default function CreateProjectForm() {
       formData.append("district", values.district);
       formData.append("block", values.block || "");
       formData.append("gramPanchayat", values.gramPanchayat || "");
-      formData.append("status", status);
 
       // Handle geoLocation object
       if (values.geoLocation?.latitude && values.geoLocation?.longitude) {
@@ -2432,11 +2431,6 @@ export default function CreateProjectForm() {
                           <h3 className="text-lg font-semibold text-gray-900 mb-2">
                             Project Ready for Submission
                           </h3>
-                          <p className="text-gray-600 mb-6">
-                            Choose your submission path below. Regular
-                            submission goes to AEE for processing, while direct
-                            submission goes to MD for priority review.
-                          </p>
 
                           <div className="flex flex-col sm:flex-row gap-4 justify-center max-w-2xl mx-auto">
                             <Button
@@ -2444,7 +2438,7 @@ export default function CreateProjectForm() {
                               disabled={isSubmittingForm}
                               onClick={() =>
                                 form.handleSubmit((values) =>
-                                  onSubmit(values, "Submitted to AEE")
+                                  onSubmit(values)
                                 )()
                               }
                               className="flex-1 sm:flex-none px-6 py-3 bg-teal-600 hover:bg-teal-700 text-white min-w-[200px]"
@@ -2458,31 +2452,7 @@ export default function CreateProjectForm() {
                               ) : (
                                 <>
                                   {/* <Send className="mr-2 w-5 h-5" /> */}
-                                  Submit to AEE
-                                </>
-                              )}
-                            </Button>
-
-                            <Button
-                              type="button"
-                              disabled={isSubmittingForm}
-                              onClick={() =>
-                                form.handleSubmit((values) =>
-                                  onSubmit(values, "Submitted to MD")
-                                )()
-                              }
-                              className="flex-1 sm:flex-none px-6 py-3 bg-orange-600 hover:bg-orange-700 text-white min-w-[200px]"
-                              size="lg"
-                            >
-                              {isSubmittingForm ? (
-                                <>
-                                  <Loader2 className="animate-spin mr-2 w-5 h-5" />
-                                  Creating Project...
-                                </>
-                              ) : (
-                                <>
-                                  {/* <Send className="mr-2 w-5 h-5" /> */}
-                                  Submit to MD
+                                  Submit Project
                                 </>
                               )}
                             </Button>
@@ -2490,12 +2460,8 @@ export default function CreateProjectForm() {
 
                           <div className="mt-6 text-sm text-gray-500 space-y-2">
                             <p>
-                              • <strong>Submit to AEE:</strong> Regular
-                              processing workflow
-                            </p>
-                            <p>
-                              • <strong>Submit to MD:</strong> Direct submission
-                              for priority review
+                              • Project once submitted will be forwarded for
+                              approval.
                             </p>
                           </div>
                         </div>
