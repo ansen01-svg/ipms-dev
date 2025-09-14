@@ -8,8 +8,8 @@ import {
   ProgressUpdateResponse,
 } from "@/types/projects.types";
 
-// const API_BASE_URL = process.env.NEXT_PUBLIC_PROD_API_URL;
-const API_BASE_URL = process.env.NEXT_PUBLIC_DEV_API_URL;
+const API_BASE_URL = process.env.NEXT_PUBLIC_PROD_API_URL;
+// const API_BASE_URL = process.env.NEXT_PUBLIC_DEV_API_URL;
 
 // Helper function for authenticated requests
 const makeAuthenticatedRequest = async (url: string, options: RequestInit) => {

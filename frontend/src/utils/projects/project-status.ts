@@ -1,7 +1,7 @@
 import { clearAuthData, getAuthToken } from "@/lib/rbac-config.ts/auth-local";
 
-// const API_BASE_URL = process.env.NEXT_PUBLIC_PROD_API_URL;
-const API_BASE_URL = process.env.NEXT_PUBLIC_DEV_API_URL;
+const API_BASE_URL = process.env.NEXT_PUBLIC_PROD_API_URL;
+// const API_BASE_URL = process.env.NEXT_PUBLIC_DEV_API_URL;
 
 // Type definitions for project status operations
 export interface StatusUpdateRequest {

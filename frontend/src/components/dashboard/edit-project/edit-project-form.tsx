@@ -1175,8 +1175,8 @@ export default function EditProjectForm({ projectId }: EditProjectFormProps) {
         });
       }
 
-      // const apiUrl = process.env.NEXT_PUBLIC_PROD_API_URL;
-      const apiUrl = process.env.NEXT_PUBLIC_DEV_API_URL;
+      const apiUrl = process.env.NEXT_PUBLIC_PROD_API_URL;
+      // const apiUrl = process.env.NEXT_PUBLIC_DEV_API_URL;
 
       if (!apiUrl) {
         throw new Error("API configuration is missing");
