@@ -28,8 +28,8 @@ interface ProjectHeaderProps {
   user: User;
 }
 
-// const API_BASE_URL = process.env.NEXT_PUBLIC_PROD_API_URL;
-const API_BASE_URL = process.env.NEXT_PUBLIC_DEV_API_URL;
+const API_BASE_URL = process.env.NEXT_PUBLIC_PROD_API_URL;
+// const API_BASE_URL = process.env.NEXT_PUBLIC_DEV_API_URL;
 
 export function ProjectHeader({ project }: ProjectHeaderProps) {
   const [isDownloading, setIsDownloading] = useState(false);

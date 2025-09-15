@@ -100,16 +100,61 @@ const formatCsvValue = (value: unknown): string => {
   return stringValue;
 };
 
-const formatDateForCsv = (dateString: string): string => {
-  return new Date(dateString).toLocaleDateString("en-IN", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  });
+const formatDateForCsv = (
+  dateInput: string | Date | null | undefined
+): string => {
+  if (!dateInput) return "";
+
+  try {
+    // Handle both string and Date objects
+    const date =
+      typeof dateInput === "string" ? new Date(dateInput) : dateInput;
+
+    // Check if date is valid
+    if (isNaN(date.getTime())) {
+      return "";
+    }
+
+    return date.toLocaleDateString("en-IN", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    });
+  } catch (error) {
+    console.warn("Date formatting error:", error);
+    return "";
+  }
 };
 
-const formatCurrencyForCsv = (amount: number): string => {
-  return `₹${(amount / 100000).toFixed(2)}L`;
+const formatCurrencyForCsv = (
+  amount: number | string | null | undefined
+): string => {
+  if (!amount && amount !== 0) return "";
+
+  try {
+    // Convert to number if it's a string
+    const numAmount = typeof amount === "string" ? parseFloat(amount) : amount;
+
+    // Check if it's a valid number
+    if (isNaN(numAmount)) return "";
+
+    // If the amount is already in lakhs (< 1000), don't divide
+    // If the amount is in rupees (> 100000), convert to lakhs
+    let formattedAmount: number;
+
+    if (numAmount >= 100000) {
+      // Amount is in rupees, convert to lakhs
+      formattedAmount = numAmount / 100000;
+    } else {
+      // Amount is already in lakhs or a smaller unit
+      formattedAmount = numAmount;
+    }
+
+    return `₹${formattedAmount.toFixed(2)}L`;
+  } catch (error) {
+    console.warn("Currency formatting error:", error);
+    return "";
+  }
 };
 
 const generateCsvContent = (projects: DbArchiveProject[]): string => {
@@ -169,6 +214,7 @@ const downloadCsv = (csvContent: string, filename: string): void => {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    URL.revokeObjectURL(url); // Clean up the URL object
   }
 };
 

@@ -44,8 +44,8 @@ export default function ResetPasswordPage({
   const onSubmit = async (data: ResetPasswordSchema) => {
     try {
       const response = await fetch(
-        // `${process.env.NEXT_PUBLIC_PROD_API_URL}/auth/forgot-password`,
-        `${process.env.NEXT_PUBLIC_DEV_API_URL}/auth/reset-password/${searchParams.resetToken}`,
+        `${process.env.NEXT_PUBLIC_PROD_API_URL}/auth/forgot-password/${searchParams.resetToken}`,
+        // `${process.env.NEXT_PUBLIC_DEV_API_URL}/auth/reset-password/${searchParams.resetToken}`,
         {
           method: "POST",
           headers: {

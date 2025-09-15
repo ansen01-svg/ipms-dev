@@ -24,8 +24,8 @@ export default function ForgotPasswordPage() {
   const onSubmit = async (data: ForgotPasswordSchema) => {
     try {
       const response = await fetch(
-        // `${process.env.NEXT_PUBLIC_PROD_API_URL}/auth/forgot-password`,
-        `${process.env.NEXT_PUBLIC_DEV_API_URL}/auth/forgot-password`,
+        `${process.env.NEXT_PUBLIC_PROD_API_URL}/auth/forgot-password`,
+        // `${process.env.NEXT_PUBLIC_DEV_API_URL}/auth/forgot-password`,
         {
           method: "POST",
           headers: {
