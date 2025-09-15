@@ -1,25 +1,15 @@
 import React, { useState } from "react";
-import {
-  AlertCircle,
-  FileQuestion,
-  RefreshCw,
-  Users,
-  UserCheck,
-} from "lucide-react";
+import { AlertCircle, FileQuestion, Users, UserCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import RaisedQueryModal from "../raisedQueryModal";
-import { getAuthToken } from "@/lib/rbac-config.ts/auth-local";
+
 interface ViewerActionsProps {
   projectId: string;
   projectName?: string;
   onQuerySubmitted?: () => void;
 }
 
-function ViewerActions({
-  projectId,
-  projectName,
-  onQuerySubmitted,
-}: ViewerActionsProps) {
+function ViewerActions({ projectId, onQuerySubmitted }: ViewerActionsProps) {
   const [isQueryModalOpen, setIsQueryModalOpen] = useState(false);
   const [queryCounts, setQueryCounts] = useState({
     total: 0,
@@ -132,8 +122,9 @@ function ViewerActions({
                     only
                   </div>
                   <div>
-                    <strong>Action:</strong> Use the "Raise Query" button to
-                    submit your questions or concerns
+                    <strong>Action:</strong>{" "}
+                    {`Use the "Raise Query" button to
+                    submit your questions or concerns`}
                   </div>
                 </div>
               </div>
@@ -164,10 +155,11 @@ function ViewerActions({
             {/* Instructions */}
             <div className="mt-3 p-2 bg-blue-50 rounded border border-blue-200">
               <p className="text-xs text-blue-700">
-                <strong>Note:</strong> All queries must be raised through the
+                <strong>Note:</strong>{" "}
+                {`All queries must be raised through the
                 system. Only JE personnel can mark queries as resolved. If you
                 need immediate assistance, mark your query as "Urgent" when
-                submitting.
+                submitting.`}
               </p>
             </div>
           </div>

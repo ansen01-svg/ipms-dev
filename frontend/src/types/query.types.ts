@@ -237,11 +237,11 @@ export interface QueryCardProps {
 export interface APIError {
   success: false;
   message: string;
-  details?: any;
+  details?: unknown;
   errors?: Array<{
     field: string;
     message: string;
-    value: any;
+    value: unknown;
   }>;
 }
 

@@ -57,6 +57,7 @@ export const AvatarUpload: React.FC<AvatarUploadProps> = ({
       onAvatarChange(response.url);
       setPreview(null);
     } catch (error) {
+      console.log(error);
       setPreview(null);
       toast.error("Upload failed");
     } finally {

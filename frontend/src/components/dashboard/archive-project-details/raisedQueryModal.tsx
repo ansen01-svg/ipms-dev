@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { X, AlertCircle, Send } from "lucide-react";
-import { get } from "http";
 import { getAuthToken } from "@/lib/rbac-config.ts/auth-local";
 import { toast } from "sonner";
 interface RaisedQueryModalProps {

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { User, UpdateProfileData, ApiResponse } from "../types/user.types";
+import { User, UpdateProfileData } from "../types/user.types";
 import { apiService } from "../lib/profile/api";
 import { toast } from "sonner";
 

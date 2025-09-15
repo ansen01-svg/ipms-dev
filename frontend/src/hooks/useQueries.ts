@@ -8,10 +8,10 @@ import {
   QueryFilters,
   GetQueriesResponse,
   CreateQueryResponse,
-  APIError,
   UseQueryReturn,
 } from "../types/query.types";
 import { getAuthToken } from "@/lib/rbac-config.ts/auth-local";
+
 export function useQueries(
   projectId: string,
   initialFilters?: QueryFilters
@@ -48,7 +48,7 @@ export function useQueries(
 
       return data;
     },
-    [getAuthToken]
+    []
   );
 
   // Fetch queries for the project
@@ -269,7 +269,7 @@ export function useQueries(
 
 // Additional hook for query statistics
 export function useQueryStatistics(projectId?: string) {
-  const [statistics, setStatistics] = useState<any>(null);
+  const [statistics, setStatistics] = useState<unknown>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -323,70 +323,70 @@ export function useQueryStatistics(projectId?: string) {
 }
 
 // Hook for searching queries across all projects
-export function useQuerySearch() {
-  const [results, setResults] = useState<any[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+// export function useQuerySearch() {
+//   const [results, setResults] = useState<unknown[]>([]);
+//   const [loading, setLoading] = useState(false);
+//   const [error, setError] = useState<string | null>(null);
 
-  const searchQueries = useCallback(
-    async (searchTerm: string, filters?: any) => {
-      if (!searchTerm || searchTerm.trim().length < 3) {
-        setError("Search term must be at least 3 characters long");
-        return;
-      }
+//   const searchQueries = useCallback(
+//     async (searchTerm: string, filters?: any) => {
+//       if (!searchTerm || searchTerm.trim().length < 3) {
+//         setError("Search term must be at least 3 characters long");
+//         return;
+//       }
 
-      setLoading(true);
-      setError(null);
+//       setLoading(true);
+//       setError(null);
 
-      try {
-        const queryParams = new URLSearchParams({ q: searchTerm.trim() });
+//       try {
+//         const queryParams = new URLSearchParams({ q: searchTerm.trim() });
 
-        if (filters?.status) queryParams.append("status", filters.status);
-        if (filters?.priority) queryParams.append("priority", filters.priority);
-        if (filters?.category) queryParams.append("category", filters.category);
+//         if (filters?.status) queryParams.append("status", filters.status);
+//         if (filters?.priority) queryParams.append("priority", filters.priority);
+//         if (filters?.category) queryParams.append("category", filters.category);
 
-        const token = localStorage.getItem("token");
-        const response = await fetch(
-          `${
-            process.env.NEXT_PUBLIC_DEV_API_URL
-          }/queries/search?${queryParams.toString()}`,
-          {
-            headers: {
-              "Content-Type": "application/json",
-              ...(token && { Authorization: `Bearer ${token}` }),
-            },
-          }
-        );
+//         const token = localStorage.getItem("token");
+//         const response = await fetch(
+//           `${
+//             process.env.NEXT_PUBLIC_DEV_API_URL
+//           }/queries/search?${queryParams.toString()}`,
+//           {
+//             headers: {
+//               "Content-Type": "application/json",
+//               ...(token && { Authorization: `Bearer ${token}` }),
+//             },
+//           }
+//         );
 
-        const data = await response.json();
+//         const data = await response.json();
 
-        if (response.ok && data.success) {
-          setResults(data.data.queries);
-        } else {
-          throw new Error(data.message || "Search failed");
-        }
-      } catch (err) {
-        const errorMessage =
-          err instanceof Error ? err.message : "Search failed";
-        setError(errorMessage);
-        console.error("Error searching queries:", err);
-      } finally {
-        setLoading(false);
-      }
-    },
-    []
-  );
+//         if (response.ok && data.success) {
+//           setResults(data.data.queries);
+//         } else {
+//           throw new Error(data.message || "Search failed");
+//         }
+//       } catch (err) {
+//         const errorMessage =
+//           err instanceof Error ? err.message : "Search failed";
+//         setError(errorMessage);
+//         console.error("Error searching queries:", err);
+//       } finally {
+//         setLoading(false);
+//       }
+//     },
+//     []
+//   );
 
-  const clearResults = useCallback(() => {
-    setResults([]);
-    setError(null);
-  }, []);
+//   const clearResults = useCallback(() => {
+//     setResults([]);
+//     setError(null);
+//   }, []);
 
-  return {
-    results,
-    loading,
-    error,
-    searchQueries,
-    clearResults,
-  };
-}
+//   return {
+//     results,
+//     loading,
+//     error,
+//     searchQueries,
+//     clearResults,
+//   };
+// }

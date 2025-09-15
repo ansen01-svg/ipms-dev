@@ -430,8 +430,8 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
                   <Alert className="bg-blue-50 border-blue-200">
                     <AlertCircle className="h-4 w-4 text-blue-600" />
                     <AlertDescription className="text-blue-800">
-                      Make changes to your profile information and click "Save
-                      Changes" to update.
+                      {`Make changes to your profile information and click "Save
+                      Changes" to update.`}
                     </AlertDescription>
                   </Alert>
                 )}

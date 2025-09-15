@@ -11,7 +11,6 @@ import {
   QuerySearchResponse,
   QueryFilters,
   RaisedQuery,
-  APIError,
 } from "../types/query.types";
 
 // Base API configuration
@@ -188,10 +187,10 @@ class QueryApiService {
   }): Promise<{
     success: boolean;
     data: {
-      overview: any;
-      distributions: any;
-      resolution: any;
-      filters: any;
+      overview: unknown;
+      distributions: unknown;
+      resolution: unknown;
+      filters: unknown;
       generatedAt: string;
     };
   }> {
@@ -254,8 +253,8 @@ class QueryApiService {
   ): Promise<{
     success: boolean;
     data: {
-      successful: any[];
-      failed: any[];
+      successful: unknown[];
+      failed: unknown[];
       summary: {
         total: number;
         successful: number;
@@ -370,7 +369,7 @@ export default QueryApiService;
 /**
  * Error handler for API calls
  */
-export function handleApiError(error: any): string {
+export function handleApiError(error: unknown): string {
   if (error instanceof Error) {
     return error.message;
   }
@@ -379,8 +378,32 @@ export function handleApiError(error: any): string {
     return error;
   }
 
-  if (error?.response?.data?.message) {
-    return error.response.data.message;
+  if (
+    typeof error === "object" &&
+    error !== null &&
+    "response" in error &&
+    typeof (error as { response?: unknown }).response === "object" &&
+    (error as { response?: unknown }).response !== null &&
+    "data" in (error as { response: { data?: unknown } }).response &&
+    typeof (
+      (error as { response: { data?: unknown } }).response as { data?: unknown }
+    ).data === "object" &&
+    ((error as { response: { data?: unknown } }).response as { data?: unknown })
+      .data !== null &&
+    "message" in
+      (
+        (error as { response: { data?: unknown } }).response as {
+          data: { message?: unknown };
+        }
+      ).data
+  ) {
+    return (
+      (
+        (error as { response: { data: { message?: unknown } } }).response as {
+          data: { message?: unknown };
+        }
+      ).data as { message: string }
+    ).message;
   }
 
   return "An unexpected error occurred. Please try again.";
@@ -394,7 +417,7 @@ export async function retryApiCall<T>(
   maxRetries: number = 3,
   baseDelay: number = 1000
 ): Promise<T> {
-  let lastError: any;
+  let lastError: unknown;
 
   for (let attempt = 0; attempt < maxRetries; attempt++) {
     try {
