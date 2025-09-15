@@ -1,23 +1,21 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { Toaster } from "@/components/ui/sonner";
 import {
   forgotPasswordSchema,
   ForgotPasswordSchema,
 } from "@/schema/auth/forgotPasswordSchema";
 import { zodResolver } from "@hookform/resolvers/zod";
-import axios from "axios";
 import { LoaderCircle, Mail } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
 export default function ForgotPasswordPage() {
-  const router = useRouter();
-
   const {
     register,
     handleSubmit,
+    reset,
     formState: { errors, isSubmitting },
   } = useForm<ForgotPasswordSchema>({
     resolver: zodResolver(forgotPasswordSchema),
@@ -25,14 +23,40 @@ export default function ForgotPasswordPage() {
 
   const onSubmit = async (data: ForgotPasswordSchema) => {
     try {
-      await axios.post("/api/auth/forgot-password", { email: data.email });
-      toast.success("OTP sent to your email");
-      router.push(`/verify-otp?email=${encodeURIComponent(data.email)}`);
+      const response = await fetch(
+        // `${process.env.NEXT_PUBLIC_PROD_API_URL}/auth/forgot-password`,
+        `${process.env.NEXT_PUBLIC_DEV_API_URL}/auth/forgot-password`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ email: data.email }),
+        }
+      );
+
+      if (!response.ok) {
+        // Try to parse error message from response
+        let errorMessage = "Failed to send OTP";
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData?.message || errorMessage;
+        } catch {
+          // If JSON parsing fails, use status text or default message
+          errorMessage = response.statusText || errorMessage;
+        }
+        throw new Error(errorMessage);
+      }
+
+      reset();
+      toast.success("OTP sent to your email. Please check your inbox.");
     } catch (error: unknown) {
       let message = "Failed to send OTP";
-      if (axios.isAxiosError(error)) {
-        message = error.response?.data?.message || message;
+
+      if (error instanceof Error) {
+        message = error.message;
       }
+
       toast.error(message);
     }
   };
@@ -50,7 +74,7 @@ export default function ForgotPasswordPage() {
         <div>
           <label className="text-sm font-medium mb-1 block">Email</label>
           <div className="flex items-center w-full min-w-0">
-            <span className="w-10 h-10 bg-[#279eab] text-white flex items-center justify-center rounded-l-sm">
+            <span className="w-10 h-10 bg-teal-600 text-white flex items-center justify-center rounded-l-sm">
               <Mail className="w-4 h-4" />
             </span>
             <input
@@ -73,18 +97,32 @@ export default function ForgotPasswordPage() {
         <Button
           type="submit"
           disabled={isSubmitting}
-          className={`w-full border border-[#C5C5C5] text-sm font-medium py-3 rounded-md transition-all ${
+          className={`w-full h-10 flex justify-center items-center gap-2 text-sm font-medium rounded-md transition-all duration-200 ${
             isSubmitting
-              ? "bg-[#279eab] text-white cursor-not-allowed"
-              : "bg-white text-gray-700 hover:bg-[#279eab] hover:text-white"
+              ? "bg-teal-400 text-white cursor-not-allowed opacity-80"
+              : "bg-teal-600 text-white hover:bg-teal-700 focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 active:bg-teal-800"
           }`}
         >
-          {isSubmitting && (
-            <LoaderCircle className="w-4 h-4 mr-2 animate-spin [animation-duration:0.5s]" />
+          {isSubmitting ? (
+            <>
+              <LoaderCircle className="w-4 h-4 animate-spin" />
+              Sending email...
+            </>
+          ) : (
+            "Send Email"
           )}
-          {isSubmitting ? "Sending..." : "Send OTP"}
         </Button>
       </form>
+
+      {/* Toast Notifications */}
+      <Toaster
+        position="top-center"
+        richColors
+        toastOptions={{
+          style: { fontSize: "14px" },
+          className: "text-sm",
+        }}
+      />
     </div>
   );
 }
