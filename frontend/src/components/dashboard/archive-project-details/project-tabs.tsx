@@ -39,6 +39,7 @@ const tabs: TabConfig[] = [
   { id: "timeline", label: "Timeline", icon: Clock },
   { id: "location", label: "Location", icon: MapPin },
   { id: "metrics", label: "Metrics", icon: TrendingUp },
+  { id: "queries", label: "Quaries", icon: TrendingUp },
 ];
 
 export function ArchiveProjectTabs({
@@ -78,6 +79,8 @@ export function ArchiveProjectTabs({
         return <PlaceholderTab icon={MapPin} title="Location Details" />;
       case "metrics":
         return <PlaceholderTab icon={TrendingUp} title="Project Metrics" />;
+      case "quaries":
+        return <PlaceholderTab icon={TrendingUp} title="Quaries" />;
       default:
         return <ArchiveOverviewTab project={project} />;
     }
