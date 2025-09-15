@@ -1,19 +1,25 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { Toaster } from "@/components/ui/sonner";
 import {
   resetPasswordSchema,
   ResetPasswordSchema,
 } from "@/schema/auth/resetPasswordSchema";
 import { zodResolver } from "@hookform/resolvers/zod";
-import axios from "axios";
 import { Eye, EyeOff, LoaderCircle, Lock } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
-export default function ResetPasswordPage() {
+interface ResetPasswordPageProps {
+  searchParams: { resetToken: string };
+}
+
+export default function ResetPasswordPage({
+  searchParams,
+}: ResetPasswordPageProps) {
   const router = useRouter();
   const {
     register,
@@ -37,15 +43,42 @@ export default function ResetPasswordPage() {
 
   const onSubmit = async (data: ResetPasswordSchema) => {
     try {
-      await axios.post("/api/auth/reset-password", {
-        newPassword: data.newPassword,
-      });
+      const response = await fetch(
+        // `${process.env.NEXT_PUBLIC_PROD_API_URL}/auth/forgot-password`,
+        `${process.env.NEXT_PUBLIC_DEV_API_URL}/auth/reset-password/${searchParams.resetToken}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            newPassword: data.newPassword,
+          }),
+        }
+      );
+
+      // Check if the response is successful
+      if (!response.ok) {
+        // Try to parse error message from response
+        let errorMessage = "Change failed";
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData?.message || errorMessage;
+        } catch {
+          // If JSON parsing fails, use status text or default message
+          errorMessage = response.statusText || errorMessage;
+        }
+        throw new Error(errorMessage);
+      }
+
+      // If successful, parse the response (optional, depending on your API)
+      await response.json();
 
       toast.success("Password changed successfully");
       router.push("/login");
-    } catch (error) {
-      if (axios.isAxiosError(error)) {
-        toast.error(error.response?.data?.message || "Change failed");
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        toast.error(error.message);
       } else {
         toast.error("Something went wrong");
       }
@@ -58,11 +91,11 @@ export default function ResetPasswordPage() {
   ) => (
     <div className="w-full">
       <div className="flex items-center w-full h-10 rounded-md overflow-hidden border border-[#C5C5C5] bg-white transition outline-none focus:outline-none relative">
-        <span className="w-10 h-full bg-[#279eab] text-white flex items-center justify-center flex-shrink-0">
+        <span className="w-10 h-full bg-teal-600 text-white flex items-center justify-center flex-shrink-0">
           <Lock className="w-4 h-4" />
         </span>
         <input
-          type={showPassword[name] ? "text" : "password"}
+          type={showPassword[name] ? "password" : "text"}
           placeholder={placeholder}
           {...register(name)}
           className="w-full h-full px-3 text-sm text-gray-700 placeholder:text-gray-400 outline-none focus:outline-none bg-transparent pr-10"
@@ -105,19 +138,33 @@ export default function ResetPasswordPage() {
           <Button
             type="submit"
             disabled={isSubmitting}
-            className={`w-full h-10 sm:h-11 text-sm font-medium rounded-md transition-all hover:shadow-lg ${
+            className={`w-full h-10 flex justify-center items-center gap-2 text-sm font-medium rounded-md transition-all duration-200 ${
               isSubmitting
-                ? "bg-[#279eab] text-white cursor-not-allowed opacity-80"
-                : "bg-white text-gray-700 border border-[#C5C5C5] hover:bg-[#279eab] hover:text-white"
+                ? "bg-teal-400 text-white cursor-not-allowed opacity-80"
+                : "bg-teal-600 text-white hover:bg-teal-700 focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 active:bg-teal-800"
             }`}
           >
-            {isSubmitting && (
-              <LoaderCircle className="w-4 h-4 mr-2 animate-spin [animation-duration:0.5s]" />
+            {isSubmitting ? (
+              <>
+                <LoaderCircle className="w-4 h-4 animate-spin" />
+                Resetting...
+              </>
+            ) : (
+              "Reset Password"
             )}
-            {isSubmitting ? "Changing..." : "Reset Password"}
           </Button>
         </div>
       </form>
+
+      {/* Toast Notifications */}
+      <Toaster
+        position="top-center"
+        richColors
+        toastOptions={{
+          style: { fontSize: "14px" },
+          className: "text-sm",
+        }}
+      />
     </div>
   );
 }
