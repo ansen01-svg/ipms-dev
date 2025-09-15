@@ -8,19 +8,16 @@ import {
 } from "@/schema/auth/resetPasswordSchema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Eye, EyeOff, LoaderCircle, Lock } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
-interface ResetPasswordPageProps {
-  searchParams: { resetToken: string };
-}
-
-export default function ResetPasswordPage({
-  searchParams,
-}: ResetPasswordPageProps) {
+export default function ResetPasswordPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const resetToken = searchParams.get("resetToken");
+
   const {
     register,
     handleSubmit,
@@ -41,11 +38,18 @@ export default function ResetPasswordPage({
     }));
   };
 
+  console.log("Reset Token:", resetToken); // Debugging line
+
   const onSubmit = async (data: ResetPasswordSchema) => {
     try {
+      if (!resetToken) {
+        toast.error("Invalid or missing reset token");
+        return;
+      }
+
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_PROD_API_URL}/auth/reset-password/${searchParams.resetToken}`,
-        // `${process.env.NEXT_PUBLIC_DEV_API_URL}/auth/reset-password/${searchParams.resetToken}`,
+        `${process.env.NEXT_PUBLIC_PROD_API_URL}/auth/reset-password/${resetToken}`,
+        // `${process.env.NEXT_PUBLIC_DEV_API_URL}/auth/reset-password/${resetToken}`,
         {
           method: "POST",
           headers: {
