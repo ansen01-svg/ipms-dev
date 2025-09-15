@@ -186,7 +186,7 @@ export default function RouteGuard({
       const pathSegments = pathname.split("/");
       const roleInPath = pathSegments[2];
 
-      const sharedRoutes = ["projects", "archived-projects", "mb"];
+      const sharedRoutes = ["projects", "archived-projects", "mb", "profile"];
       const isSharedRoute = sharedRoutes.includes(roleInPath);
 
       // JE-only sub-routes

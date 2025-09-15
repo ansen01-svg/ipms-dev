@@ -48,9 +48,16 @@ export function getUserFromHeaders(request: NextRequest): User | null {
   return {
     id: userId,
     userId: userId,
+    _id: userId, // Placeholder, adjust as needed
     role: userRole as UserRole,
     name: userName,
     department: userDepartment || undefined,
     email: "", // Would be set from token in real implementation
+    phoneNumber: "", // Placeholder
+    designation: "", // Placeholder
+    isFirstLogin: false, // Placeholder
+    lastPasswordChange: new Date().toISOString(), // Placeholder, adjust as needed
+    updatedAt: new Date().toISOString(), // Placeholder, adjust as needed
+    // Add any other required properties with default values here
   };
 }

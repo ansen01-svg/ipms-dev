@@ -23,7 +23,7 @@ export function ArchiveRoleActionSelector({
         user.role === "CE" ||
         user.role === "MD" ||
         user.role === "VIEWER" ||
-        user.role === "ADMIN") && <ViewerActions />}
+        user.role === "ADMIN") && <ViewerActions projectId={project._id} />}
     </div>
   );
 }

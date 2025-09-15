@@ -1,5 +1,6 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import Link from "next/link";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -35,11 +36,6 @@ export default function Header({
 }: HeaderProps) {
   const handleLogout = () => {
     logout();
-  };
-
-  const handleProfileClick = () => {
-    // router.push('/profile')
-    console.log("Navigate to profile");
   };
 
   return (
@@ -145,12 +141,14 @@ export default function Header({
                 <DropdownMenuSeparator className="bg-gray-200" />
 
                 {/* Profile option */}
-                <DropdownMenuItem
-                  onClick={handleProfileClick}
-                  className="flex items-center space-x-2 px-3 py-2 hover:bg-gray-50 cursor-pointer"
-                >
-                  <UserIcon className="h-4 w-4 text-gray-500" />
-                  <span className="text-sm text-gray-700">Profile</span>
+                <DropdownMenuItem className="p-0">
+                  <Link
+                    href="/dashboard/profile"
+                    className="flex items-center space-x-2 px-3 py-2 hover:bg-gray-50 cursor-pointer w-full"
+                  >
+                    <UserIcon className="h-4 w-4 text-gray-500" />
+                    <span className="text-sm text-gray-700">Profile</span>
+                  </Link>
                 </DropdownMenuItem>
 
                 <DropdownMenuSeparator className="bg-gray-200" />
