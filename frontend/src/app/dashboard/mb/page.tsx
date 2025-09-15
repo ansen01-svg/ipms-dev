@@ -276,20 +276,6 @@ export default function MeasurementBooksPage() {
             </div>
 
             <div className="flex gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleRefresh}
-                disabled={refreshing || searchingProject}
-              >
-                <RefreshCw
-                  className={`w-4 h-4 mr-2 ${
-                    refreshing || searchingProject ? "animate-spin" : ""
-                  }`}
-                />
-                Refresh
-              </Button>
-
               {currentProjectId && (
                 <Button
                   variant="outline"

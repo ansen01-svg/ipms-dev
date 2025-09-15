@@ -9,6 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useAuth } from "@/contexts/auth-context";
 import useDebounce from "@/hooks/useDebounce";
 import {
   ArchiveProjectFilters,
@@ -179,6 +180,7 @@ export function ArchiveProjectFiltersComponent({
     clearFilters,
     hasActiveFilters,
   } = useArchiveFilters();
+  const { user } = useAuth();
 
   const updateFilter = (
     key: keyof SimplifiedArchiveFilters,
@@ -270,22 +272,26 @@ export function ArchiveProjectFiltersComponent({
             </SelectContent>
           </Select>
 
-          <Select
-            value={localFilters.concernedEngineer || "all"}
-            onValueChange={(value) => updateFilter("concernedEngineer", value)}
-          >
-            <SelectTrigger className="w-[140px] h-9">
-              <SelectValue placeholder="Engineer" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Engineers</SelectItem>
-              {filterOptions?.engineers?.map((engineer) => (
-                <SelectItem key={engineer} value={engineer}>
-                  {engineer}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          {user?.role !== "JE" && (
+            <Select
+              value={localFilters.concernedEngineer || "all"}
+              onValueChange={(value) =>
+                updateFilter("concernedEngineer", value)
+              }
+            >
+              <SelectTrigger className="w-[140px] h-9">
+                <SelectValue placeholder="Engineer" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Engineers</SelectItem>
+                {filterOptions?.engineers?.map((engineer) => (
+                  <SelectItem key={engineer} value={engineer}>
+                    {engineer}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
 
           <Select
             value={localFilters.nameOfContractor || "all"}

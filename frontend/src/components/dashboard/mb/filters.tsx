@@ -153,12 +153,10 @@ export function MBFilters({
   isSearching = false,
 }: MBFiltersProps) {
   const {
-    searchQuery,
     projectIdSearch,
     selectedCreator,
     selectedApprovalStatus,
     selectedFileType,
-    setSearchQuery,
     setProjectIdSearch,
     setSelectedCreator,
     setSelectedApprovalStatus,
@@ -197,9 +195,6 @@ export function MBFilters({
       {/* Project Search */}
       <div className="flex flex-col lg:flex-row gap-4 lg:items-center lg:justify-between">
         <div className="flex flex-col sm:flex-row gap-3 flex-1">
-          <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
-            <span>Project Search:</span>
-          </div>
           <div className="flex gap-2 flex-1 max-w-md">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
@@ -225,26 +220,8 @@ export function MBFilters({
 
       {/* Search and Filters in Same Line */}
       <div className="flex flex-col lg:flex-row gap-4 lg:items-center lg:justify-between">
-        {/* General Search */}
-        <div className="flex-1 max-w-md">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-            <Input
-              type="text"
-              placeholder="Search by description, remarks, project..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 pr-4 py-2"
-            />
-          </div>
-        </div>
-
         {/* Filters */}
         <div className="flex flex-wrap gap-3 items-center">
-          <div className="flex items-center space-x-2 text-sm font-medium text-gray-700">
-            <span>Filters:</span>
-          </div>
-
           <Select value={selectedCreator} onValueChange={setSelectedCreator}>
             <SelectTrigger className="w-[160px] h-9">
               <SelectValue placeholder="Created By" />
