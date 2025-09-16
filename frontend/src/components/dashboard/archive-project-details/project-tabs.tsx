@@ -17,6 +17,7 @@ import ArchiveFinancialTab from "./tabs/financial";
 import ArchiveOverviewTab from "./tabs/overview";
 import PlaceholderTab from "./tabs/placeholder";
 import ArchiveProgressTab from "./tabs/progress";
+import ArchiveQueriesTab from "./tabs/queries";
 import ArchiveTimelineTab from "./tabs/timeline";
 
 interface ArchiveProjectTabsProps {
@@ -39,7 +40,7 @@ const tabs: TabConfig[] = [
   { id: "timeline", label: "Timeline", icon: Clock },
   { id: "location", label: "Location", icon: MapPin },
   { id: "metrics", label: "Metrics", icon: TrendingUp },
-  { id: "queries", label: "Quaries", icon: TrendingUp },
+  { id: "queries", label: "Queries", icon: TrendingUp },
 ];
 
 export function ArchiveProjectTabs({
@@ -79,8 +80,8 @@ export function ArchiveProjectTabs({
         return <PlaceholderTab icon={MapPin} title="Location Details" />;
       case "metrics":
         return <PlaceholderTab icon={TrendingUp} title="Project Metrics" />;
-      case "quaries":
-        return <PlaceholderTab icon={TrendingUp} title="Quaries" />;
+      case "queries":
+        return <ArchiveQueriesTab project={project} />;
       default:
         return <ArchiveOverviewTab project={project} />;
     }

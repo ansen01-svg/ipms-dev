@@ -5,7 +5,6 @@ import panelImage from "@/assets/images/login-panel-img.jpg";
 import logo from "@/assets/images/logo4.png";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Toaster } from "@/components/ui/sonner";
 // import { useAuth } from "@/contexts/auth-context";
 // import { setAuthToken, setUserData } from "@/lib/rbac-config.ts/auth-local";
 import { LoginFormData, loginSchema } from "@/schema/auth/loginSchema";
@@ -496,16 +495,6 @@ const LoginPage = () => {
           </div>
         </div>
       </div>
-
-      {/* Toast Notifications */}
-      <Toaster
-        position="top-center"
-        richColors
-        toastOptions={{
-          style: { fontSize: "14px" },
-          className: "text-sm",
-        }}
-      />
     </div>
   );
 };

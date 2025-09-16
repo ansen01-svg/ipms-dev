@@ -384,7 +384,7 @@ export default function ArchiveProgressTab({
 
                 <div className="text-center">
                   <div className="text-2xl font-bold text-purple-600 mb-2">
-                    {100 - (project.progress || 0)}%
+                    {(100 - (project.progress || 0)).toFixed(1)}%
                   </div>
                   <div className="text-sm text-gray-500 mb-3">
                     Remaining Work

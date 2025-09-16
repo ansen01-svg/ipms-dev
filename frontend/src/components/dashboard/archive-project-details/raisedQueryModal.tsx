@@ -1,7 +1,8 @@
-import React, { useState } from "react";
-import { X, AlertCircle, Send } from "lucide-react";
 import { getAuthToken } from "@/lib/rbac-config.ts/auth-local";
+import { Send, X } from "lucide-react";
+import React, { useState } from "react";
 import { toast } from "sonner";
+
 interface RaisedQueryModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -124,6 +125,7 @@ function RaisedQueryModal({
 
     try {
       const response = await fetch(
+        // `${process.env.NEXT_PUBLIC_PROD_API_URL}/archive-project/${projectId}/queries`,
         `${process.env.NEXT_PUBLIC_DEV_API_URL}/archive-project/${projectId}/queries`,
         {
           method: "POST",
@@ -146,7 +148,7 @@ function RaisedQueryModal({
 
       if (response.ok && result.success) {
         // Success notification could be added here
-        toast("Query raised successfully!");
+        toast.success("Query raised successfully!");
 
         // Reset form
         setFormData({
@@ -193,16 +195,11 @@ function RaisedQueryModal({
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
       <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
+        <div className="flex items-center justify-between p-6 bg-blue-600 border-b border-gray-200">
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-              <AlertCircle className="w-5 h-5 text-blue-600" />
-            </div>
             <div>
-              <h2 className="text-xl font-semibold text-gray-900">
-                Raise Query
-              </h2>
-              <p className="text-sm text-gray-500">
+              <h2 className="text-xl font-semibold text-white">Raise Query</h2>
+              <p className="text-sm text-white">
                 Submit a new query for this project
               </p>
             </div>
@@ -210,9 +207,9 @@ function RaisedQueryModal({
           <button
             onClick={handleClose}
             disabled={isLoading}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50"
+            className="p-2 hover:bg-gray-50 rounded-lg transition-colors disabled:opacity-50"
           >
-            <X className="w-5 h-5 text-gray-500" />
+            <X className="w-5 h-5 text-white" />
           </button>
         </div>
 
