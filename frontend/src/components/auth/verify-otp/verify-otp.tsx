@@ -3,8 +3,8 @@
 import logo from "@/assets/images/logo4.png";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/auth-context";
-import { setAuthToken, setUserData } from "@/lib/rbac-config.ts/auth-local";
-import { ROLE_DASHBOARD_PATHS } from "@/lib/rbac-config.ts/constants";
+import { setAuthToken, setUserData } from "@/lib/rbac-config/auth-local";
+import { ROLE_DASHBOARD_PATHS } from "@/lib/rbac-config/constants";
 import {
   VerifyOtpSchema,
   verifyOtpSchema,
@@ -101,18 +101,14 @@ export default function VerifyOTPForm() {
     setVerificationStatus("idle");
 
     try {
-      const response = await fetch(
-        // `${apiUrl}/auth/verify-otp`,
-        `${apiUrl}/auth/verify-otp`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ ...otpData, email }),
-          credentials: "include",
-        }
-      );
+      const response = await fetch(`${apiUrl}/auth/verify-otp`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ ...otpData, email }),
+        credentials: "include",
+      });
 
       const data = await response.json();
 

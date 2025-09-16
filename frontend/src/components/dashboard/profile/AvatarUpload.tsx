@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useRef } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Camera, Upload } from "lucide-react";
-import { apiService } from "../../../lib/profile/api";
+import { apiService } from "@/utils/profile/api";
+import { Upload } from "lucide-react";
+import { useRef, useState } from "react";
 import { toast } from "sonner";
 
 interface AvatarUploadProps {
@@ -37,6 +37,7 @@ export const AvatarUpload: React.FC<AvatarUploadProps> = ({
     // Validate file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
       toast.error("File size should be less than 5MB");
+      return;
     }
 
     // Create preview
@@ -56,10 +57,11 @@ export const AvatarUpload: React.FC<AvatarUploadProps> = ({
       const response = await apiService.uploadAvatar(file);
       onAvatarChange(response.url);
       setPreview(null);
+      toast.success("Avatar updated successfully");
     } catch (error) {
       console.log(error);
       setPreview(null);
-      toast.error("Upload failed");
+      toast.error("Avatar upload failed. Please try again.");
     } finally {
       setUploading(false);
     }
@@ -71,55 +73,71 @@ export const AvatarUpload: React.FC<AvatarUploadProps> = ({
 
   const getInitials = (name?: string) => {
     if (!name) return "U";
-    return name
-      .split(" ")
-      .map((n) => n[0])
+
+    // Split the name and get first letter of each word
+    const nameParts = name.trim().split(/\s+/);
+    if (nameParts.length === 1) {
+      // Single name, take first two characters
+      return nameParts[0].substring(0, 2).toUpperCase();
+    }
+
+    // Multiple names, take first letter of first two words
+    return nameParts
+      .slice(0, 2)
+      .map((part) => part[0])
       .join("")
-      .toUpperCase()
-      .slice(0, 2);
+      .toUpperCase();
   };
+
+  const displayAvatar = preview || currentAvatar;
 
   return (
     <div className="flex flex-col items-center space-y-4">
-      <div className="relative">
-        <Avatar className="h-24 w-24">
+      {/* Avatar Display */}
+      <div className="relative group">
+        <Avatar className="h-20 w-20 border-2 border-gray-200">
           <AvatarImage
-            src={preview || currentAvatar}
-            alt={userName || "User"}
+            src={displayAvatar}
+            alt={userName || "User Avatar"}
+            className="object-cover"
           />
-          <AvatarFallback className="text-lg">
+          <AvatarFallback className="text-xl font-semibold bg-teal-500 text-white">
             {getInitials(userName)}
           </AvatarFallback>
         </Avatar>
 
-        <Button
-          type="button"
-          size="sm"
-          variant="secondary"
-          className="absolute -bottom-2 -right-2 h-8 w-8 rounded-full p-0"
-          onClick={triggerFileInput}
-          disabled={disabled || uploading}
-        >
-          {uploading ? (
-            <div className="h-4 w-4 animate-spin rounded-full border-2 border-gray-300 border-t-gray-600" />
-          ) : (
-            <Camera className="h-4 w-4" />
-          )}
-        </Button>
+        {/* Upload Overlay */}
+        {!uploading && (
+          <div
+            className="absolute inset-0 rounded-full bg-black bg-opacity-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+            onClick={triggerFileInput}
+          >
+            <Upload className="h-6 w-6 text-white" />
+          </div>
+        )}
+
+        {/* Loading Overlay */}
+        {uploading && (
+          <div className="absolute inset-0 rounded-full bg-black bg-opacity-50 flex items-center justify-center">
+            <div className="h-6 w-6 animate-spin rounded-full border-2 border-gray-300 border-t-white" />
+          </div>
+        )}
       </div>
 
+      {/* Change Avatar Button */}
       <Button
         type="button"
         variant="outline"
         size="sm"
         onClick={triggerFileInput}
         disabled={disabled || uploading}
-        className="w-full max-w-xs"
+        className="text-sm font-medium border-gray-300 hover:border-teal-500 hover:text-teal-600 transition-colors"
       >
         <Upload className="mr-2 h-4 w-4" />
         {uploading ? "Uploading..." : "Change Avatar"}
       </Button>
 
+      {/* Hidden File Input */}
       <input
         ref={fileInputRef}
         type="file"
@@ -128,6 +146,11 @@ export const AvatarUpload: React.FC<AvatarUploadProps> = ({
         className="hidden"
         disabled={disabled || uploading}
       />
+
+      {/* Upload Info */}
+      <p className="text-xs text-gray-500 text-center max-w-xs">
+        Click to upload a new avatar. Maximum file size: 5MB
+      </p>
     </div>
   );
 };

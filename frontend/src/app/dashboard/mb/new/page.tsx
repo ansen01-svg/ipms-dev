@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/contexts/auth-context";
-import { getAuthToken } from "@/lib/rbac-config.ts/auth-local";
+import { getAuthToken } from "@/lib/rbac-config/auth-local";
 import { Calculator, File, Plus, Save, Trash2, Upload, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";

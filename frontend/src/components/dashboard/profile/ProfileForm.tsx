@@ -1,28 +1,26 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AvatarUpload } from "./AvatarUpload";
-import { User, UpdateProfileData } from "@/types/user.types";
 import {
-  validateForm,
   ProfileUpdateFormData,
+  validateForm,
 } from "@/schema/profile/validations";
+import { UpdateProfileData, User } from "@/types/user.types";
 import {
-  Save,
   AlertCircle,
-  User as UserIcon,
-  Mail,
-  Phone,
   Building,
-  Badge,
   MapPin,
   RotateCcw,
+  Save,
+  UserCheck,
+  User as UserIcon,
 } from "lucide-react";
+import { useEffect, useState } from "react";
+import { AvatarUpload } from "./AvatarUpload";
 
 interface ProfileFormProps {
   user: User;
@@ -138,164 +136,163 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
   };
 
   return (
-    <div className="mx-auto">
+    <div className="min-h-screen bg-gray-50">
       {/* Header Section */}
-      <div className="mb-8">
-        <div className="bg-gradient-to-r from-teal-600 to-teal-700 rounded-2xl p-8 text-white shadow-xl">
+      <div className="bg-teal-600 rounded-t-xl text-white px-6 py-8">
+        <div className="max-w-7xl mx-auto">
           <h1 className="text-2xl font-bold mb-2">Profile Settings</h1>
-          <p className="text-teal-100 text-md">
+          <p className="text-teal-100">
             Manage your personal information and account preferences
           </p>
         </div>
       </div>
 
-      <div className="grid lg:grid-cols-3 gap-8">
-        {/* Avatar and Quick Info */}
-        <div className="lg:col-span-1">
-          <Card className="shadow-xl border-0 bg-white/80 backdrop-blur">
-            <CardContent className="p-8">
-              <div className="text-center space-y-6">
-                <AvatarUpload
-                  currentAvatar={formData.avatar}
-                  userName={formData.username || user.fullName}
-                  onAvatarChange={handleAvatarChange}
-                  disabled={loading}
-                />
+      <div className="max-w-7xl mx-auto px-6 py-8">
+        <div className="grid lg:grid-cols-3 gap-8">
+          {/* Left Profile Card */}
+          <div className="lg:col-span-1">
+            <Card className="shadow-sm border border-gray-200 bg-white">
+              <CardContent className="p-8">
+                <div className="text-center space-y-6">
+                  {/* Avatar Section */}
+                  <div className="space-y-4">
+                    <AvatarUpload
+                      currentAvatar={formData.avatar}
+                      userName={formData.username || user.fullName}
+                      onAvatarChange={handleAvatarChange}
+                      disabled={loading}
+                    />
+                  </div>
 
-                <div className="space-y-3">
-                  <h3 className="text-xl font-semibold text-gray-900">
-                    {user.fullName || "N/A"}
-                  </h3>
-                  <div className="flex items-center justify-center text-gray-600">
-                    <Badge className="h-4 w-4 mr-2 text-teal-600" />
-                    <span className="text-sm">{user.designation || "N/A"}</span>
-                  </div>
-                  <div className="flex items-center justify-center text-gray-600">
-                    <Building className="h-4 w-4 mr-2 text-teal-600" />
-                    <span className="text-sm">
-                      {user.departmentName || "N/A"}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-center text-gray-600">
-                    <UserIcon className="h-4 w-4 mr-2 text-teal-600" />
-                    <span className="text-sm font-mono">{user.userId}</span>
-                  </div>
-                  {user.officeLocation && (
-                    <div className="flex items-center justify-center text-gray-600">
-                      <MapPin className="h-4 w-4 mr-2 text-teal-600" />
-                      <span className="text-sm">{user.officeLocation}</span>
+                  {/* User Info Section */}
+                  <div className="space-y-1">
+                    <h2 className="text-2xl font-bold text-gray-900">
+                      {user.fullName || formData.username || "N/A"}
+                    </h2>
+
+                    {/* Role Badge */}
+                    <div className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-teal-100 text-teal-800 mt-2">
+                      <UserCheck className="h-3 w-3 mr-1" />
+                      {user.designation || "N/A"}
                     </div>
-                  )}
+                  </div>
+
+                  {/* Divider */}
+                  <div className="w-full h-px bg-gray-200"></div>
+
+                  {/* Details Section */}
+                  <div className="space-y-4">
+                    {/* Department */}
+                    {(user.departmentName || user.officeLocation) && (
+                      <div className="space-y-3">
+                        {user.departmentName && (
+                          <div className="flex items-center text-sm">
+                            <Building className="h-4 w-4 text-gray-400 mr-3 flex-shrink-0" />
+                            <span className="text-gray-700 text-left">
+                              {user.departmentName}
+                            </span>
+                          </div>
+                        )}
+
+                        {user.officeLocation && (
+                          <div className="flex items-center text-sm">
+                            <MapPin className="h-4 w-4 text-gray-400 mr-3 flex-shrink-0" />
+                            <span className="text-gray-700 text-left">
+                              {user.officeLocation}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* User ID */}
+                    <div className="bg-gray-50 rounded-lg p-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center">
+                          <UserIcon className="h-4 w-4 text-gray-400 mr-2" />
+                          <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                            User ID
+                          </span>
+                        </div>
+                        <span className="font-mono text-sm font-semibold text-gray-900">
+                          {user.userId}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+              </CardContent>
+            </Card>
+          </div>
 
-        {/* Main Form */}
-        <div className="lg:col-span-2">
-          <Card className="shadow-xl border-0 bg-white/80 backdrop-blur">
-            <CardHeader className="pb-6">
-              <CardTitle className="text-2xl font-bold text-gray-900 flex items-center">
-                <UserIcon className="h-6 w-6 mr-3 text-teal-500" />
-                Personal Information
-              </CardTitle>
-              <p className="text-gray-600 mt-2">
-                Update your profile information below. Fields marked with * are
-                required.
-              </p>
-            </CardHeader>
+          {/* Right Form Card */}
+          <div className="lg:col-span-2">
+            <Card className="shadow-sm border border-gray-200 bg-white">
+              <CardHeader className="border-b border-gray-100 pb-4">
+                <div className="flex items-center">
+                  <CardTitle className="text-xl font-semibold text-gray-900">
+                    Personal Information
+                  </CardTitle>
+                </div>
+                <p className="text-sm text-gray-600 mt-1">
+                  Update your profile information below. Fields marked with *
+                  are required.
+                </p>
+              </CardHeader>
 
-            <CardContent className="space-y-8">
-              <form onSubmit={handleSubmit} className="space-y-8">
-                {/* Read-only Information */}
-                <div className="space-y-6">
-                  <div className="border-l-4 border-teal-500 pl-4">
-                    <h4 className="text-lg font-semibold text-gray-900 mb-4">
-                      Organization Details
-                    </h4>
+              <CardContent className="p-6">
+                <form onSubmit={handleSubmit} className="space-y-8">
+                  {/* Organization Details */}
+                  <div className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="space-y-2">
-                        <Label
-                          htmlFor="fullName"
-                          className="text-sm font-medium text-gray-700"
-                        >
+                        <Label className="text-sm font-medium text-gray-700">
                           Full Name
                         </Label>
-                        <div className="relative">
-                          <UserIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                          <Input
-                            id="fullName"
-                            value={user.fullName || "N/A"}
-                            disabled
-                            className="pl-10 bg-gray-50/80 border-gray-200 focus:border-teal-500 transition-colors"
-                          />
-                        </div>
+                        <Input
+                          value={user.fullName || "N/A"}
+                          disabled
+                          className="bg-gray-50 border-gray-200"
+                        />
                       </div>
-
                       <div className="space-y-2">
-                        <Label
-                          htmlFor="designation"
-                          className="text-sm font-medium text-gray-700"
-                        >
+                        <Label className="text-sm font-medium text-gray-700">
                           Designation
                         </Label>
-                        <div className="relative">
-                          <Badge className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                          <Input
-                            id="designation"
-                            value={user.designation || "N/A"}
-                            disabled
-                            className="pl-10 bg-gray-50/80 border-gray-200 focus:border-teal-500 transition-colors"
-                          />
-                        </div>
+                        <Input
+                          value={user.designation || "N/A"}
+                          disabled
+                          className="bg-gray-50 border-gray-200"
+                        />
                       </div>
-
                       <div className="space-y-2">
-                        <Label
-                          htmlFor="department"
-                          className="text-sm font-medium text-gray-700"
-                        >
+                        <Label className="text-sm font-medium text-gray-700">
                           Department
                         </Label>
-                        <div className="relative">
-                          <Building className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                          <Input
-                            id="department"
-                            value={user.departmentName || "N/A"}
-                            disabled
-                            className="pl-10 bg-gray-50/80 border-gray-200 focus:border-teal-500 transition-colors"
-                          />
-                        </div>
+                        <Input
+                          value={user.departmentName || "N/A"}
+                          disabled
+                          className="bg-gray-50 border-gray-200"
+                        />
                       </div>
-
                       <div className="space-y-2">
-                        <Label
-                          htmlFor="userId"
-                          className="text-sm font-medium text-gray-700"
-                        >
+                        <Label className="text-sm font-medium text-gray-700">
                           User ID
                         </Label>
-                        <div className="relative">
-                          <UserIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                          <Input
-                            id="userId"
-                            value={user.userId}
-                            disabled
-                            className="pl-10 bg-gray-50/80 border-gray-200 focus:border-teal-500 transition-colors font-mono"
-                          />
-                        </div>
+                        <Input
+                          value={user.userId}
+                          disabled
+                          className="bg-gray-50 border-gray-200 font-mono"
+                        />
                       </div>
                     </div>
                   </div>
-                </div>
 
-                {/* Editable Fields */}
-                <div className="space-y-6">
-                  <div className="border-l-4 border-blue-500 pl-4">
-                    <h4 className="text-lg font-semibold text-gray-900 mb-4">
+                  {/* Editable Information */}
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-medium text-gray-900 border-b border-gray-100 pb-2">
                       Editable Information
-                    </h4>
+                    </h3>
                     <div className="space-y-6">
                       <div className="space-y-2">
                         <Label
@@ -304,24 +301,21 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
                         >
                           Username <span className="text-red-500">*</span>
                         </Label>
-                        <div className="relative">
-                          <UserIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                          <Input
-                            id="username"
-                            value={formData.username}
-                            onChange={handleInputChange("username")}
-                            onBlur={handleBlur("username")}
-                            placeholder="Enter your username"
-                            disabled={loading}
-                            className={`pl-10 border-2 transition-all duration-200 focus:ring-2 focus:ring-teal-500/20 ${
-                              errors.username && touched.username
-                                ? "border-red-500 focus:border-red-500"
-                                : "border-gray-200 focus:border-teal-500"
-                            }`}
-                          />
-                        </div>
+                        <Input
+                          id="username"
+                          value={formData.username}
+                          onChange={handleInputChange("username")}
+                          onBlur={handleBlur("username")}
+                          placeholder="Enter your username"
+                          disabled={loading}
+                          className={`transition-colors ${
+                            errors.username && touched.username
+                              ? "border-red-500 focus:border-red-500"
+                              : "border-gray-300 focus:border-teal-500"
+                          }`}
+                        />
                         {errors.username && touched.username && (
-                          <div className="flex items-center gap-2 text-sm text-red-600 bg-red-50 p-2 rounded-md">
+                          <div className="flex items-center gap-2 text-sm text-red-600">
                             <AlertCircle className="h-4 w-4" />
                             {errors.username}
                           </div>
@@ -335,25 +329,22 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
                         >
                           Email <span className="text-red-500">*</span>
                         </Label>
-                        <div className="relative">
-                          <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                          <Input
-                            id="email"
-                            type="email"
-                            value={formData.email}
-                            onChange={handleInputChange("email")}
-                            onBlur={handleBlur("email")}
-                            placeholder="Enter your email"
-                            disabled={loading}
-                            className={`pl-10 border-2 transition-all duration-200 focus:ring-2 focus:ring-teal-500/20 ${
-                              errors.email && touched.email
-                                ? "border-red-500 focus:border-red-500"
-                                : "border-gray-200 focus:border-teal-500"
-                            }`}
-                          />
-                        </div>
+                        <Input
+                          id="email"
+                          type="email"
+                          value={formData.email}
+                          onChange={handleInputChange("email")}
+                          onBlur={handleBlur("email")}
+                          placeholder="Enter your email"
+                          disabled={loading}
+                          className={`transition-colors ${
+                            errors.email && touched.email
+                              ? "border-red-500 focus:border-red-500"
+                              : "border-gray-300 focus:border-teal-500"
+                          }`}
+                        />
                         {errors.email && touched.email && (
-                          <div className="flex items-center gap-2 text-sm text-red-600 bg-red-50 p-2 rounded-md">
+                          <div className="flex items-center gap-2 text-sm text-red-600">
                             <AlertCircle className="h-4 w-4" />
                             {errors.email}
                           </div>
@@ -367,24 +358,21 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
                         >
                           Phone Number <span className="text-red-500">*</span>
                         </Label>
-                        <div className="relative">
-                          <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                          <Input
-                            id="phoneNumber"
-                            value={formData.phoneNumber}
-                            onChange={handleInputChange("phoneNumber")}
-                            onBlur={handleBlur("phoneNumber")}
-                            placeholder="Enter your phone number"
-                            disabled={loading}
-                            className={`pl-10 border-2 transition-all duration-200 focus:ring-2 focus:ring-teal-500/20 ${
-                              errors.phoneNumber && touched.phoneNumber
-                                ? "border-red-500 focus:border-red-500"
-                                : "border-gray-200 focus:border-teal-500"
-                            }`}
-                          />
-                        </div>
+                        <Input
+                          id="phoneNumber"
+                          value={formData.phoneNumber}
+                          onChange={handleInputChange("phoneNumber")}
+                          onBlur={handleBlur("phoneNumber")}
+                          placeholder="Enter your phone number"
+                          disabled={loading}
+                          className={`transition-colors ${
+                            errors.phoneNumber && touched.phoneNumber
+                              ? "border-red-500 focus:border-red-500"
+                              : "border-gray-300 focus:border-teal-500"
+                          }`}
+                        />
                         {errors.phoneNumber && touched.phoneNumber && (
-                          <div className="flex items-center gap-2 text-sm text-red-600 bg-red-50 p-2 rounded-md">
+                          <div className="flex items-center gap-2 text-sm text-red-600">
                             <AlertCircle className="h-4 w-4" />
                             {errors.phoneNumber}
                           </div>
@@ -392,52 +380,52 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
                       </div>
                     </div>
                   </div>
-                </div>
 
-                {/* Action buttons */}
-                <div className="flex flex-col sm:flex-row gap-4 pt-6 border-t border-gray-200">
-                  <Button
-                    type="submit"
-                    disabled={loading || !hasChanges}
-                    className="flex-1 bg-gradient-to-r from-teal-600 to-teal-700 hover:from-teal-700 hover:to-teal-800 text-white font-medium py-3 px-6 rounded-lg transition-all duration-200 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {loading ? (
-                      <>
-                        <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-gray-300 border-t-white" />
-                        Updating...
-                      </>
-                    ) : (
-                      <>
-                        <Save className="mr-2 h-4 w-4" />
-                        Save Changes
-                      </>
-                    )}
-                  </Button>
+                  {/* Action buttons */}
+                  <div className="flex flex-col sm:flex-row gap-3 pt-6 border-t border-gray-200">
+                    <Button
+                      type="submit"
+                      disabled={loading || !hasChanges}
+                      className="bg-teal-600 hover:bg-teal-700 text-white disabled:opacity-50"
+                    >
+                      {loading ? (
+                        <>
+                          <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-gray-300 border-t-white" />
+                          Updating...
+                        </>
+                      ) : (
+                        <>
+                          <Save className="mr-2 h-4 w-4" />
+                          Save Changes
+                        </>
+                      )}
+                    </Button>
 
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={resetForm}
-                    disabled={loading || !hasChanges}
-                    className="flex-1 border-2 border-gray-300 hover:border-gray-400 text-gray-700 font-medium py-3 px-6 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    <RotateCcw className="mr-2 h-4 w-4" />
-                    Reset
-                  </Button>
-                </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={resetForm}
+                      disabled={loading || !hasChanges}
+                      className="border-gray-300 hover:border-gray-400 disabled:opacity-50"
+                    >
+                      <RotateCcw className="mr-2 h-4 w-4" />
+                      Reset
+                    </Button>
+                  </div>
 
-                {!hasChanges && (
-                  <Alert className="bg-blue-50 border-blue-200">
-                    <AlertCircle className="h-4 w-4 text-blue-600" />
-                    <AlertDescription className="text-blue-800">
-                      {`Make changes to your profile information and click "Save
-                      Changes" to update.`}
-                    </AlertDescription>
-                  </Alert>
-                )}
-              </form>
-            </CardContent>
-          </Card>
+                  {!hasChanges && (
+                    <Alert className="bg-blue-50 border-blue-200">
+                      <AlertCircle className="h-4 w-4 text-blue-600" />
+                      <AlertDescription className="text-blue-800">
+                        {`Make changes to your profile information and click "Save
+                        Changes" to update.`}
+                      </AlertDescription>
+                    </Alert>
+                  )}
+                </form>
+              </CardContent>
+            </Card>
+          </div>
         </div>
       </div>
     </div>

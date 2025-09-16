@@ -1,6 +1,5 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import Link from "next/link";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -9,7 +8,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { logout } from "@/lib/rbac-config.ts/logout";
+import { logout } from "@/lib/rbac-config/logout";
 import { User } from "@/types/user.types";
 import {
   LogOut,
@@ -18,6 +17,7 @@ import {
   PanelLeftClose,
   User as UserIcon,
 } from "lucide-react";
+import Link from "next/link";
 
 // Types
 type HeaderProps = {
@@ -110,7 +110,7 @@ export default function Header({
                   className="relative h-10 w-10 rounded-full p-0 hover:bg-gray-100 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                 >
                   <Avatar className="h-10 w-10">
-                    <AvatarImage src="" alt={user.name} />
+                    <AvatarImage src={user.avatar} alt={user.name} />
                     <AvatarFallback className="bg-gradient-to-r from-blue-500 to-purple-600 text-white">
                       {user.name
                         .split(" ")

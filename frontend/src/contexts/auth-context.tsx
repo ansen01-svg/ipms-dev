@@ -5,7 +5,7 @@ import {
   getCurrentUser,
   setAuthToken,
   setUserData,
-} from "@/lib/rbac-config.ts/auth-local";
+} from "@/lib/rbac-config/auth-local";
 import { User } from "@/types/user.types";
 import React, { createContext, useContext, useEffect, useState } from "react";
 

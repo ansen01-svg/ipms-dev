@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { getAuthToken } from "@/lib/rbac-config.ts/auth-local";
+import { getAuthToken } from "@/lib/rbac-config/auth-local";
 import { DbProject } from "@/types/projects.types";
 import { AlertCircle } from "lucide-react";
 import { useState } from "react";

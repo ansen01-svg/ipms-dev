@@ -18,7 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { getAuthToken } from "@/lib/rbac-config.ts/auth-local";
+import { getAuthToken } from "@/lib/rbac-config/auth-local";
 import createuserFormSchema, {
   designation,
 } from "@/schema/create-user/create-user.schema";

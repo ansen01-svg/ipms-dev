@@ -32,7 +32,7 @@ import {
 } from "@/components/ui/select";
 import { Toaster } from "@/components/ui/sonner";
 import { Textarea } from "@/components/ui/textarea";
-import { getAuthToken } from "@/lib/rbac-config.ts/auth-local";
+import { getAuthToken } from "@/lib/rbac-config/auth-local";
 import {
   CreateProjectFormValues,
   createProjectSchema,

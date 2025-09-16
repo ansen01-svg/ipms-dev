@@ -1,7 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { getAuthToken } from "@/lib/rbac-config.ts/auth-local";
+import { getAuthToken } from "@/lib/rbac-config/auth-local";
 import { DbProject } from "@/types/projects.types";
 import { User } from "@/types/user.types";
 import {
