@@ -1,5 +1,5 @@
 import { User } from "@/types/user.types";
-import { SignJWT, jwtVerify } from "jose";
+import { jwtVerify } from "jose";
 
 const JWT_SECRET_STRING =
   process.env.NEXT_PUBLIC_JWT_SECRET || "your-fallback-secret";
@@ -8,20 +8,6 @@ const JWT_ALGORITHM = "HS256";
 
 const AUTH_TOKEN_KEY = "auth-token";
 const USER_DATA_KEY = "user-data";
-
-export async function createToken(user: User): Promise<string> {
-  return await new SignJWT({
-    id: user.id,
-    email: user.email,
-    role: user.role,
-    name: user.name,
-    department: user.department,
-  })
-    .setProtectedHeader({ alg: JWT_ALGORITHM })
-    .setIssuedAt()
-    .setExpirationTime("24h")
-    .sign(JWT_SECRET);
-}
 
 export async function verifyToken(token: string): Promise<User> {
   try {

@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
-import { User, UpdateProfileData } from "../types/user.types";
-import { apiService } from "../lib/profile/api";
+import { apiService } from "@/utils/profile/api";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { UpdateProfileData, User } from "../types/user.types";
 
 export const useProfile = () => {
   const [user, setUser] = useState<User | null>(null);

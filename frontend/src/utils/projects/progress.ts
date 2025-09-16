@@ -1,4 +1,4 @@
-import { clearAuthData, getAuthToken } from "@/lib/rbac-config.ts/auth-local";
+import { clearAuthData, getAuthToken } from "@/lib/rbac-config/auth-local";
 import {
   FinancialProgressHistoryResponse,
   FinancialProgressUpdateRequest,

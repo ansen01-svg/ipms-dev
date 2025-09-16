@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { getAuthToken } from "@/lib/rbac-config.ts/auth-local";
+import { getAuthToken } from "@/lib/rbac-config/auth-local";
 import { AlertCircle, UserCheck, Users } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";

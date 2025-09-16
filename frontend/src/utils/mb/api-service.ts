@@ -1,4 +1,4 @@
-import { getAuthToken } from "@/lib/rbac-config.ts/auth-local";
+import { getAuthToken } from "@/lib/rbac-config/auth-local";
 import {
   CreateMBData,
   MBPaginationData,

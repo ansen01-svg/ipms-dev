@@ -1,5 +1,5 @@
-import { ApiResponse, UpdateProfileData, User } from "../../types/user.types";
-import { getAuthToken } from "../rbac-config.ts/auth-local";
+import { getAuthToken } from "@/lib/rbac-config/auth-local";
+import { ApiResponse, UpdateProfileData, User } from "@/types/user.types";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_PROD_API_URL;
 // const API_BASE_URL = process.env.NEXT_PUBLIC_DEV_API_URL;
@@ -56,7 +56,7 @@ class ApiService {
 
     const token = getAuthToken();
     const response = await fetch(`${API_BASE_URL}/user/profile`, {
-      method: "POST",
+      method: "PUT",
       headers: {
         ...(token && { Authorization: `Bearer ${token}` }),
       },

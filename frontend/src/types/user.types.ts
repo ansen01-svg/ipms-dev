@@ -1,16 +1,5 @@
 export type UserRole = "ADMIN" | "JE" | "AEE" | "CE" | "MD" | "VIEWER";
 
-// export interface User {
-//   userId: string;
-//   email: string;
-//   name: string;
-//   role: UserRole;
-//   department?: string;
-//   avatar?: string;
-//   createdAt?: string;
-//   lastLoginAt?: string;
-// }
-
 export interface User {
   userId: string;
   email: string;
@@ -30,10 +19,8 @@ export interface User {
   departmentId?: string;
   designation: string;
   officeLocation?: string;
-
   isFirstLogin: boolean;
   lastPasswordChange: string;
-
   updatedAt: string;
 }
 

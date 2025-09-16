@@ -119,7 +119,7 @@
 
 "use client";
 import { useAuth } from "@/contexts/auth-context";
-import { ROLE_DASHBOARD_PATHS } from "@/lib/rbac-config.ts/constants";
+import { ROLE_DASHBOARD_PATHS } from "@/lib/rbac-config/constants";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
 
