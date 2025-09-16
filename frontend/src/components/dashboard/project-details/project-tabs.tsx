@@ -12,11 +12,11 @@ import {
   Users,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import CommentsTab from "./tabs/comments";
 import DocumentsTab from "./tabs/documents";
 import OverviewTab from "./tabs/overview";
 import PlaceholderTab from "./tabs/placeholder";
 import ProgressTab from "./tabs/progress";
+import ProjectQueriesTab from "./tabs/queries";
 import SubProjectsTab from "./tabs/sub-projects";
 import TimelineTab from "./tabs/timeline";
 
@@ -47,7 +47,7 @@ const tabs: TabConfig[] = [
   { id: "team", label: "Team", icon: Users },
   { id: "media", label: "Media", icon: Camera },
   { id: "timeline", label: "Timeline", icon: Clock },
-  { id: "comments", label: "Comments", icon: MessageSquare },
+  { id: "queries", label: "Queries", icon: MessageSquare },
 ];
 
 export function ProjectTabs({ project, activeTab }: ProjectTabsProps) {
@@ -78,8 +78,8 @@ export function ProjectTabs({ project, activeTab }: ProjectTabsProps) {
         return <SubProjectsTab project={project} />;
       case "documents":
         return <DocumentsTab project={project} />;
-      case "comments":
-        return <CommentsTab />;
+      case "queries":
+        return <ProjectQueriesTab project={project} />;
       case "team":
         return <PlaceholderTab icon={Users} title="Team" />;
       case "media":

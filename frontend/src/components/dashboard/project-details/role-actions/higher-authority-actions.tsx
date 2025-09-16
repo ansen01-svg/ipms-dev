@@ -1,10 +1,15 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { getAuthToken } from "@/lib/rbac-config.ts/auth-local";
 import { DbProject } from "@/types/projects.types";
 import { PROJECT_STATUSES } from "@/utils/project-details/constants";
-import { CheckCircle, XCircle } from "lucide-react";
+import { AlertCircle, CheckCircle, XCircle } from "lucide-react";
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
+import RaisedQueryModal, {
+  QueryFormData,
+} from "../../archive-project-details/raisedQueryModal";
 import { StatusUpdateModal } from "../status-update-modal";
 
 interface HigherAuthorityActionsProps {
@@ -22,6 +27,25 @@ type ProjectStatus =
   | "Ongoing"
   | "Completed";
 
+export const getRoleLabel = (role: string) => {
+  switch (role) {
+    case "AEE":
+      return "Assistant Executive Engineer";
+    case "JE":
+      return "Junior Engineer";
+    case "CE":
+      return "Chief Engineer";
+    case "MD":
+      return "Managing Director";
+    case "VIEWER":
+      return "Viewer";
+    case "ADMIN":
+      return "Admin";
+    default:
+      return "User";
+  }
+};
+
 export function HigherAuthorityActions({
   project,
   role,
@@ -35,31 +59,14 @@ export function HigherAuthorityActions({
     project.status as ProjectStatus
   );
   const [hasStatusChanged, setHasStatusChanged] = useState(false);
+  const [isQueryModalOpen, setIsQueryModalOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Update local status when project prop changes
   useEffect(() => {
     setCurrentStatus(project.status as ProjectStatus);
     setHasStatusChanged(false);
   }, [project.status]);
-
-  const getRoleLabel = (role: string) => {
-    switch (role) {
-      case "AEE":
-        return "Assistant Executive Engineer";
-      case "JE":
-        return "Junior Engineer";
-      case "CE":
-        return "Chief Engineer";
-      case "MD":
-        return "Managing Director";
-      case "VIEWER":
-        return "Viewer";
-      case "ADMIN":
-        return "Administrator";
-      default:
-        return "User";
-    }
-  };
 
   const handleAction = (action: "approve" | "reject") => {
     setModalAction(action);
@@ -79,6 +86,51 @@ export function HigherAuthorityActions({
     // Call parent callback to refresh project data
     if (onProjectUpdate) {
       onProjectUpdate();
+    }
+  };
+
+  const handleQuerySubmit = async (formData: QueryFormData) => {
+    setIsSubmitting(true);
+    const token = getAuthToken();
+
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_PROD_API_URL}/project/${project._id}/queries`,
+        // `${process.env.NEXT_PUBLIC_DEV_API_URL}/project/${project._id}/queries`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            queryTitle: formData.queryTitle,
+            queryDescription: formData.queryDescription,
+            queryCategory: formData.queryCategory,
+            priority: formData.priority,
+            expectedResolutionDate: formData.expectedResolutionDate,
+            assignedTo: formData.assignedTo || undefined,
+          }),
+        }
+      );
+
+      const result = await response.json();
+
+      if (response.ok && result.success) {
+        toast.success("Query raised successfully!");
+        return { success: true };
+      } else {
+        toast.error(
+          result.message || "Failed to raise query. Please try again."
+        );
+        return { success: false, message: result.message };
+      }
+    } catch (error) {
+      console.error("Error raising query:", error);
+      toast.error("Network error. Please check your connection and try again.");
+      return { success: false, message: "Network error occurred" };
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -121,6 +173,7 @@ export function HigherAuthorityActions({
             Review and approve projects for technical compliance
           </p>
 
+          {/* Action buttons */}
           <div className="flex flex-wrap gap-3">
             <Button
               onClick={() => handleAction("approve")}
@@ -150,6 +203,17 @@ export function HigherAuthorityActions({
               {hasStatusChanged && currentStatus.includes("Rejected")
                 ? "Rejected"
                 : "Reject"}
+            </Button>
+
+            <Button
+              onClick={() => setIsQueryModalOpen(true)}
+              disabled={isSubmitting}
+              className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 ease-in-out transform hover:scale-105 active:scale-95 shadow-md hover:shadow-lg"
+            >
+              <AlertCircle className="w-4 h-4" />
+              <span className="font-medium">
+                {isSubmitting ? "Submitting..." : "Raise Query"}
+              </span>
             </Button>
           </div>
 
@@ -187,6 +251,16 @@ export function HigherAuthorityActions({
         isOpen={isModalOpen}
         onClose={handleModalClose}
         onStatusUpdate={handleStatusUpdate}
+      />
+
+      {/* Raised Query Modal */}
+      <RaisedQueryModal
+        isOpen={isQueryModalOpen}
+        onClose={() => setIsQueryModalOpen(false)}
+        onSubmit={handleQuerySubmit}
+        isLoading={isSubmitting}
+        title="Raise Query"
+        subtitle="Submit a new query for this project"
       />
     </>
   );

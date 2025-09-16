@@ -1,8 +1,8 @@
-import { ApiResponse, User, UpdateProfileData } from "../../types/user.types";
+import { ApiResponse, UpdateProfileData, User } from "../../types/user.types";
 import { getAuthToken } from "../rbac-config.ts/auth-local";
 
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_DEV_API_URL || "http://localhost:5000/api";
+const API_BASE_URL = process.env.NEXT_PUBLIC_PROD_API_URL;
+// const API_BASE_URL = process.env.NEXT_PUBLIC_DEV_API_URL;
 
 class ApiService {
   private async makeRequest<T>(
