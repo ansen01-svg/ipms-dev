@@ -2,8 +2,8 @@ import RouteGuard from "@/components/auth/route-guard";
 import { AuthProvider } from "@/contexts/auth-context";
 import type { Metadata } from "next";
 import localFont from "next/font/local";
-import "./globals.css";
 import { Toaster } from "sonner";
+import "./globals.css";
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
   variable: "--font-geist-sans",
@@ -34,7 +34,14 @@ export default function RootLayout({
         <AuthProvider>
           <RouteGuard requireAuth={true}>
             {children}
-            <Toaster />
+            <Toaster
+              position="top-center"
+              richColors
+              toastOptions={{
+                style: { fontSize: "14px" },
+                className: "text-sm",
+              }}
+            />
           </RouteGuard>
         </AuthProvider>
       </body>

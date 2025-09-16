@@ -1,7 +1,6 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Toaster } from "@/components/ui/sonner";
 import {
   resetPasswordSchema,
   ResetPasswordSchema,
@@ -159,16 +158,6 @@ export default function ResetPasswordPage() {
           </Button>
         </div>
       </form>
-
-      {/* Toast Notifications */}
-      <Toaster
-        position="top-center"
-        richColors
-        toastOptions={{
-          style: { fontSize: "14px" },
-          className: "text-sm",
-        }}
-      />
     </div>
   );
 }

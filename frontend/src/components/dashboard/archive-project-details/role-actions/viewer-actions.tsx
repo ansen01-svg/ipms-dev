@@ -1,7 +1,7 @@
-import React, { useState } from "react";
-import { AlertCircle, FileQuestion, Users, UserCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import RaisedQueryModal from "../raisedQueryModal";
+import { AlertCircle, UserCheck, Users } from "lucide-react";
+import { useState } from "react";
+import RaiseQueryModal from "../raisedQueryModal";
 
 interface ViewerActionsProps {
   projectId: string;
@@ -11,23 +11,8 @@ interface ViewerActionsProps {
 
 function ViewerActions({ projectId, onQuerySubmitted }: ViewerActionsProps) {
   const [isQueryModalOpen, setIsQueryModalOpen] = useState(false);
-  const [queryCounts, setQueryCounts] = useState({
-    total: 0,
-    open: 0,
-    inProgress: 0,
-    resolved: 0,
-  });
-  console.log(projectId);
 
   const handleQuerySubmitSuccess = () => {
-    // Optionally refresh query counts after successful submission
-    setQueryCounts((prev) => ({
-      ...prev,
-      total: prev.total + 1,
-      open: prev.open + 1,
-    }));
-
-    // Call parent callback if provided
     onQuerySubmitted?.();
   };
 
@@ -36,9 +21,6 @@ function ViewerActions({ projectId, onQuerySubmitted }: ViewerActionsProps) {
       {/* Viewer Access Info */}
       <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-200">
         <div className="flex items-center space-x-3 mb-2">
-          <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-            <FileQuestion className="w-4 h-4 text-blue-600" />
-          </div>
           <h4 className="font-medium text-gray-900">Viewer Access</h4>
         </div>
         <p className="text-sm text-gray-600 mb-4">
@@ -46,41 +28,11 @@ function ViewerActions({ projectId, onQuerySubmitted }: ViewerActionsProps) {
           project details and raise queries for clarification.
         </p>
 
-        {/* Quick Query Stats */}
-        {queryCounts.total > 0 && (
-          <div className="grid grid-cols-4 gap-2 mb-4">
-            <div className="text-center p-2 bg-gray-50 rounded-lg">
-              <div className="text-lg font-semibold text-gray-900">
-                {queryCounts.total}
-              </div>
-              <div className="text-xs text-gray-500">Total</div>
-            </div>
-            <div className="text-center p-2 bg-orange-50 rounded-lg">
-              <div className="text-lg font-semibold text-orange-600">
-                {queryCounts.open}
-              </div>
-              <div className="text-xs text-orange-600">Open</div>
-            </div>
-            <div className="text-center p-2 bg-blue-50 rounded-lg">
-              <div className="text-lg font-semibold text-blue-600">
-                {queryCounts.inProgress}
-              </div>
-              <div className="text-xs text-blue-600">In Progress</div>
-            </div>
-            <div className="text-center p-2 bg-green-50 rounded-lg">
-              <div className="text-lg font-semibold text-green-600">
-                {queryCounts.resolved}
-              </div>
-              <div className="text-xs text-green-600">Resolved</div>
-            </div>
-          </div>
-        )}
-
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row gap-3">
           <Button
             onClick={() => setIsQueryModalOpen(true)}
-            className="flex items-center gap-2 bg-teal-600 hover:bg-teal-700 active:bg-teal-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 ease-in-out transform hover:scale-105 active:scale-95 shadow-md hover:shadow-lg"
+            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 ease-in-out transform hover:scale-105 active:scale-95 shadow-md hover:shadow-lg"
           >
             <AlertCircle className="w-4 h-4" />
             <span className="font-medium">Raise Query</span>
@@ -167,7 +119,7 @@ function ViewerActions({ projectId, onQuerySubmitted }: ViewerActionsProps) {
       </div>
 
       {/* Raised Query Modal */}
-      <RaisedQueryModal
+      <RaiseQueryModal
         isOpen={isQueryModalOpen}
         onClose={() => setIsQueryModalOpen(false)}
         projectId={projectId}

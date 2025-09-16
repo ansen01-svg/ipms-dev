@@ -1,7 +1,6 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Toaster } from "@/components/ui/sonner";
 import {
   forgotPasswordSchema,
   ForgotPasswordSchema,
@@ -113,16 +112,6 @@ export default function ForgotPasswordPage() {
           )}
         </Button>
       </form>
-
-      {/* Toast Notifications */}
-      <Toaster
-        position="top-center"
-        richColors
-        toastOptions={{
-          style: { fontSize: "14px" },
-          className: "text-sm",
-        }}
-      />
     </div>
   );
 }
