@@ -1,22 +1,24 @@
-import { getAuthToken } from "@/lib/rbac-config.ts/auth-local";
 import { Send, X } from "lucide-react";
 import React, { useState } from "react";
-import { toast } from "sonner";
 
-interface RaisedQueryModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  projectId: string;
-  onSubmitSuccess?: () => void;
-}
-
-interface QueryFormData {
+export interface QueryFormData {
   queryTitle: string;
   queryDescription: string;
   queryCategory: string;
   priority: string;
   expectedResolutionDate: string;
   assignedTo: string;
+}
+
+interface RaisedQueryModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onSubmit: (
+    formData: QueryFormData
+  ) => Promise<{ success: boolean; message?: string }>;
+  isLoading?: boolean;
+  title?: string;
+  subtitle?: string;
 }
 
 const QUERY_CATEGORIES = [
@@ -42,8 +44,10 @@ const PRIORITIES = [
 function RaisedQueryModal({
   isOpen,
   onClose,
-  projectId,
-  onSubmitSuccess,
+  onSubmit,
+  isLoading = false,
+  title = "Raise Query",
+  subtitle = "Submit a new query for this project",
 }: RaisedQueryModalProps) {
   const [formData, setFormData] = useState<QueryFormData>({
     queryTitle: "",
@@ -54,7 +58,6 @@ function RaisedQueryModal({
     assignedTo: "",
   });
 
-  const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<Partial<QueryFormData>>({});
 
   // Get tomorrow's date as minimum date
@@ -120,71 +123,44 @@ function RaisedQueryModal({
       return;
     }
 
-    setIsLoading(true);
-    const token = getAuthToken();
-
     try {
-      const response = await fetch(
-        // `${process.env.NEXT_PUBLIC_PROD_API_URL}/archive-project/${projectId}/queries`,
-        `${process.env.NEXT_PUBLIC_DEV_API_URL}/archive-project/${projectId}/queries`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`, // Adjust based on your auth implementation
-          },
-          body: JSON.stringify({
-            queryTitle: formData.queryTitle.trim(),
-            queryDescription: formData.queryDescription.trim(),
-            queryCategory: formData.queryCategory,
-            priority: formData.priority,
-            expectedResolutionDate: formData.expectedResolutionDate,
-            assignedTo: formData.assignedTo.trim() || undefined,
-          }),
-        }
-      );
+      const sanitizedFormData: QueryFormData = {
+        queryTitle: formData.queryTitle.trim(),
+        queryDescription: formData.queryDescription.trim(),
+        queryCategory: formData.queryCategory,
+        priority: formData.priority,
+        expectedResolutionDate: formData.expectedResolutionDate,
+        assignedTo: formData.assignedTo.trim() || "",
+      };
 
-      const result = await response.json();
+      const result = await onSubmit(sanitizedFormData);
 
-      if (response.ok && result.success) {
-        // Success notification could be added here
-        toast.success("Query raised successfully!");
-
-        // Reset form
-        setFormData({
-          queryTitle: "",
-          queryDescription: "",
-          queryCategory: "",
-          priority: "Medium",
-          expectedResolutionDate: "",
-          assignedTo: "",
-        });
-
-        onSubmitSuccess?.();
+      if (result.success) {
+        // Reset form on success
+        resetForm();
         onClose();
-      } else {
-        // Handle API errors
-        alert(result.message || "Failed to raise query. Please try again.");
       }
     } catch (error) {
-      console.error("Error raising query:", error);
-      alert("Network error. Please check your connection and try again.");
-    } finally {
-      setIsLoading(false);
+      // Error handling is done by parent component
+      console.error("Error in modal submit:", error);
     }
+  };
+
+  const resetForm = () => {
+    setFormData({
+      queryTitle: "",
+      queryDescription: "",
+      queryCategory: "",
+      priority: "Medium",
+      expectedResolutionDate: "",
+      assignedTo: "",
+    });
+    setErrors({});
   };
 
   const handleClose = () => {
     if (!isLoading) {
-      setFormData({
-        queryTitle: "",
-        queryDescription: "",
-        queryCategory: "",
-        priority: "Medium",
-        expectedResolutionDate: "",
-        assignedTo: "",
-      });
-      setErrors({});
+      resetForm();
       onClose();
     }
   };
@@ -198,10 +174,8 @@ function RaisedQueryModal({
         <div className="flex items-center justify-between p-6 bg-blue-600 border-b border-gray-200">
           <div className="flex items-center space-x-3">
             <div>
-              <h2 className="text-xl font-semibold text-white">Raise Query</h2>
-              <p className="text-sm text-white">
-                Submit a new query for this project
-              </p>
+              <h2 className="text-xl font-semibold text-white">{title}</h2>
+              <p className="text-sm text-white">{subtitle}</p>
             </div>
           </div>
           <button

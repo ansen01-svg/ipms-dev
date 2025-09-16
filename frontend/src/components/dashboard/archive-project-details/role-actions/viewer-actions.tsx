@@ -1,19 +1,62 @@
 import { Button } from "@/components/ui/button";
+import { getAuthToken } from "@/lib/rbac-config.ts/auth-local";
 import { AlertCircle, UserCheck, Users } from "lucide-react";
 import { useState } from "react";
-import RaiseQueryModal from "../raisedQueryModal";
+import { toast } from "sonner";
+import RaisedQueryModal, { QueryFormData } from "../raisedQueryModal";
 
 interface ViewerActionsProps {
   projectId: string;
   projectName?: string;
-  onQuerySubmitted?: () => void;
 }
 
-function ViewerActions({ projectId, onQuerySubmitted }: ViewerActionsProps) {
+function ViewerActions({ projectId }: ViewerActionsProps) {
   const [isQueryModalOpen, setIsQueryModalOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleQuerySubmitSuccess = () => {
-    onQuerySubmitted?.();
+  const handleQuerySubmit = async (formData: QueryFormData) => {
+    setIsSubmitting(true);
+    const token = getAuthToken();
+
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_PROD_API_URL}/archive-project/${projectId}/queries`,
+        // `${process.env.NEXT_PUBLIC_DEV_API_URL}/archive-project/${projectId}/queries`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            queryTitle: formData.queryTitle,
+            queryDescription: formData.queryDescription,
+            queryCategory: formData.queryCategory,
+            priority: formData.priority,
+            expectedResolutionDate: formData.expectedResolutionDate,
+            assignedTo: formData.assignedTo || undefined,
+          }),
+        }
+      );
+
+      const result = await response.json();
+
+      if (response.ok && result.success) {
+        toast.success("Query raised successfully!");
+        return { success: true };
+      } else {
+        toast.error(
+          result.message || "Failed to raise query. Please try again."
+        );
+        return { success: false, message: result.message };
+      }
+    } catch (error) {
+      console.error("Error raising query:", error);
+      toast.error("Network error. Please check your connection and try again.");
+      return { success: false, message: "Network error occurred" };
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -32,10 +75,13 @@ function ViewerActions({ projectId, onQuerySubmitted }: ViewerActionsProps) {
         <div className="flex flex-col sm:flex-row gap-3">
           <Button
             onClick={() => setIsQueryModalOpen(true)}
+            disabled={isSubmitting}
             className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 ease-in-out transform hover:scale-105 active:scale-95 shadow-md hover:shadow-lg"
           >
             <AlertCircle className="w-4 h-4" />
-            <span className="font-medium">Raise Query</span>
+            <span className="font-medium">
+              {isSubmitting ? "Submitting..." : "Raise Query"}
+            </span>
           </Button>
         </div>
       </div>
@@ -119,11 +165,13 @@ function ViewerActions({ projectId, onQuerySubmitted }: ViewerActionsProps) {
       </div>
 
       {/* Raised Query Modal */}
-      <RaiseQueryModal
+      <RaisedQueryModal
         isOpen={isQueryModalOpen}
         onClose={() => setIsQueryModalOpen(false)}
-        projectId={projectId}
-        onSubmitSuccess={handleQuerySubmitSuccess}
+        onSubmit={handleQuerySubmit}
+        isLoading={isSubmitting}
+        title="Raise Query"
+        subtitle="Submit a new query for this project"
       />
     </div>
   );

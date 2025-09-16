@@ -1,5 +1,6 @@
 import { clearAuthData, getAuthToken } from "@/lib/rbac-config.ts/auth-local";
 import {
+  CreateQueryRequest,
   EscalateQueryResponse,
   GetQueriesResponse,
   QueryFilters,
@@ -7,8 +8,8 @@ import {
   UpdateQueryRequest,
 } from "@/types/query.types";
 
-// const API_BASE_URL = process.env.NEXT_PUBLIC_PROD_API_URL;
-const API_BASE_URL = process.env.NEXT_PUBLIC_DEV_API_URL;
+const API_BASE_URL = process.env.NEXT_PUBLIC_PROD_API_URL;
+// const API_BASE_URL = process.env.NEXT_PUBLIC_DEV_API_URL;
 
 // Helper function for authenticated requests
 const makeAuthenticatedRequest = async (url: string, options: RequestInit) => {
@@ -31,6 +32,60 @@ const makeAuthenticatedRequest = async (url: string, options: RequestInit) => {
   }
 
   return response;
+};
+
+/**
+ * Create a new query for a project
+ * POST /api/archive-projects/:id/queries
+ */
+export const createQuery = async (
+  projectId: string,
+  queryData: CreateQueryRequest
+): Promise<{
+  success: boolean;
+  message: string;
+  data: {
+    query: RaisedQuery;
+    projectInfo: {
+      projectId: string;
+      nameOfWork: string;
+      concernedEngineer: string;
+    };
+  };
+  metadata: {
+    createdAt: string;
+    createdBy: {
+      userId: string;
+      userName: string;
+      userDesignation: string;
+    };
+    totalQueriesForProject: number;
+  };
+}> => {
+  const response = await makeAuthenticatedRequest(
+    `${API_BASE_URL}/archive-project/${projectId}/queries`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        queryTitle: queryData.queryTitle.trim(),
+        queryDescription: queryData.queryDescription.trim(),
+        queryCategory: queryData.queryCategory,
+        priority: queryData.priority,
+        expectedResolutionDate: queryData.expectedResolutionDate,
+        assignedTo: queryData.assignedTo?.trim() || undefined,
+      }),
+    }
+  );
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.message || "Failed to create query");
+  }
+
+  return response.json();
 };
 
 /**
@@ -271,6 +326,80 @@ export const getCategoryColor = (category: string): string => {
     default:
       return "bg-gray-100 text-gray-800 border-gray-300";
   }
+};
+
+export const validateQueryCreate = (queryData: {
+  queryTitle: string;
+  queryDescription: string;
+  queryCategory: string;
+  priority: string;
+  expectedResolutionDate: string;
+  assignedTo?: string;
+}) => {
+  const errors: Record<string, string> = {};
+
+  // Query Title validation
+  if (!queryData.queryTitle || queryData.queryTitle.trim().length === 0) {
+    errors.queryTitle = "Query title is required";
+  } else if (queryData.queryTitle.trim().length < 5) {
+    errors.queryTitle = "Query title must be at least 5 characters";
+  } else if (queryData.queryTitle.trim().length > 200) {
+    errors.queryTitle = "Query title cannot exceed 200 characters";
+  }
+
+  // Query Description validation
+  if (
+    !queryData.queryDescription ||
+    queryData.queryDescription.trim().length === 0
+  ) {
+    errors.queryDescription = "Query description is required";
+  } else if (queryData.queryDescription.trim().length < 20) {
+    errors.queryDescription =
+      "Query description must be at least 20 characters";
+  } else if (queryData.queryDescription.trim().length > 2000) {
+    errors.queryDescription = "Query description cannot exceed 2000 characters";
+  }
+
+  // Query Category validation
+  if (!queryData.queryCategory || queryData.queryCategory.trim().length === 0) {
+    errors.queryCategory = "Query category is required";
+  }
+
+  // Priority validation
+  if (!queryData.priority || queryData.priority.trim().length === 0) {
+    errors.priority = "Priority is required";
+  } else {
+    const validPriorities = ["Low", "Medium", "High", "Urgent"];
+    if (!validPriorities.includes(queryData.priority)) {
+      errors.priority = "Priority must be Low, Medium, High, or Urgent";
+    }
+  }
+
+  // Expected Resolution Date validation
+  if (
+    !queryData.expectedResolutionDate ||
+    queryData.expectedResolutionDate.trim().length === 0
+  ) {
+    errors.expectedResolutionDate = "Expected resolution date is required";
+  } else {
+    const expectedDate = new Date(queryData.expectedResolutionDate);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Reset time to start of day for fair comparison
+
+    if (isNaN(expectedDate.getTime())) {
+      errors.expectedResolutionDate = "Please provide a valid date";
+    } else if (expectedDate <= today) {
+      errors.expectedResolutionDate =
+        "Expected resolution date must be in the future";
+    }
+  }
+
+  // Assigned To validation (optional field)
+  if (queryData.assignedTo && queryData.assignedTo.trim().length > 100) {
+    errors.assignedTo = "Assigned to field cannot exceed 100 characters";
+  }
+
+  return errors;
 };
 
 // Validation helpers

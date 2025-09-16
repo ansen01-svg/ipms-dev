@@ -12,7 +12,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useAuth } from "@/contexts/auth-context";
-import { DbArchiveProject } from "@/types/archive-projects.types";
+import { DbProject } from "@/types/projects.types";
 import {
   QUERY_CATEGORIES,
   QUERY_PRIORITIES,
@@ -27,7 +27,7 @@ import {
   getDaysDifference,
   getProjectQueries,
   isQueryOverdue,
-} from "@/utils/archive-projects/queries";
+} from "@/utils/projects/queries";
 import {
   AlertTriangle,
   ArrowUp,
@@ -46,11 +46,11 @@ import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import UpdateQueryModal from "../update-query-modal";
 
-interface ArchiveQueriesTabProps {
-  project: DbArchiveProject;
+interface ProjectQueriesTabProps {
+  project: DbProject;
 }
 
-export default function ArchiveQueriesTab({ project }: ArchiveQueriesTabProps) {
+export default function ProjectQueriesTab({ project }: ProjectQueriesTabProps) {
   const [queries, setQueries] = useState<RaisedQuery[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
@@ -81,7 +81,7 @@ export default function ArchiveQueriesTab({ project }: ArchiveQueriesTabProps) {
   const fetchQueries = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await getProjectQueries(project._id, filters);
+      const response = await getProjectQueries(project._id as string, filters);
 
       setQueries(response.data.queries);
       setStatistics(response.data.statistics);
@@ -215,7 +215,6 @@ export default function ArchiveQueriesTab({ project }: ArchiveQueriesTabProps) {
         </div>
       </div>
 
-      {/* Query Statistics Overview */}
       {/* Query Statistics Overview */}
       {statistics && (
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
@@ -533,23 +532,26 @@ export default function ArchiveQueriesTab({ project }: ArchiveQueriesTabProps) {
               <h4 className="text-xl font-semibold text-gray-900 mb-3">
                 No Queries Found
               </h4>
-              <p className="text-gray-600 max-w-md mx-auto">
+              <p className="text-gray-600 max-w-md mx-auto mb-4">
                 {Object.values(filters).some(
                   (v) => v !== undefined && v !== 1 && v !== 10
                 )
                   ? "No queries match your current filters. Try adjusting the filters above to see more results."
                   : "No queries have been raised for this project yet. When queries are created, they will appear here."}
               </p>
-              {Object.values(filters).some(
-                (v) => v !== undefined && v !== 1 && v !== 10
-              ) && (
-                <Button
-                  onClick={clearFilters}
-                  className="mt-4 bg-teal-600 hover:bg-teal-700 text-white"
-                >
-                  Clear All Filters
-                </Button>
-              )}
+              <div className="flex gap-3 justify-center">
+                {Object.values(filters).some(
+                  (v) => v !== undefined && v !== 1 && v !== 10
+                ) && (
+                  <Button
+                    onClick={clearFilters}
+                    variant="outline"
+                    className="border-gray-300 hover:bg-teal-50 hover:border-teal-500 hover:text-teal-700"
+                  >
+                    Clear All Filters
+                  </Button>
+                )}
+              </div>
             </CardContent>
           </Card>
         ) : (
@@ -779,8 +781,8 @@ export default function ArchiveQueriesTab({ project }: ArchiveQueriesTabProps) {
                             ? `${getDaysDifference(
                                 query.expectedResolutionDate
                               )} days until due`
-                            : `${getDaysDifference(
-                                query.expectedResolutionDate
+                            : `${Math.abs(
+                                getDaysDifference(query.expectedResolutionDate)
                               )} days overdue`}
                         </div>
                       </div>

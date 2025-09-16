@@ -29,8 +29,12 @@ export function RoleActionSelector({
       {user.role === "MD" && (
         <HigherAuthorityActions project={project} role={user.role} />
       )}
-      {user.role === "VIEWER" && <ViewerActions />}
-      {user.role === "ADMIN" && <ViewerActions />}
+      {user.role === "VIEWER" && (
+        <ViewerActions project={project} role={user.role} />
+      )}
+      {user.role === "ADMIN" && (
+        <ViewerActions project={project} role={user.role} />
+      )}
     </div>
   );
 }
