@@ -30,6 +30,11 @@ export interface NavigationItem {
 type DashboardLayoutProps = {
   children: React.ReactNode;
   user: User;
+  // title: string;
+  // subtitle?: string;
+  // showRefresh?: boolean;
+  // showExport?: boolean;
+  // onExport?: () => void;
 };
 
 // Function to get navigation items based on user role
@@ -65,142 +70,22 @@ const getNavigationItems = (role: string) => {
 
   switch (role) {
     case "JE":
-      return [
-        ...commonItems,
-        // {
-        //   id: "users",
-        //   label: "Users",
-        //   href: `/dashboard/admin/users`,
-        //   icon: Users,
-        // },
-        // {
-        //   id: "create-project",
-        //   label: "Create Project",
-        //   href: `/dashboard/je/projects/create`,
-        //   icon: Building,
-        // },
-        // {
-        //   id: "my-tasks",
-        //   label: "My Tasks",
-        //   href: `/dashboard/je/tasks`,
-        //   icon: CheckSquare,
-        // },
-      ];
+      return [...commonItems];
 
     case "AEE":
-      return [
-        ...commonItems,
-        // {
-        //   id: "review-queue",
-        //   label: "Review Queue",
-        //   href: `/dashboard/aee/projects`,
-        //   icon: FolderOpen,
-        // },
-        // {
-        //   id: "team-management",
-        //   label: "Team Management",
-        //   href: `/dashboard/aee/team`,
-        //   icon: Users,
-        // },
-        // {
-        //   id: "reports",
-        //   label: "Reports",
-        //   href: `/dashboard/aee/reports`,
-        //   icon: FileText,
-        // },
-      ];
+      return [...commonItems];
 
     case "CE":
-      return [
-        ...commonItems,
-        // {
-        //   id: "approval-queue",
-        //   label: "Approval Queue",
-        //   href: `/dashboard/ce/projects`,
-        //   icon: FolderOpen,
-        // },
-        // {
-        //   id: "budget-review",
-        //   label: "Budget Review",
-        //   href: `/dashboard/ce/budget`,
-        //   icon: BarChart3,
-        // },
-        // {
-        //   id: "reports",
-        //   label: "Reports",
-        //   href: `/dashboard/ce/reports`,
-        //   icon: FileText,
-        // },
-      ];
+      return [...commonItems];
 
     case "MD":
-      return [
-        ...commonItems,
-        // {
-        //   id: "sanction-queue",
-        //   label: "Sanction Queue",
-        //   href: `/dashboard/md/projects`,
-        //   icon: FolderOpen,
-        // },
-        // {
-        //   id: "executive-reports",
-        //   label: "Executive Reports",
-        //   href: `/dashboard/md/reports`,
-        //   icon: FileText,
-        // },
-        // {
-        //   id: "policy-management",
-        //   label: "Policy Management",
-        //   href: `/dashboard/md/policy`,
-        //   icon: Settings,
-        // },
-      ];
+      return [...commonItems];
 
     case "EXECUTOR":
-      return [
-        ...commonItems,
-        // {
-        //   id: "implementation",
-        //   label: "Implementation",
-        //   href: `/dashboard/executor/projects`,
-        //   icon: FolderOpen,
-        // },
-        // {
-        //   id: "progress-tracking",
-        //   label: "Progress Tracking",
-        //   href: `/dashboard/executor/progress`,
-        //   icon: BarChart3,
-        // },
-        // {
-        //   id: "team-&-resources",
-        //   label: "Team & Resources",
-        //   href: `/dashboard/executor/team`,
-        //   icon: Users,
-        // },
-      ];
+      return [...commonItems];
 
     case "VIEWER":
-      return [
-        ...commonItems,
-        // {
-        //   id: "all-projects",
-        //   label: "All Projects",
-        //   href: `/dashboard/viewer/projects`,
-        //   icon: Eye,
-        // },
-        // {
-        //   id: "public-reports",
-        //   label: "Public Reports",
-        //   href: `/dashboard/viewer/reports`,
-        //   icon: FileText,
-        // },
-        // {
-        //   id: "district-view",
-        //   label: "District View",
-        //   href: `/dashboard/viewer/district`,
-        //   icon: BarChart3,
-        // },
-      ];
+      return [...commonItems];
 
     case "ADMIN":
       return [
@@ -286,8 +171,6 @@ export default function DashboardLayout({
             isCollapsed={sidebarCollapsed}
           />
 
-          {/* Breadcrumbs */}
-
           {/* Main Content - Scrollable */}
           <main className="flex-1 overflow-hidden">
             <div className="h-full overflow-y-auto">
@@ -299,11 +182,6 @@ export default function DashboardLayout({
           </main>
         </div>
       </SidebarProvider>
-
-      {/* Footer - Fixed at bottom with higher z-index to appear over sidebar */}
-      {/* <div className="fixed bottom-0 left-0 right-0 z-50">
-        <Footer />
-      </div> */}
     </div>
   );
 }
