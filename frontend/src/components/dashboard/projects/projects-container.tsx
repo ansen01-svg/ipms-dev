@@ -159,7 +159,7 @@ export function ProjectsContainer() {
           {user?.role === "JE" && (
             <Button
               onClick={handleNewProject}
-              className="bg-teal-600 hover:bg-teal-700 text-white w-full sm:w-auto"
+              className="bg-gradient-to-r from-teal-500 to-teal-600 text-white shadow-sm hover:from-teal-700 hover:to-teal-800 w-full sm:w-auto"
             >
               <Plus className="w-4 h-4 mr-2" />
               New Project

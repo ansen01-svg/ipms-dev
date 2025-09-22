@@ -3,7 +3,7 @@ import { useDistrictAnalytics } from "@/hooks/useDashboardData";
 import { AlertTriangle, Filter, MapPin } from "lucide-react";
 import React, { useMemo, useState } from "react";
 
-interface DistrictAnalyticsAreaChartProps {
+interface DistrictAnalyticsBarChartProps {
   filters?: {
     status?: string;
     fund?: string;
@@ -26,14 +26,15 @@ interface District {
   avgFinancialProgress: number;
 }
 
-const DistrictAnalyticsAreaChart: React.FC<
-  DistrictAnalyticsAreaChartProps
+const DistrictAnalyticsBarChart: React.FC<
+  DistrictAnalyticsBarChartProps
 > = () => {
   const { data, isLoading, error } = useDistrictAnalytics();
-  const [hoveredPoint, setHoveredPoint] = useState<{
+  const [hoveredBar, setHoveredBar] = useState<{
     districtName: string;
     completedProjects: number;
     ongoingProjects: number;
+    totalProjects: number;
     x: number;
     y: number;
   } | null>(null);
@@ -150,91 +151,68 @@ const DistrictAnalyticsAreaChart: React.FC<
     );
   }
 
-  // Chart configuration
-  const chartWidth = 800;
-  const chartHeight = 340; // Increased height
-  const padding = { top: 40, right: 40, bottom: 100, left: 80 }; // More bottom padding for slanted text
+  // Chart configuration with responsive sizing
+  const baseChartWidth = 800;
+  const minBarWidth = 40;
+  const maxBarWidth = 60;
+  const chartHeight = 400;
+  const padding = { top: 40, right: 40, bottom: 120, left: 80 };
+
+  // Calculate optimal bar width and chart width
+  const districtCount = sortedDistricts.length;
+  const optimalBarWidth = Math.min(
+    maxBarWidth,
+    Math.max(minBarWidth, (baseChartWidth / districtCount) * 0.6)
+  );
+  const barSpacing = optimalBarWidth * 0.3;
+  const totalBarsWidth =
+    districtCount * optimalBarWidth + (districtCount - 1) * barSpacing;
+  const chartWidth = Math.max(
+    baseChartWidth,
+    totalBarsWidth + padding.left + padding.right
+  );
+
   const chartAreaWidth = chartWidth - padding.left - padding.right;
   const chartAreaHeight = chartHeight - padding.top - padding.bottom;
 
-  const maxCompletedProjects = Math.max(
-    ...sortedDistricts.map((d) => d.completedProjects),
+  // Calculate maximum total projects for Y-axis scaling
+  const maxTotalProjects = Math.max(
+    ...sortedDistricts.map((d) => d.completedProjects + d.ongoingProjects),
     10
   );
-  const yAxisMax = Math.ceil(maxCompletedProjects * 1.1); // Add 10% padding
-
-  // Generate wavy smooth path with enhanced curves
-  const generateWavyPath = (districts: District[]) => {
-    if (districts.length === 0) return "";
-
-    const points = districts.map((district, index) => {
-      const x =
-        padding.left + (index / (districts.length - 1)) * chartAreaWidth;
-      const y =
-        padding.top +
-        chartAreaHeight -
-        (district.completedProjects / yAxisMax) * chartAreaHeight;
-      return { x, y, district };
-    });
-
-    if (points.length < 2) return `M ${points[0]?.x || 0} ${points[0]?.y || 0}`;
-
-    // Create very smooth wavy curves using cubic Bezier curves
-    let path = `M ${points[0].x} ${points[0].y}`;
-
-    for (let i = 1; i < points.length; i++) {
-      const currentPoint = points[i];
-      const previousPoint = points[i - 1];
-
-      // Calculate control points for smooth wavy curves
-      const cp1x = previousPoint.x + (currentPoint.x - previousPoint.x) * 0.5;
-      const cp1y = previousPoint.y;
-
-      const cp2x = currentPoint.x - (currentPoint.x - previousPoint.x) * 0.5;
-      const cp2y = currentPoint.y;
-
-      // Add some wave distortion for more organic feel
-      const waveOffset = Math.sin(i * 0.8) * 5;
-
-      path += ` C ${cp1x} ${cp1y + waveOffset} ${cp2x} ${cp2y - waveOffset} ${
-        currentPoint.x
-      } ${currentPoint.y}`;
-    }
-
-    return path;
-  };
-
-  // Generate area path (same as line but closed to bottom)
-  const generateWavyAreaPath = (districts: District[]) => {
-    const linePath = generateWavyPath(districts);
-    if (!linePath || districts.length === 0) return "";
-
-    const lastPointX = padding.left + chartAreaWidth;
-    const bottomY = padding.top + chartAreaHeight;
-    const firstPointX = padding.left;
-
-    return `${linePath} L ${lastPointX} ${bottomY} L ${firstPointX} ${bottomY} Z`;
-  };
-
-  const areaPath = generateWavyAreaPath(sortedDistricts);
-  const linePath = generateWavyPath(sortedDistricts);
-
-  // Generate interactive points
-  const interactivePoints = sortedDistricts.map((district, index) => {
-    const x =
-      padding.left + (index / (sortedDistricts.length - 1)) * chartAreaWidth;
-    const y =
-      padding.top +
-      chartAreaHeight -
-      (district.completedProjects / yAxisMax) * chartAreaHeight;
-    return { x, y, district };
-  });
+  const yAxisMax = Math.ceil(maxTotalProjects * 1.1); // Add 10% padding
 
   // Y-axis label formatting
   const formatYAxisLabel = (value: number) => {
     if (value >= 1000) return `${Math.round(value / 1000)}k`;
     return value.toString();
   };
+
+  // Generate bar data with positions
+  const barData = sortedDistricts.map((district, index) => {
+    const totalProjects = district.completedProjects + district.ongoingProjects;
+    const barX = padding.left + index * (optimalBarWidth + barSpacing);
+
+    // Calculate heights based on values
+    const completedHeight =
+      (district.completedProjects / yAxisMax) * chartAreaHeight;
+    const ongoingHeight =
+      (district.ongoingProjects / yAxisMax) * chartAreaHeight;
+
+    // Positions for stacked bars
+    const completedY = padding.top + chartAreaHeight - completedHeight;
+    const ongoingY = completedY - ongoingHeight;
+
+    return {
+      district,
+      totalProjects,
+      barX,
+      completedHeight,
+      ongoingHeight,
+      completedY,
+      ongoingY,
+    };
+  });
 
   return (
     <Card className="lg:col-span-6 border-0 shadow-sm rounded-xl">
@@ -249,32 +227,41 @@ const DistrictAnalyticsAreaChart: React.FC<
       </CardHeader>
 
       <CardContent className="px-6 py-4">
-        <div className="relative">
+        <div className="relative overflow-x-auto">
           <svg
             width="100%"
             height={chartHeight}
             viewBox={`0 0 ${chartWidth} ${chartHeight}`}
             className="overflow-visible"
+            style={{ minWidth: chartWidth }}
           >
-            {/* Define gradient matching the screenshot */}
+            {/* Define gradients for the bars - CHANGE BAR COLORS HERE */}
             <defs>
               <linearGradient
-                id="wavyAreaGradient"
+                id="completedGradient"
                 x1="0%"
                 y1="0%"
                 x2="0%"
                 y2="100%"
               >
-                <stop offset="0%" stopColor="#7dd3fc" stopOpacity="0.9" />
-                <stop offset="30%" stopColor="#67e8f9" stopOpacity="0.7" />
-                <stop offset="60%" stopColor="#5eead4" stopOpacity="0.6" />
-                <stop offset="100%" stopColor="#6ee7b7" stopOpacity="0.4" />
+                <stop offset="0%" stopColor="#14b8a6" stopOpacity="0.9" />
+                <stop offset="100%" stopColor="#0f766e" stopOpacity="0.8" />
               </linearGradient>
-              <filter id="wavyDropShadow">
+              <linearGradient
+                id="ongoingGradient"
+                x1="0%"
+                y1="0%"
+                x2="0%"
+                y2="100%"
+              >
+                <stop offset="0%" stopColor="#5eead4" stopOpacity="0.9" />
+                <stop offset="100%" stopColor="#2dd4bf" stopOpacity="0.8" />
+              </linearGradient>
+              <filter id="barDropShadow">
                 <feDropShadow
                   dx="0"
-                  dy="1"
-                  stdDeviation="2"
+                  dy="2"
+                  stdDeviation="3"
                   floodOpacity="0.15"
                 />
               </filter>
@@ -290,10 +277,10 @@ const DistrictAnalyticsAreaChart: React.FC<
                 padding.top + chartAreaHeight / 2
               })`}
             >
-              Completed Projects
+              Total Projects
             </text>
 
-            {/* Y-axis grid lines and labels */}
+            {/* Y-axis grid lines and labels - MORE SUBTLE DOTTED LINES */}
             {[0, 0.2, 0.4, 0.6, 0.8, 1].map((ratio) => {
               const value = Math.round(ratio * yAxisMax);
               const y = padding.top + chartAreaHeight - ratio * chartAreaHeight;
@@ -304,8 +291,10 @@ const DistrictAnalyticsAreaChart: React.FC<
                     y1={y}
                     x2={padding.left + chartAreaWidth}
                     y2={y}
-                    stroke="#f1f5f9"
-                    strokeWidth={0.5}
+                    stroke="#e2e8f0"
+                    strokeWidth={0.8}
+                    strokeDasharray="3,3"
+                    opacity={0.6}
                   />
                   <text
                     x={padding.left - 15}
@@ -320,104 +309,167 @@ const DistrictAnalyticsAreaChart: React.FC<
             })}
 
             {/* X-axis labels */}
-            {sortedDistricts.map((district, index) => {
-              const x =
-                padding.left +
-                (index / (sortedDistricts.length - 1)) * chartAreaWidth;
+            {barData.map((bar) => {
+              const labelX = bar.barX + optimalBarWidth / 2;
 
               return (
                 <text
-                  key={district.districtName}
-                  x={x}
+                  key={bar.district.districtName}
+                  x={labelX}
                   y={chartHeight - 25}
                   textAnchor="start"
-                  className="fill-gray-500 text-base"
-                  transform={`rotate(-45, ${x}, ${chartHeight - 25})`}
+                  className="fill-gray-500 text-sm"
+                  transform={`rotate(-45, ${labelX}, ${chartHeight - 25})`}
                 >
-                  {district.districtName}
+                  {bar.district.districtName}
                 </text>
               );
             })}
 
-            {/* Wavy area fill */}
-            <path
-              d={areaPath}
-              fill="url(#wavyAreaGradient)"
-              filter="url(#wavyDropShadow)"
-            />
+            {/* Stacked bars with rounded top corners only */}
+            {barData.map((bar) => {
+              // Create path for rounded top corners only
+              const borderRadius = 6;
+              const topBarPath = `
+                M ${bar.barX} ${bar.ongoingY + borderRadius}
+                Q ${bar.barX} ${bar.ongoingY} ${bar.barX + borderRadius} ${
+                bar.ongoingY
+              }
+                L ${bar.barX + optimalBarWidth - borderRadius} ${bar.ongoingY}
+                Q ${bar.barX + optimalBarWidth} ${bar.ongoingY} ${
+                bar.barX + optimalBarWidth
+              } ${bar.ongoingY + borderRadius}
+                L ${bar.barX + optimalBarWidth} ${
+                bar.ongoingY + bar.ongoingHeight
+              }
+                L ${bar.barX} ${bar.ongoingY + bar.ongoingHeight}
+                Z
+              `;
 
-            {/* Main wavy line */}
-            <path
-              d={linePath}
-              stroke="#0891b2"
-              strokeWidth={2}
-              fill="none"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
+              return (
+                <g key={bar.district.districtName}>
+                  {/* Completed projects bar (bottom) - square corners */}
+                  <rect
+                    x={bar.barX}
+                    y={bar.completedY}
+                    width={optimalBarWidth}
+                    height={bar.completedHeight}
+                    fill="url(#completedGradient)"
+                    filter="url(#barDropShadow)"
+                    className="cursor-pointer hover:opacity-80 transition-opacity"
+                    onMouseEnter={() => {
+                      setHoveredBar({
+                        districtName: bar.district.districtName,
+                        completedProjects: bar.district.completedProjects,
+                        ongoingProjects: bar.district.ongoingProjects,
+                        totalProjects: bar.totalProjects,
+                        x: bar.barX + optimalBarWidth / 2,
+                        y: bar.ongoingY,
+                      });
+                    }}
+                    onMouseLeave={() => setHoveredBar(null)}
+                  />
 
-            {/* Interactive points */}
-            {interactivePoints.map((point) => (
-              <circle
-                key={point.district.districtName}
-                cx={point.x}
-                cy={point.y}
-                r={4}
-                fill="#0891b2"
-                stroke="white"
-                strokeWidth={2}
-                className="cursor-pointer hover:r-6 transition-all"
-                onMouseEnter={() =>
-                  setHoveredPoint({
-                    districtName: point.district.districtName,
-                    completedProjects: point.district.completedProjects,
-                    ongoingProjects: point.district.ongoingProjects,
-                    x: point.x,
-                    y: point.y,
-                  })
-                }
-                onMouseLeave={() => setHoveredPoint(null)}
-              />
-            ))}
+                  {/* Ongoing projects bar (top) - rounded top corners only */}
+                  <path
+                    d={topBarPath}
+                    fill="url(#ongoingGradient)"
+                    filter="url(#barDropShadow)"
+                    className="cursor-pointer hover:opacity-80 transition-opacity"
+                    onMouseEnter={() => {
+                      setHoveredBar({
+                        districtName: bar.district.districtName,
+                        completedProjects: bar.district.completedProjects,
+                        ongoingProjects: bar.district.ongoingProjects,
+                        totalProjects: bar.totalProjects,
+                        x: bar.barX + optimalBarWidth / 2,
+                        y: bar.ongoingY,
+                      });
+                    }}
+                    onMouseLeave={() => setHoveredBar(null)}
+                  />
+                </g>
+              );
+            })}
 
-            {/* Hover tooltip with black rounded background like screenshot */}
-            {hoveredPoint && (
+            {/* Hover tooltip */}
+            {hoveredBar && (
               <g>
                 <rect
-                  x={hoveredPoint.x - 75}
-                  y={hoveredPoint.y - 60}
-                  width={150}
-                  height={50}
+                  x={hoveredBar.x - 85}
+                  y={hoveredBar.y - 80}
+                  width={170}
+                  height={70}
                   fill="rgba(0, 0, 0, 0.85)"
                   rx={6}
                 />
                 <text
-                  x={hoveredPoint.x}
-                  y={hoveredPoint.y - 45}
+                  x={hoveredBar.x}
+                  y={hoveredBar.y - 60}
                   textAnchor="middle"
                   className="fill-white text-sm font-semibold"
                 >
-                  Ongoing Projects - {hoveredPoint.ongoingProjects}
+                  {hoveredBar.districtName}
                 </text>
                 <text
-                  x={hoveredPoint.x}
-                  y={hoveredPoint.y - 30}
+                  x={hoveredBar.x}
+                  y={hoveredBar.y - 45}
                   textAnchor="middle"
-                  className="fill-white text-sm"
+                  className="fill-white text-xs"
                 >
-                  {hoveredPoint.districtName}
+                  Total: {hoveredBar.totalProjects} projects
+                </text>
+                <text
+                  x={hoveredBar.x}
+                  y={hoveredBar.y - 30}
+                  textAnchor="middle"
+                  className="fill-teal-300 text-xs"
+                >
+                  Completed: {hoveredBar.completedProjects}
+                </text>
+                <text
+                  x={hoveredBar.x}
+                  y={hoveredBar.y - 15}
+                  textAnchor="middle"
+                  className="fill-teal-200 text-xs"
+                >
+                  Ongoing: {hoveredBar.ongoingProjects}
                 </text>
                 {/* Tooltip pointer */}
                 <polygon
-                  points={`${hoveredPoint.x},${hoveredPoint.y - 25} ${
-                    hoveredPoint.x - 4
-                  },${hoveredPoint.y - 15} ${hoveredPoint.x + 4},${
-                    hoveredPoint.y - 15
-                  }`}
+                  points={`${hoveredBar.x},${hoveredBar.y - 10} ${
+                    hoveredBar.x - 6
+                  },${hoveredBar.y} ${hoveredBar.x + 6},${hoveredBar.y}`}
                   fill="rgba(0, 0, 0, 0.85)"
                 />
               </g>
             )}
+
+            {/* Legend */}
+            <g transform={`translate(${chartWidth - 200}, ${padding.top})`}>
+              <rect
+                x={0}
+                y={0}
+                width={12}
+                height={12}
+                fill="url(#completedGradient)"
+                rx={2}
+              />
+              <text x={18} y={9} className="fill-gray-600 text-xs">
+                Completed Projects
+              </text>
+              <rect
+                x={0}
+                y={20}
+                width={12}
+                height={12}
+                fill="url(#ongoingGradient)"
+                rx={2}
+              />
+              <text x={18} y={29} className="fill-gray-600 text-xs">
+                Ongoing Projects
+              </text>
+            </g>
 
             {/* Top right update timestamp */}
             <text
@@ -432,48 +484,6 @@ const DistrictAnalyticsAreaChart: React.FC<
                 day: "2-digit",
               })}
             </text>
-
-            {/* Peak indicators similar to screenshot */}
-            {(() => {
-              const peaks = interactivePoints
-                .map((point, index) => ({ ...point, index }))
-                .filter((point, index, arr) => {
-                  const prev = arr[index - 1];
-                  const next = arr[index + 1];
-                  return (
-                    (!prev ||
-                      point.district.completedProjects >
-                        prev.district.completedProjects) &&
-                    (!next ||
-                      point.district.completedProjects >
-                        next.district.completedProjects) &&
-                    point.district.completedProjects >
-                      maxCompletedProjects * 0.7
-                  );
-                })
-                .slice(0, 2); // Show top 2 peaks
-
-              return peaks.map((peak, i) => (
-                <g key={i}>
-                  <circle
-                    cx={peak.x}
-                    cy={peak.y}
-                    r={6}
-                    fill={i === 0 ? "#059669" : "#0891b2"}
-                    stroke="white"
-                    strokeWidth={2}
-                  />
-                  <text
-                    x={peak.x}
-                    y={peak.y - 12}
-                    textAnchor="middle"
-                    className="fill-gray-700 text-xs font-semibold"
-                  >
-                    {i === 0 ? "MAX" : "HIGH"}
-                  </text>
-                </g>
-              ));
-            })()}
           </svg>
         </div>
       </CardContent>
@@ -481,4 +491,4 @@ const DistrictAnalyticsAreaChart: React.FC<
   );
 };
 
-export default DistrictAnalyticsAreaChart;
+export default DistrictAnalyticsBarChart;

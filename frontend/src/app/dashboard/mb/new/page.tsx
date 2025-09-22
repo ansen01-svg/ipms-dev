@@ -4,12 +4,26 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { useAuth } from "@/contexts/auth-context";
 import { getAuthToken } from "@/lib/rbac-config/auth-local";
-import { Calculator, File, Plus, Save, Trash2, Upload, X } from "lucide-react";
+import {
+  fetchUnifiedProjectDetails,
+  UnifiedProjectDetails,
+} from "@/utils/combined-projects/fetch-project-details";
+import {
+  Calculator,
+  Calendar,
+  File,
+  IndianRupee,
+  MapPin,
+  Plus,
+  Save,
+  Trash2,
+  Upload,
+  User,
+  X,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 interface Measurement {
@@ -29,11 +43,6 @@ interface WorkItem {
   measurements: Measurement[];
   totalQuantity: number;
   uploadedFile: File | null;
-}
-
-interface MBFormData {
-  projectId: string;
-  description: string;
   remarks: string;
 }
 
@@ -42,22 +51,19 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_PROD_API_URL;
 
 const CreateMBPage = () => {
   const router = useRouter();
-  const { user } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isFetchingProject, setIsFetchingProject] = useState(false);
+  const [projectDetails, setProjectDetails] =
+    useState<UnifiedProjectDetails | null>(null);
 
   // Form data for the main MB
-  const [mbFormData, setMBFormData] = useState<MBFormData>({
-    projectId: "",
-    description: "",
-    remarks: "",
-  });
+  const [projectId, setProjectId] = useState("");
 
-  // Work items for measurement calculations (display only)
+  // Work items for measurement calculations - each will become a separate MB
   const [workItems, setWorkItems] = useState<WorkItem[]>([
     {
       id: 1,
-      description:
-        "Earth work in excavation by mechanical means (Hydraulic excavator) / manual means in foundation trenches",
+      description: "",
       unit: "Cum",
       measurements: [
         {
@@ -72,12 +78,41 @@ const CreateMBPage = () => {
       ],
       totalQuantity: 32,
       uploadedFile: null,
+      remarks: "",
     },
   ]);
 
-  // Main file upload for the MB
-  const [mainFile, setMainFile] = useState<File | null>(null);
-  const [mainFileError, setMainFileError] = useState<string>("");
+  // Fetch project details when projectId changes
+  useEffect(() => {
+    const fetchProjectDetails = async () => {
+      if (!projectId.trim() || projectId.length < 3) {
+        setProjectDetails(null);
+        return;
+      }
+
+      setIsFetchingProject(true);
+      try {
+        const details = await fetchUnifiedProjectDetails(projectId.trim());
+        if (details) {
+          setProjectDetails(details);
+        } else {
+          setProjectDetails(null);
+          toast.error(
+            `Project with ID '${projectId}' not found in either Project or ArchiveProject collections`
+          );
+        }
+      } catch (error) {
+        console.error("Error fetching project details:", error);
+        setProjectDetails(null);
+        toast.error("Error fetching project details");
+      } finally {
+        setIsFetchingProject(false);
+      }
+    };
+
+    const debounceTimer = setTimeout(fetchProjectDetails, 500);
+    return () => clearTimeout(debounceTimer);
+  }, [projectId]);
 
   const addMeasurement = (itemIndex: number) => {
     const newMeasurement: Measurement = {
@@ -143,6 +178,7 @@ const CreateMBPage = () => {
       measurements: [],
       totalQuantity: 0,
       uploadedFile: null,
+      remarks: "",
     };
     setWorkItems([...workItems, newItem]);
   };
@@ -151,30 +187,9 @@ const CreateMBPage = () => {
     if (workItems.length > 1) {
       const updatedItems = workItems.filter((_, index) => index !== itemIndex);
       setWorkItems(updatedItems);
+    } else {
+      toast.error("At least one measurement book is required");
     }
-  };
-
-  const handleMainFileSelect = (file: File) => {
-    // Validate file type
-    const allowedTypes = [
-      "application/pdf",
-      "image/jpeg",
-      "image/jpg",
-      "image/png",
-    ];
-    if (!allowedTypes.includes(file.type)) {
-      setMainFileError("Please select a PDF, JPG, JPEG, or PNG file");
-      return;
-    }
-
-    // Validate file size (50MB max)
-    if (file.size > 50 * 1024 * 1024) {
-      setMainFileError("File size must be less than 50MB");
-      return;
-    }
-
-    setMainFile(file);
-    setMainFileError("");
   };
 
   const handleWorkItemFileSelect = (itemIndex: number, file: File) => {
@@ -184,15 +199,16 @@ const CreateMBPage = () => {
       "image/jpeg",
       "image/jpg",
       "image/png",
+      "image/webp",
     ];
     if (!allowedTypes.includes(file.type)) {
-      toast.error("Please select a PDF, JPG, JPEG, or PNG file");
+      toast.error("Please select a PDF, JPG, JPEG, PNG, or WebP file");
       return;
     }
 
-    // Validate file size (50MB max)
-    if (file.size > 50 * 1024 * 1024) {
-      toast.error("File size must be less than 50MB");
+    // Validate file size (10MB max for MB files)
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("File size must be less than 10MB");
       return;
     }
 
@@ -207,30 +223,51 @@ const CreateMBPage = () => {
     setWorkItems(updatedItems);
   };
 
+  const updateWorkItemField = (
+    itemIndex: number,
+    field: keyof WorkItem,
+    value: string
+  ) => {
+    const updatedItems = [...workItems];
+    updatedItems[itemIndex][field] = value as never;
+    setWorkItems(updatedItems);
+  };
+
   const validateForm = (): boolean => {
-    if (!mbFormData.projectId.trim()) {
+    if (!projectId.trim()) {
       toast.error("Project ID is required");
       return false;
     }
 
-    if (mbFormData.projectId.length !== 24) {
-      toast.error("Project ID must be 24 characters long");
+    if (!projectDetails) {
+      toast.error(
+        "Please enter a valid Project ID and wait for project details to load"
+      );
       return false;
     }
 
-    if (!mbFormData.description.trim()) {
-      toast.error("Description is required");
-      return false;
-    }
+    // Validate each work item
+    for (let i = 0; i < workItems.length; i++) {
+      const item = workItems[i];
 
-    if (mbFormData.description.length < 10) {
-      toast.error("Description must be at least 10 characters long");
-      return false;
-    }
+      if (!item.description.trim()) {
+        toast.error(`Measurement Book ${i + 1}: Description is required`);
+        return false;
+      }
 
-    if (!mainFile) {
-      toast.error("Main measurement book file is required");
-      return false;
+      if (item.description.trim().length < 10) {
+        toast.error(
+          `Measurement Book ${
+            i + 1
+          }: Description must be at least 10 characters`
+        );
+        return false;
+      }
+
+      if (!item.uploadedFile) {
+        toast.error(`Measurement Book ${i + 1}: File upload is required`);
+        return false;
+      }
     }
 
     return true;
@@ -243,25 +280,26 @@ const CreateMBPage = () => {
     const token = getAuthToken();
 
     try {
-      // Create FormData for file upload
+      // Create FormData for batch file upload
       const formData = new FormData();
-      formData.append("project", mbFormData.projectId);
-      formData.append("description", mbFormData.description);
-      if (mbFormData.remarks.trim()) {
-        formData.append("remarks", mbFormData.remarks);
-      }
-      formData.append("mbFile", mainFile as File);
 
-      // Add work items data (for reference, not used by backend)
-      const workItemsData = workItems.map((item) => ({
-        description: item.description,
-        unit: item.unit,
-        measurements: item.measurements,
-        totalQuantity: item.totalQuantity,
+      // Add all files
+      workItems.forEach((item) => {
+        if (item.uploadedFile) {
+          formData.append("mbFiles", item.uploadedFile);
+        }
+      });
+
+      // Create measurement books data array
+      const measurementBooksData = workItems.map((item) => ({
+        project: projectId.trim(),
+        description: item.description.trim(),
+        remarks: item.remarks?.trim() || undefined,
       }));
-      formData.append("workItemsReference", JSON.stringify(workItemsData));
 
-      const response = await fetch(`${API_BASE_URL}/mb`, {
+      formData.append("measurementBooks", JSON.stringify(measurementBooksData));
+
+      const response = await fetch(`${API_BASE_URL}/mb/batch`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -272,22 +310,46 @@ const CreateMBPage = () => {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || "Failed to create measurement book");
+        throw new Error(data.message || "Failed to create measurement books");
       }
 
       if (!data.success) {
-        throw new Error(data.message || "Failed to create measurement book");
+        throw new Error(data.message || "Failed to create measurement books");
       }
 
-      toast.success("Measurement book created successfully");
+      toast.success(
+        `${data.data.summary.totalCreated} Measurement Books created successfully`
+      );
+
+      // Show additional success details
+      if (data.data.summary.projectTypes) {
+        const { regular, archive } = data.data.summary.projectTypes;
+        if (regular > 0 && archive > 0) {
+          toast.info(
+            `Created for ${regular} regular project(s) and ${archive} archive project(s)`
+          );
+        }
+      }
+
       router.push("/dashboard/mb");
     } catch (error) {
-      console.error("Error creating measurement book:", error);
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : "Failed to create measurement book"
-      );
+      console.error("Error creating measurement books:", error);
+
+      // Show specific error messages if available
+      if (error instanceof Error && error.message.includes("validation")) {
+        toast.error(`Validation Error: ${error.message}`);
+      } else if (
+        error instanceof Error &&
+        error.message.includes("not found")
+      ) {
+        toast.error(`Project Error: ${error.message}`);
+      } else {
+        toast.error(
+          error instanceof Error
+            ? error.message
+            : "Failed to create measurement books"
+        );
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -307,7 +369,6 @@ const CreateMBPage = () => {
     label?: string;
   }) => {
     const [isDragOver, setIsDragOver] = useState(false);
-    // let fileInputRef = useState<HTMLInputElement | null>(null)[0];
     const fileInputId = useState(
       `file-upload-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
     )[0];
@@ -317,7 +378,6 @@ const CreateMBPage = () => {
       if (selectedFile) {
         onFileSelect(selectedFile);
       }
-      // Reset the input value to allow selecting the same file again
       event.target.value = "";
     };
 
@@ -382,19 +442,16 @@ const CreateMBPage = () => {
                 {isDragOver ? "Drop file here" : label}
               </span>
               <input
-                // ref={(el) => {
-                //   if (el) fileInputRef = el;
-                // }}
                 id={fileInputId}
                 type="file"
                 className="sr-only"
-                accept=".pdf,.jpg,.jpeg,.png"
+                accept=".pdf,.jpg,.jpeg,.png,.webp"
                 onChange={handleFileChange}
               />
               <p className="text-xs text-gray-500 mt-1">
                 {isDragOver
                   ? "Release to upload"
-                  : "PDF, JPG, JPEG, PNG up to 50MB or drag and drop"}
+                  : "PDF, JPG, JPEG, PNG, WebP up to 10MB or drag and drop"}
               </p>
             </div>
           </div>
@@ -434,35 +491,9 @@ const CreateMBPage = () => {
             <div className="flex items-center space-x-4">
               <div>
                 <h1 className="text-2xl font-bold text-gray-900">
-                  Create New Measurement Book
+                  Create Measurement Books
                 </h1>
               </div>
-            </div>
-            <div className="flex space-x-2">
-              <Button
-                variant="outline"
-                onClick={() => router.push("/dashboard/mb")}
-                disabled={isSubmitting}
-              >
-                Cancel
-              </Button>
-              <Button
-                onClick={handleSubmit}
-                disabled={isSubmitting}
-                className="bg-teal-600 hover:bg-teal-700"
-              >
-                {isSubmitting ? (
-                  <>
-                    <Calculator className="h-4 w-4 mr-2 animate-spin" />
-                    Creating...
-                  </>
-                ) : (
-                  <>
-                    <Save className="h-4 w-4 mr-2" />
-                    Create MB
-                  </>
-                )}
-              </Button>
             </div>
           </div>
         </div>
@@ -470,123 +501,135 @@ const CreateMBPage = () => {
 
       {/* Content */}
       <div className="py-6 space-y-6">
-        {/* MB Information Card */}
+        {/* Project Information Card */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center">
-              <Calculator className="h-5 w-5 mr-2" />
-              Measurement Book Information
+              Project Information
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
+              <div className="md:col-span-2">
                 <Label htmlFor="projectId" className="text-sm font-medium">
                   Project ID *
                 </Label>
                 <Input
                   id="projectId"
                   type="text"
-                  value={mbFormData.projectId}
-                  onChange={(e) =>
-                    setMBFormData({ ...mbFormData, projectId: e.target.value })
-                  }
-                  placeholder="Enter 24-character Project ID"
-                  maxLength={24}
+                  value={projectId}
+                  onChange={(e) => setProjectId(e.target.value)}
+                  placeholder="Enter Project ID (e.g., PRJ-2024-001 or ARC-2023-042)"
                   className="mt-1"
                 />
                 <p className="text-xs text-gray-500 mt-1">
-                  Enter the exact MongoDB Project ID (24 characters)
+                  E
+                  {`nter the Project ID string. System will automatically detect
+                  if it's a regular project or archive project.`}
                 </p>
-              </div>
-              <div>
-                <Label htmlFor="createdBy" className="text-sm font-medium">
-                  Created By
-                </Label>
-                <Input
-                  id="createdBy"
-                  type="text"
-                  value={user?.name || ""}
-                  disabled
-                  className="mt-1 bg-gray-50"
-                />
+                {isFetchingProject && (
+                  <p className="text-xs text-blue-600 mt-1">
+                    Loading project details...
+                  </p>
+                )}
               </div>
             </div>
 
-            <div>
-              <Label htmlFor="description" className="text-sm font-medium">
-                Description *
-              </Label>
-              <Textarea
-                id="description"
-                value={mbFormData.description}
-                onChange={(e) =>
-                  setMBFormData({ ...mbFormData, description: e.target.value })
-                }
-                placeholder="Enter detailed description of the measurement book (minimum 10 characters)"
-                className="mt-1 min-h-[100px]"
-                maxLength={1000}
-              />
-              <p className="text-xs text-gray-500 mt-1">
-                {mbFormData.description.length}/1000 characters (minimum 10
-                required)
-              </p>
-            </div>
-
-            <div>
-              <Label htmlFor="remarks" className="text-sm font-medium">
-                Remarks
-              </Label>
-              <Textarea
-                id="remarks"
-                value={mbFormData.remarks}
-                onChange={(e) =>
-                  setMBFormData({ ...mbFormData, remarks: e.target.value })
-                }
-                placeholder="Enter any additional remarks (optional)"
-                className="mt-1 min-h-[80px]"
-                maxLength={500}
-              />
-              <p className="text-xs text-gray-500 mt-1">
-                {mbFormData.remarks.length}/500 characters (optional)
-              </p>
-            </div>
-
-            <div>
-              <Label className="text-sm font-medium">
-                Main Measurement Book File *
-              </Label>
-              <div className="mt-2">
-                <FileUpload
-                  file={mainFile}
-                  onFileSelect={handleMainFileSelect}
-                  onFileRemove={() => setMainFile(null)}
-                  error={mainFileError}
-                  label="Upload Main MB File"
-                />
+            {/* Project Details Display */}
+            {projectDetails && (
+              <div className="mt-6 border-t pt-4">
+                <h4 className="text-sm font-medium text-gray-900 mb-3 flex items-center">
+                  <Calculator className="h-4 w-4 mr-2" />
+                  Project Details ({projectDetails.projectType})
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <div className="bg-gray-50 p-3 rounded-lg">
+                    <Label className="text-xs font-medium text-gray-500">
+                      Project Name
+                    </Label>
+                    <p className="text-sm font-medium text-gray-900 mt-1">
+                      {projectDetails.name}
+                    </p>
+                  </div>
+                  <div className="bg-gray-50 p-3 rounded-lg">
+                    <Label className="text-xs font-medium text-gray-500 flex items-center">
+                      <User className="h-3 w-3 mr-1" />
+                      Contractor
+                    </Label>
+                    <p className="text-sm font-medium text-gray-900 mt-1">
+                      {projectDetails.contractorName}
+                      {projectDetails.contractorPhone && (
+                        <span className="text-xs text-gray-600 block">
+                          {projectDetails.contractorPhone}
+                        </span>
+                      )}
+                    </p>
+                  </div>
+                  <div className="bg-gray-50 p-3 rounded-lg">
+                    <Label className="text-xs font-medium text-gray-500 flex items-center">
+                      <MapPin className="h-3 w-3 mr-1" />
+                      Location
+                    </Label>
+                    <p className="text-sm font-medium text-gray-900 mt-1">
+                      {projectDetails.location}
+                    </p>
+                  </div>
+                  <div className="bg-gray-50 p-3 rounded-lg">
+                    <Label className="text-xs font-medium text-gray-500 flex items-center">
+                      <Calendar className="h-3 w-3 mr-1" />
+                      Start Date
+                    </Label>
+                    <p className="text-sm font-medium text-gray-900 mt-1">
+                      {new Date(projectDetails.startDate).toLocaleDateString()}
+                    </p>
+                  </div>
+                  {projectDetails.endDate && (
+                    <div className="bg-gray-50 p-3 rounded-lg">
+                      <Label className="text-xs font-medium text-gray-500 flex items-center">
+                        <Calendar className="h-3 w-3 mr-1" />
+                        End Date
+                      </Label>
+                      <p className="text-sm font-medium text-gray-900 mt-1">
+                        {new Date(projectDetails.endDate).toLocaleDateString()}
+                      </p>
+                    </div>
+                  )}
+                  <div className="bg-gray-50 p-3 rounded-lg">
+                    <Label className="text-xs font-medium text-gray-500 flex items-center">
+                      <IndianRupee className="h-3 w-3 mr-1" />
+                      Work Value
+                    </Label>
+                    <p className="text-sm font-medium text-gray-900 mt-1">
+                      ₹{projectDetails.workValue.toLocaleString()}
+                    </p>
+                  </div>
+                </div>
               </div>
-            </div>
+            )}
           </CardContent>
         </Card>
 
-        {/* Work Items Section */}
+        {/* Measurement Books Section */}
         <Card>
           <CardHeader>
             <div className="flex justify-between items-center">
-              <CardTitle>Work Item Measurements (Reference)</CardTitle>
+              <CardTitle className="flex items-center">
+                Measurement Books ({workItems.length})
+              </CardTitle>
               <Button
                 onClick={addWorkItem}
                 variant="outline"
                 size="sm"
                 className="text-green-600 border-green-600 hover:bg-green-50"
+                disabled={!projectDetails}
               >
                 <Plus className="h-4 w-4 mr-2" />
-                Add Work Item
+                Add Measurement Book
               </Button>
             </div>
             <p className="text-sm text-gray-600">
-              These work items are for reference and calculation purposes. Only
-              the main file above will be used for MB creation.
+              Each measurement book below will be created as a separate MB for
+              the selected project.
             </p>
           </CardHeader>
           <CardContent>
@@ -595,7 +638,7 @@ const CreateMBPage = () => {
                 <div key={item.id} className="border rounded-lg p-4 bg-gray-50">
                   <div className="flex justify-between items-start mb-4">
                     <h4 className="font-medium text-gray-900">
-                      Work Item {itemIndex + 1}
+                      Measurement Book {itemIndex + 1}
                     </h4>
                     {workItems.length > 1 && (
                       <Button
@@ -609,32 +652,38 @@ const CreateMBPage = () => {
                     )}
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                     <div className="md:col-span-2">
                       <Label className="text-sm font-medium">
-                        Item Description
+                        MB Description *
                       </Label>
                       <Input
                         type="text"
                         value={item.description}
-                        onChange={(e) => {
-                          const updated = [...workItems];
-                          updated[itemIndex].description = e.target.value;
-                          setWorkItems(updated);
-                        }}
-                        placeholder="Enter work item description"
+                        onChange={(e) =>
+                          updateWorkItemField(
+                            itemIndex,
+                            "description",
+                            e.target.value
+                          )
+                        }
+                        placeholder="Enter measurement book description (min 10 characters)"
                         className="mt-1"
                       />
+                      <p className="text-xs text-gray-500 mt-1">
+                        This will be the main description for this measurement
+                        book
+                      </p>
                     </div>
                     <div>
-                      <Label className="text-sm font-medium">Unit</Label>
+                      <Label className="text-sm font-medium">
+                        Unit (Reference)
+                      </Label>
                       <select
                         value={item.unit}
-                        onChange={(e) => {
-                          const updated = [...workItems];
-                          updated[itemIndex].unit = e.target.value;
-                          setWorkItems(updated);
-                        }}
+                        onChange={(e) =>
+                          updateWorkItemField(itemIndex, "unit", e.target.value)
+                        }
                         className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-teal-500 focus:border-teal-500"
                       >
                         <option value="Cum">Cum</option>
@@ -645,13 +694,31 @@ const CreateMBPage = () => {
                         <option value="MT">MT</option>
                       </select>
                     </div>
+                    <div>
+                      <Label className="text-sm font-medium">
+                        Remarks (Optional)
+                      </Label>
+                      <Input
+                        type="text"
+                        value={item.remarks}
+                        onChange={(e) =>
+                          updateWorkItemField(
+                            itemIndex,
+                            "remarks",
+                            e.target.value
+                          )
+                        }
+                        placeholder="Additional remarks for this MB"
+                        className="mt-1"
+                      />
+                    </div>
                   </div>
 
-                  {/* Measurements Table */}
-                  <div className="border-t pt-4">
+                  {/* Measurements Table - For Reference/Calculation Only */}
+                  <div className="border-t pt-4 mb-4">
                     <div className="flex justify-between items-center mb-4">
                       <h4 className="font-medium text-gray-900">
-                        Measurements
+                        Measurements (Reference Only)
                       </h4>
                       <Button
                         onClick={() => addMeasurement(itemIndex)}
@@ -812,10 +879,10 @@ const CreateMBPage = () => {
                     </div>
                   </div>
 
-                  {/* File Upload for Work Item */}
-                  <div className="mb-4">
+                  {/* File Upload for Measurement Book */}
+                  <div className="border-t pt-4">
                     <Label className="text-sm font-medium">
-                      Work Item File
+                      Measurement Book File *
                     </Label>
                     <div className="mt-2">
                       <FileUpload
@@ -824,7 +891,7 @@ const CreateMBPage = () => {
                           handleWorkItemFileSelect(itemIndex, file)
                         }
                         onFileRemove={() => removeWorkItemFile(itemIndex)}
-                        label="Upload Work Item File"
+                        label="Upload Measurement Book File"
                       />
                     </div>
                   </div>
@@ -833,6 +900,39 @@ const CreateMBPage = () => {
             </div>
           </CardContent>
         </Card>
+
+        {/* Action Buttons */}
+        <div className="flex justify-end gap-3 pt-6">
+          <Button
+            variant="outline"
+            size="lg" // Add this line
+            onClick={() => router.push("/dashboard/mb")}
+            disabled={isSubmitting}
+          >
+            Cancel
+          </Button>
+
+          <Button
+            onClick={handleSubmit}
+            disabled={isSubmitting || !projectDetails || workItems.length === 0}
+            size="lg"
+            className="bg-gradient-to-r from-teal-500 to-teal-600 text-white shadow-sm hover:from-teal-700 hover:to-teal-800 px-8"
+          >
+            {isSubmitting ? (
+              <>
+                <Calculator className="h-5 w-5 mr-2 animate-spin" />
+                Creating {workItems.length} MB{workItems.length > 1 ? "s" : ""}
+                ...
+              </>
+            ) : (
+              <>
+                <Save className="h-5 w-5 mr-2" />
+                Create {workItems.length} Measurement Book
+                {workItems.length > 1 ? "s" : ""}
+              </>
+            )}
+          </Button>
+        </div>
       </div>
     </div>
   );

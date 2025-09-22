@@ -138,7 +138,7 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header Section */}
-      <div className="bg-teal-600 rounded-t-xl text-white px-6 py-8">
+      <div className="bg-gradient-to-r from-teal-500 to-teal-600 rounded-t-xl text-white px-6 py-8">
         <div className="max-w-7xl mx-auto">
           <h1 className="text-2xl font-bold mb-2">Profile Settings</h1>
           <p className="text-teal-100">
@@ -386,7 +386,7 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
                     <Button
                       type="submit"
                       disabled={loading || !hasChanges}
-                      className="bg-teal-600 hover:bg-teal-700 text-white disabled:opacity-50"
+                      className="bg-gradient-to-r from-teal-500 to-teal-600 text-white shadow-sm hover:from-teal-700 hover:to-teal-800 disabled:opacity-50"
                     >
                       {loading ? (
                         <>
