@@ -59,19 +59,19 @@ export const ProjectOverviewCards: React.FC = () => {
       />
 
       <KPICard
-        title="Completed"
-        value={overview.completed || 0}
-        icon={CheckCircle}
+        title="Under Review"
+        value={overview.underReview || 0}
+        icon={AlertTriangle}
         colorScheme="red"
-        subtitle="Successfully finished"
+        subtitle="Pending Approval"
       />
 
       <KPICard
-        title="Needs Attention"
-        value={overview.overdue || 0}
-        icon={AlertTriangle}
+        title="Completed"
+        value={overview.completed || 0}
+        icon={CheckCircle}
         colorScheme="green"
-        subtitle="Overdue projects"
+        subtitle="Successfully finished"
       />
     </>
   );
@@ -178,7 +178,7 @@ export const ProjectOverviewCards: React.FC = () => {
               onClick={() => setShowArchive(false)}
               className={`px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm font-medium transition-colors ${
                 !showArchive
-                  ? "bg-gradient-to-r from-teal-500 to-teal-600 text-white shadow-sm"
+                  ? "bg-gradient-to-r from-teal-500 to-teal-600 text-white shadow-sm hover:from-teal-700 hover:to-teal-800"
                   : ""
               }`}
             >

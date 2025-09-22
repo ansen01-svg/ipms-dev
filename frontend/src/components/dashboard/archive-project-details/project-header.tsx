@@ -130,7 +130,7 @@ export function ArchiveProjectHeader({ project }: ArchiveProjectHeaderProps) {
 
   return (
     <Card className="bg-white border border-gray-100 shadow-sm rounded-xl">
-      <CardHeader className="py-5 bg-teal-600 rounded-tl-xl rounded-tr-xl">
+      <CardHeader className="py-5 bg-gradient-to-r from-teal-500 to-teal-600 rounded-tl-xl rounded-tr-xl">
         <div className="flex items-start justify-between mb-6">
           <div className="flex-1">
             <div className="flex items-center gap-3 mb-2">

@@ -155,11 +155,9 @@ export function MBFilters({
   const {
     projectIdSearch,
     selectedCreator,
-    selectedApprovalStatus,
     selectedFileType,
     setProjectIdSearch,
     setSelectedCreator,
-    setSelectedApprovalStatus,
     setSelectedFileType,
     clearFilters,
     hasActiveFilters,
@@ -210,7 +208,7 @@ export function MBFilters({
             <Button
               onClick={handleProjectSearch}
               disabled={!projectIdSearch.trim() || isSearching}
-              className="bg-teal-600 hover:bg-teal-700 whitespace-nowrap"
+              className="bg-gradient-to-r from-teal-500 to-teal-600 text-white shadow-sm hover:from-teal-700 hover:to-teal-800 whitespace-nowrap"
             >
               {isSearching ? "Searching..." : "Search"}
             </Button>
@@ -233,20 +231,6 @@ export function MBFilters({
                   {creator.name}
                 </SelectItem>
               ))}
-            </SelectContent>
-          </Select>
-
-          <Select
-            value={selectedApprovalStatus}
-            onValueChange={setSelectedApprovalStatus}
-          >
-            <SelectTrigger className="w-[130px] h-9">
-              <SelectValue placeholder="Status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Status</SelectItem>
-              <SelectItem value="approved">Approved</SelectItem>
-              <SelectItem value="pending">Pending</SelectItem>
             </SelectContent>
           </Select>
 

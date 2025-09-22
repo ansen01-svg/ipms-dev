@@ -360,8 +360,8 @@ export function ArchiveProjectsTable({
             className={cn(
               "flex items-center space-x-2",
               selectedRows.size === 0
-                ? "bg-teal-400 cursor-not-allowed"
-                : "bg-teal-600 hover:bg-teal-700 text-white"
+                ? "bg-gradient-to-r from-teal-400 to-teal-500 text-white shadow-sm  cursor-not-allowed"
+                : "bg-gradient-to-r from-teal-500 to-teal-600 text-white shadow-sm hover:from-teal-700 hover:to-teal-800"
             )}
           >
             <Download className="w-4 h-4" />
@@ -600,7 +600,7 @@ export function ArchiveProjectsTable({
                           {project.nameOfWork}
                         </div>
                         <div className="text-xs text-gray-500 whitespace-nowrap">
-                          ID - {project._id}
+                          ID - {project.projectId}
                         </div>
                       </div>
                     </TableCell>
@@ -827,8 +827,13 @@ export function ArchiveProjectsTable({
                     </TableCell>
 
                     <TableCell className="px-3">
-                      <div className="text-xs text-gray-900 leading-tight line-clamp-2">
-                        {project.nameOfWork}
+                      <div className="space-y-1">
+                        <div className="text-xs text-gray-900 leading-tight line-clamp-2">
+                          {project.nameOfWork}
+                        </div>
+                        <div className="text-xs text-gray-500 whitespace-nowrap">
+                          ID - {project.projectId}
+                        </div>
                       </div>
                     </TableCell>
 

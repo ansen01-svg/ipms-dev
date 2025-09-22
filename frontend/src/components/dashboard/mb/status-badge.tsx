@@ -1,5 +1,3 @@
-// frontend/src/components/dashboard/mb/status-badge.tsx - Simplified for approval status
-
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 

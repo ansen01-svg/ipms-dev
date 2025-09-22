@@ -14,14 +14,7 @@ import {
 import { useAuth } from "@/contexts/auth-context";
 import { MBPaginationData, MeasurementBook } from "@/types/mb.types";
 import { mbApiService } from "@/utils/mb/api-service";
-import {
-  AlertTriangle,
-  CheckCircle,
-  Download,
-  Plus,
-  RefreshCw,
-  XCircle,
-} from "lucide-react";
+import { AlertTriangle, Download, Plus, RefreshCw } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -250,7 +243,7 @@ export default function MeasurementBooksPage() {
         {user?.role === "JE" && (
           <Button
             onClick={handleNewMB}
-            className="bg-teal-600 hover:bg-teal-700"
+            className="bg-gradient-to-r from-teal-500 to-teal-600 text-white shadow-sm hover:from-teal-700 hover:to-teal-800"
           >
             <Plus className="w-4 h-4 mr-2" />
             New MB
@@ -476,50 +469,6 @@ export default function MeasurementBooksPage() {
                     <Download className="w-4 h-4 mr-2" />
                     Download File
                   </Button>
-                </div>
-              </div>
-
-              {/* Status Information */}
-              <div>
-                <h4 className="font-medium text-gray-900 mb-3">
-                  Status Information
-                </h4>
-                <div className="space-y-3">
-                  <div className="flex items-center space-x-2">
-                    {selectedMB.approvedBy ? (
-                      <CheckCircle className="w-5 h-5 text-green-500" />
-                    ) : (
-                      <XCircle className="w-5 h-5 text-gray-400" />
-                    )}
-                    <span className="text-sm">
-                      {selectedMB.approvedBy ? "Approved" : "Not Approved"}
-                    </span>
-                  </div>
-
-                  {selectedMB.approvedBy && (
-                    <div className="bg-green-50 p-3 rounded-lg text-sm">
-                      <div>
-                        <strong>Approved by:</strong>{" "}
-                        {selectedMB.approvedBy.name}
-                      </div>
-                      <div>
-                        <strong>Role:</strong> {selectedMB.approvedBy.role}
-                      </div>
-                      <div>
-                        <strong>Approved at:</strong>{" "}
-                        {formatDate(selectedMB.approvedBy.approvedAt)}
-                      </div>
-                    </div>
-                  )}
-
-                  {selectedMB.rejectionReason && (
-                    <div className="bg-red-50 p-3 rounded-lg text-sm">
-                      <div>
-                        <strong>Rejection Reason:</strong>{" "}
-                        {selectedMB.rejectionReason}
-                      </div>
-                    </div>
-                  )}
                 </div>
               </div>
 
