@@ -5,16 +5,13 @@ import { DbProject } from "@/types/projects.types";
 import {
   BarChart,
   Building,
-  Camera,
   Clock,
   FileText,
   MessageSquare,
-  Users,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import DocumentsTab from "./tabs/documents";
 import OverviewTab from "./tabs/overview";
-import PlaceholderTab from "./tabs/placeholder";
 import ProgressTab from "./tabs/progress";
 import ProjectQueriesTab from "./tabs/queries";
 import SubProjectsTab from "./tabs/sub-projects";
@@ -44,8 +41,6 @@ const tabs: TabConfig[] = [
   { id: "progress", label: "Progress", icon: BarChart },
   { id: "sub-projects", label: "Sub-Projects", icon: Building },
   { id: "documents", label: "Documents", icon: FileText },
-  { id: "team", label: "Team", icon: Users },
-  { id: "media", label: "Media", icon: Camera },
   { id: "timeline", label: "Timeline", icon: Clock },
   { id: "queries", label: "Queries", icon: MessageSquare },
 ];
@@ -79,11 +74,7 @@ export function ProjectTabs({ project, activeTab }: ProjectTabsProps) {
       case "documents":
         return <DocumentsTab project={project} />;
       case "queries":
-        return <ProjectQueriesTab project={project} />;
-      case "team":
-        return <PlaceholderTab icon={Users} title="Team" />;
-      case "media":
-        return <PlaceholderTab icon={Camera} title="Media" />;
+        return <ProjectQueriesTab project={project} isProject={true} />;
       case "timeline":
         return <TimelineTab project={project} />;
       default:

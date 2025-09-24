@@ -26,8 +26,8 @@ export function ViewerActions({ project, role }: ViewerActionsProps) {
 
     try {
       const response = await fetch(
-        // `${process.env.NEXT_PUBLIC_PROD_API_URL}/archive-project/${project._id}/queries`,
-        `${process.env.NEXT_PUBLIC_DEV_API_URL}/project/${project._id}/queries`,
+        `${process.env.NEXT_PUBLIC_PROD_API_URL}/project/${project._id}/queries`,
+        // `${process.env.NEXT_PUBLIC_DEV_API_URL}/project/${project._id}/queries`,
         {
           method: "POST",
           headers: {
@@ -40,7 +40,6 @@ export function ViewerActions({ project, role }: ViewerActionsProps) {
             queryCategory: formData.queryCategory,
             priority: formData.priority,
             expectedResolutionDate: formData.expectedResolutionDate,
-            assignedTo: formData.assignedTo || undefined,
           }),
         }
       );

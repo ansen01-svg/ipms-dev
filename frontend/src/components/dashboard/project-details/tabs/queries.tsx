@@ -12,6 +12,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useAuth } from "@/contexts/auth-context";
+import { DbArchiveProject } from "@/types/archive-projects.types";
 import { DbProject } from "@/types/projects.types";
 import {
   QUERY_CATEGORIES,
@@ -21,6 +22,7 @@ import {
   QueryStatistics,
   RaisedQuery,
 } from "@/types/query.types";
+import { getProjectQueries as getArchiveProjectQueries } from "@/utils/archive-projects/queries";
 import {
   formatDate,
   getCategoryColor,
@@ -34,10 +36,16 @@ import {
   Calendar,
   CheckCircle,
   Clock,
+  Download,
   Edit,
+  Eye,
+  FileIcon,
   FileQuestion,
+  FileText,
   Filter,
+  ImageIcon,
   MessageSquare,
+  Paperclip,
   Search,
   User,
   XCircle,
@@ -47,10 +55,34 @@ import { toast } from "sonner";
 import UpdateQueryModal from "../update-query-modal";
 
 interface ProjectQueriesTabProps {
-  project: DbProject;
+  project: DbProject | DbArchiveProject;
+  isProject: boolean;
 }
 
-export default function ProjectQueriesTab({ project }: ProjectQueriesTabProps) {
+// Helper function to get file type icon
+const getFileTypeIcon = (mimeType: string, fileType: string) => {
+  if (fileType === "image" || mimeType.startsWith("image/")) {
+    return <ImageIcon className="h-4 w-4 text-blue-500" />;
+  }
+  if (mimeType === "application/pdf") {
+    return <FileText className="h-4 w-4 text-red-500" />;
+  }
+  return <FileIcon className="h-4 w-4 text-gray-500" />;
+};
+
+// Helper function to format file size
+const formatFileSize = (bytes: number): string => {
+  if (bytes === 0) return "0 Bytes";
+  const k = 1024;
+  const sizes = ["Bytes", "KB", "MB", "GB"];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
+};
+
+export default function ProjectQueriesTab({
+  project,
+  isProject,
+}: ProjectQueriesTabProps) {
   const [queries, setQueries] = useState<RaisedQuery[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
@@ -81,7 +113,16 @@ export default function ProjectQueriesTab({ project }: ProjectQueriesTabProps) {
   const fetchQueries = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await getProjectQueries(project._id as string, filters);
+      let response;
+
+      if (isProject) {
+        response = await getProjectQueries(project._id as string, filters);
+      } else {
+        response = await getArchiveProjectQueries(
+          project._id as string,
+          filters
+        );
+      }
 
       setQueries(response.data.queries);
       setStatistics(response.data.statistics);
@@ -94,7 +135,7 @@ export default function ProjectQueriesTab({ project }: ProjectQueriesTabProps) {
     } finally {
       setLoading(false);
     }
-  }, [project._id, filters]);
+  }, [project._id, filters, isProject]);
 
   useEffect(() => {
     fetchQueries();
@@ -150,6 +191,39 @@ export default function ProjectQueriesTab({ project }: ProjectQueriesTabProps) {
       overdue: undefined,
     });
   }, []);
+
+  // Handle file download
+  const handleFileDownload = useCallback(
+    (downloadURL: string, fileName: string) => {
+      try {
+        // Open in new tab for download
+        window.open(downloadURL, "_blank");
+        toast.success(`Downloading ${fileName}`);
+      } catch (error) {
+        console.error("Error downloading file:", error);
+        toast.error("Failed to download file");
+      }
+    },
+    []
+  );
+
+  // Handle file preview
+  const handleFilePreview = useCallback(
+    (downloadURL: string, fileName: string, mimeType: string) => {
+      try {
+        if (mimeType.startsWith("image/") || mimeType === "application/pdf") {
+          window.open(downloadURL, "_blank");
+        } else {
+          // For other files, just download
+          handleFileDownload(downloadURL, fileName);
+        }
+      } catch (error) {
+        console.error("Error previewing file:", error);
+        toast.error("Failed to preview file");
+      }
+    },
+    [handleFileDownload]
+  );
 
   if (loading && queries.length === 0) {
     return (
@@ -557,6 +631,8 @@ export default function ProjectQueriesTab({ project }: ProjectQueriesTabProps) {
         ) : (
           queries.map((query) => {
             const queryResolver = user?.role === "JE";
+            const hasAttachments =
+              query.attachments && query.attachments.length > 0;
 
             return (
               <Card
@@ -586,6 +662,13 @@ export default function ProjectQueriesTab({ project }: ProjectQueriesTabProps) {
                               <Badge className="bg-orange-100 text-orange-800 border-orange-300 text-xs font-medium">
                                 <ArrowUp className="h-3 w-3 mr-1" />
                                 Level {query.escalationLevel}
+                              </Badge>
+                            )}
+                            {hasAttachments && (
+                              <Badge className="bg-blue-100 text-blue-800 border-blue-300 text-xs font-medium">
+                                <Paperclip className="h-3 w-3 mr-1" />
+                                {query.attachments!.length} file
+                                {query.attachments!.length !== 1 ? "s" : ""}
                               </Badge>
                             )}
                           </div>
@@ -652,6 +735,88 @@ export default function ProjectQueriesTab({ project }: ProjectQueriesTabProps) {
                           </div>
                           <div className="text-green-700 text-sm leading-relaxed">
                             {query.queryResponse}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Attachments Section */}
+                      {hasAttachments && (
+                        <div className="bg-blue-50 border-l-4 border-l-blue-500 rounded-lg p-4">
+                          <div className="flex items-center gap-2 text-sm font-semibold text-blue-800 mb-3">
+                            <Paperclip className="h-4 w-4" />
+                            Attachments ({query.attachments!.length})
+                          </div>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            {query.attachments!.map((attachment, index) => (
+                              <div
+                                key={`${attachment.id}-${index}`}
+                                className="flex items-center gap-3 p-3 bg-white border border-blue-200 rounded-md hover:shadow-sm transition-shadow"
+                              >
+                                <div className="flex-shrink-0">
+                                  {getFileTypeIcon(
+                                    attachment.mimeType,
+                                    attachment.fileType
+                                  )}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-sm font-medium text-blue-900 truncate">
+                                    {attachment.originalName}
+                                  </p>
+                                  <div className="flex items-center gap-2 text-xs text-blue-700">
+                                    <span>
+                                      {formatFileSize(attachment.fileSize)}
+                                    </span>
+                                    <span>•</span>
+                                    <span>
+                                      {new Date(
+                                        attachment.uploadedAt
+                                      ).toLocaleDateString()}
+                                    </span>
+                                    <span>•</span>
+                                    <span>
+                                      {attachment.uploadedBy.userName}
+                                    </span>
+                                  </div>
+                                </div>
+                                <div className="flex gap-1">
+                                  {/* Preview Button */}
+                                  {(attachment.fileType === "image" ||
+                                    attachment.mimeType ===
+                                      "application/pdf") && (
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      className="h-8 px-2 border-blue-300 text-blue-700 hover:bg-blue-100"
+                                      onClick={() =>
+                                        handleFilePreview(
+                                          attachment.downloadURL,
+                                          attachment.originalName,
+                                          attachment.mimeType
+                                        )
+                                      }
+                                      title="Preview file"
+                                    >
+                                      <Eye className="h-3 w-3" />
+                                    </Button>
+                                  )}
+                                  {/* Download Button */}
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="h-8 px-2 border-blue-300 text-blue-700 hover:bg-blue-100"
+                                    onClick={() =>
+                                      handleFileDownload(
+                                        attachment.downloadURL,
+                                        attachment.originalName
+                                      )
+                                    }
+                                    title="Download file"
+                                  >
+                                    <Download className="h-3 w-3" />
+                                  </Button>
+                                </div>
+                              </div>
+                            ))}
                           </div>
                         </div>
                       )}
@@ -772,7 +937,8 @@ export default function ProjectQueriesTab({ project }: ProjectQueriesTabProps) {
                                 : "bg-green-400"
                             }`}
                           ></div>
-                          {query.daysUntilDue !== undefined
+                          {query.daysUntilDue !== undefined &&
+                          query.daysUntilDue !== null
                             ? query.daysUntilDue > 0
                               ? `${query.daysUntilDue} days until due`
                               : `${Math.abs(query.daysUntilDue)} days overdue`
@@ -878,6 +1044,7 @@ export default function ProjectQueriesTab({ project }: ProjectQueriesTabProps) {
           onClose={handleModalClose}
           query={selectedQuery}
           onUpdateSuccess={handleQueryUpdated}
+          isProject={isProject}
         />
       )}
     </div>

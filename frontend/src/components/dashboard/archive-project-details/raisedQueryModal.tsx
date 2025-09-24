@@ -7,7 +7,6 @@ export interface QueryFormData {
   queryCategory: string;
   priority: string;
   expectedResolutionDate: string;
-  assignedTo: string;
 }
 
 interface RaisedQueryModalProps {
@@ -55,7 +54,6 @@ function RaisedQueryModal({
     queryCategory: "",
     priority: "Medium",
     expectedResolutionDate: "",
-    assignedTo: "",
   });
 
   const [errors, setErrors] = useState<Partial<QueryFormData>>({});
@@ -130,7 +128,6 @@ function RaisedQueryModal({
         queryCategory: formData.queryCategory,
         priority: formData.priority,
         expectedResolutionDate: formData.expectedResolutionDate,
-        assignedTo: formData.assignedTo.trim() || "",
       };
 
       const result = await onSubmit(sanitizedFormData);
@@ -153,7 +150,6 @@ function RaisedQueryModal({
       queryCategory: "",
       priority: "Medium",
       expectedResolutionDate: "",
-      assignedTo: "",
     });
     setErrors({});
   };
@@ -313,7 +309,7 @@ function RaisedQueryModal({
             </p>
           </div>
 
-          {/* Expected Resolution Date and Assigned To */}
+          {/* Expected Resolution Date */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label
@@ -341,25 +337,6 @@ function RaisedQueryModal({
                   {errors.expectedResolutionDate}
                 </p>
               )}
-            </div>
-
-            <div>
-              <label
-                htmlFor="assignedTo"
-                className="block text-sm font-medium text-gray-700 mb-2"
-              >
-                Assign To (Optional)
-              </label>
-              <input
-                type="text"
-                id="assignedTo"
-                name="assignedTo"
-                value={formData.assignedTo}
-                onChange={handleInputChange}
-                placeholder="Enter name or leave blank"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors"
-                disabled={isLoading}
-              />
             </div>
           </div>
 

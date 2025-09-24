@@ -6,6 +6,7 @@ import {
   QueryFilters,
   RaisedQuery,
   UpdateQueryRequest,
+  UpdateQueryResponse,
 } from "@/types/query.types";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_PROD_API_URL;
@@ -166,34 +167,46 @@ export const getQueryById = async (
 export const updateQuery = async (
   queryId: string,
   updateData: UpdateQueryRequest
-): Promise<{
-  success: boolean;
-  message: string;
-  data: {
-    query: RaisedQuery;
-    changes: Record<string, { from: string; to: string }>;
-    projectInfo: {
-      projectId: string;
-      nameOfWork: string;
-    };
-  };
-  metadata: {
-    updatedAt: string;
-    updatedBy: {
-      userId: string;
-      userName: string;
-      userDesignation: string;
-    };
-  };
-}> => {
+): Promise<UpdateQueryResponse> => {
+  // Check if files are included in the update
+  const hasFiles = updateData.attachments && updateData.attachments.length > 0;
+
+  let requestBody: FormData | string;
+  const headers: Record<string, string> = {};
+
+  if (hasFiles) {
+    // Use FormData for file uploads
+    const formData = new FormData();
+
+    // Add text fields to FormData
+    Object.entries(updateData).forEach(([key, value]) => {
+      if (key !== "attachments" && value !== undefined && value !== null) {
+        formData.append(key, String(value));
+      }
+    });
+
+    // Add files to FormData
+    if (updateData.attachments) {
+      updateData.attachments.forEach((file) => {
+        formData.append("attachments", file);
+      });
+    }
+
+    requestBody = formData;
+    // Don't set Content-Type header - let browser set it with boundary for FormData
+  } else {
+    // Use JSON for text-only updates
+    const textOnlyData = { ...updateData };
+    requestBody = JSON.stringify(textOnlyData);
+    headers["Content-Type"] = "application/json";
+  }
+
   const response = await makeAuthenticatedRequest(
     `${API_BASE_URL}/archive-project/queries/${queryId}`,
     {
       method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(updateData),
+      headers,
+      body: requestBody,
     }
   );
 

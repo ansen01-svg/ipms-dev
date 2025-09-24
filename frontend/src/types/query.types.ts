@@ -11,23 +11,21 @@ export interface RaisedQuery {
   status: QueryStatus;
   raisedBy: string;
   assignedTo?: string;
-  raisedDate: Date;
-  expectedResolutionDate: Date;
-  actualResolutionDate?: Date;
+  raisedDate: string;
+  expectedResolutionDate: string;
+  actualResolutionDate?: string;
   queryResponse?: string;
   internalRemarks?: string;
   escalationLevel: number;
-  relatedQueries: string[];
-  attachmentReferences: string[];
   isActive: boolean;
-  createdAt: Date;
-  updatedAt: Date;
-
-  // Virtual fields
+  // Attachments array as seen in the API response
+  attachments?: QueryAttachment[];
+  createdAt: string;
+  updatedAt: string;
+  // Virtual fields added by backend
   daysSinceRaised?: number;
-  daysUntilDue?: number;
+  daysUntilDue?: number | null;
   isOverdue?: boolean;
-  resolutionTimeInDays?: number;
 }
 
 export type QueryCategory =
@@ -294,15 +292,142 @@ export const QUERY_STATUSES: Array<{
     color: "bg-blue-100 text-blue-800",
   },
   {
-    value: "Under Review",
-    label: "Under Review",
-    color: "bg-purple-100 text-purple-800",
-  },
-  {
     value: "Resolved",
     label: "Resolved",
     color: "bg-green-100 text-green-800",
   },
   { value: "Closed", label: "Closed", color: "bg-gray-100 text-gray-600" },
-  { value: "Escalated", label: "Escalated", color: "bg-red-100 text-red-800" },
 ];
+
+// Updated types in @/types/query.types.ts
+
+export interface UpdateQueryRequest {
+  queryTitle?: string;
+  queryDescription?: string;
+  queryCategory?: QueryCategory;
+  priority?: QueryPriority;
+  status?: QueryStatus;
+  assignedTo?: string;
+  expectedResolutionDate?: string;
+  queryResponse?: string;
+  internalRemarks?: string;
+  // NEW: File attachments support
+  attachments?: File[];
+}
+
+// NEW: File attachment metadata interface
+export interface QueryAttachment {
+  downloadURL: string;
+  fileName: string;
+  filePath: string;
+  fileSize: number;
+  fileType: "document" | "image";
+  id: string;
+  mimeType: string;
+  originalName: string;
+  uploadedAt: string;
+  uploadedBy: {
+    userDesignation: string;
+    userId: string;
+    userName: string;
+  };
+}
+
+// Enhanced RaisedQuery interface
+export interface RaisedQuery {
+  _id: string;
+  queryId: string;
+  projectId: string;
+  queryTitle: string;
+  queryDescription: string;
+  queryCategory: QueryCategory;
+  priority: QueryPriority;
+  status: QueryStatus;
+  raisedBy: string;
+  assignedTo?: string;
+  raisedDate: string;
+  expectedResolutionDate: string;
+  actualResolutionDate?: string;
+  queryResponse?: string;
+  internalRemarks?: string;
+  escalationLevel: number;
+  isActive: boolean;
+  // NEW: Attachments support
+  attachments?: QueryAttachment[];
+  totalAttachments?: number;
+  latestAttachment?: QueryAttachment;
+  // Virtual fields
+  daysSinceRaised?: number;
+  daysUntilDue?: number | null;
+  isOverdue?: boolean;
+  resolutionTimeInDays?: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// NEW: Update query response interface
+export interface UpdateQueryResponse {
+  success: boolean;
+  message: string;
+  data: {
+    query: RaisedQuery;
+    changes: Record<string, { from: string | number; to: string | number }>;
+    projectInfo: {
+      projectId: string;
+      projectName: string;
+    };
+    // NEW: File upload summary
+    fileUploadSummary?: {
+      totalFilesUploaded: number;
+      totalAttachments: number;
+      uploadedFiles: Array<{
+        fileName: string;
+        originalName: string;
+        fileSize: number;
+        fileType: string;
+      }>;
+    };
+  };
+  metadata: {
+    updatedAt: string;
+    updatedBy: {
+      userId: string;
+      userName: string;
+      userDesignation: string;
+    };
+    filesProcessed: number;
+  };
+}
+
+// File validation constants
+export const ALLOWED_FILE_TYPES = [
+  "image/jpeg",
+  "image/jpg",
+  "image/png",
+  "image/webp",
+  "image/gif",
+  "application/pdf",
+  "application/msword",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "application/vnd.ms-excel",
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  "text/plain",
+];
+
+export const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+export const MAX_FILES_PER_UPDATE = 5;
+
+export const FILE_TYPE_EXTENSIONS = {
+  "image/jpeg": ".jpg",
+  "image/jpg": ".jpg",
+  "image/png": ".png",
+  "image/webp": ".webp",
+  "image/gif": ".gif",
+  "application/pdf": ".pdf",
+  "application/msword": ".doc",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
+    ".docx",
+  "application/vnd.ms-excel": ".xls",
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": ".xlsx",
+  "text/plain": ".txt",
+};
