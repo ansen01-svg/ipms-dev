@@ -7,17 +7,15 @@ import {
   Clock,
   DollarSign,
   FileText,
-  MapPin,
   TrendingUp,
   Users,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import ProjectQueriesTab from "../project-details/tabs/queries";
 import ArchiveContractorTab from "./tabs/contractor";
 import ArchiveFinancialTab from "./tabs/financial";
 import ArchiveOverviewTab from "./tabs/overview";
-import PlaceholderTab from "./tabs/placeholder";
 import ArchiveProgressTab from "./tabs/progress";
-import ArchiveQueriesTab from "./tabs/queries";
 import ArchiveTimelineTab from "./tabs/timeline";
 
 interface ArchiveProjectTabsProps {
@@ -38,8 +36,6 @@ const tabs: TabConfig[] = [
   { id: "financial", label: "Financial", icon: DollarSign },
   { id: "contractor", label: "Contractor", icon: Users },
   { id: "timeline", label: "Timeline", icon: Clock },
-  { id: "location", label: "Location", icon: MapPin },
-  { id: "metrics", label: "Metrics", icon: TrendingUp },
   { id: "queries", label: "Queries", icon: TrendingUp },
 ];
 
@@ -76,12 +72,8 @@ export function ArchiveProjectTabs({
         return <ArchiveContractorTab project={project} />;
       case "timeline":
         return <ArchiveTimelineTab project={project} />;
-      case "location":
-        return <PlaceholderTab icon={MapPin} title="Location Details" />;
-      case "metrics":
-        return <PlaceholderTab icon={TrendingUp} title="Project Metrics" />;
       case "queries":
-        return <ArchiveQueriesTab project={project} />;
+        return <ProjectQueriesTab project={project} isProject={false} />;
       default:
         return <ArchiveOverviewTab project={project} />;
     }

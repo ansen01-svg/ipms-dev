@@ -109,7 +109,6 @@ export function HigherAuthorityActions({
             queryCategory: formData.queryCategory,
             priority: formData.priority,
             expectedResolutionDate: formData.expectedResolutionDate,
-            assignedTo: formData.assignedTo || undefined,
           }),
         }
       );
@@ -143,6 +142,9 @@ export function HigherAuthorityActions({
 
   // Check if user has authority for status updates
   const hasStatusAuthority = ["AEE", "CE", "MD"].includes(role);
+
+  const canRaiseQuery =
+    project.status === "Ongoing" && ["AEE", "CE", "MD"].includes(role);
 
   if (!hasStatusAuthority) {
     return (
@@ -205,16 +207,18 @@ export function HigherAuthorityActions({
                 : "Reject"}
             </Button>
 
-            <Button
-              onClick={() => setIsQueryModalOpen(true)}
-              disabled={isSubmitting}
-              className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 ease-in-out transform hover:scale-105 active:scale-95 shadow-md hover:shadow-lg"
-            >
-              <AlertCircle className="w-4 h-4" />
-              <span className="font-medium">
-                {isSubmitting ? "Submitting..." : "Raise Query"}
-              </span>
-            </Button>
+            {canRaiseQuery && (
+              <Button
+                onClick={() => setIsQueryModalOpen(true)}
+                // disabled={!canRaiseQuery}
+                className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 ease-in-out transform hover:scale-105 active:scale-95 shadow-md hover:shadow-lg"
+              >
+                <AlertCircle className="w-4 h-4" />
+                <span className="font-medium">
+                  {isSubmitting ? "Submitting..." : "Raise Query"}
+                </span>
+              </Button>
+            )}
           </div>
 
           <div className="mt-3 text-xs text-green-600">

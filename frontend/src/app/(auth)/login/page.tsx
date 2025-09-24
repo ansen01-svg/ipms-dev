@@ -16,6 +16,9 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
+const API_URL = process.env.NEXT_PUBLIC_PROD_API_URL;
+// const API_URL = process.env.NEXT_PUBLIC_DEV_API_URL;
+
 const LoginPage = () => {
   const [showPassword, setShowPassword] = useState(false);
   // const { login } = useAuth();
@@ -187,18 +190,14 @@ const LoginPage = () => {
 
   const onSubmit = async (loginData: LoginFormData) => {
     try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_PROD_API_URL}/auth/login`,
-        // `${process.env.NEXT_PUBLIC_DEV_API_URL}/auth/login`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(loginData),
-          credentials: "include",
-        }
-      );
+      const response = await fetch(`${API_URL}/auth/login`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(loginData),
+        credentials: "include",
+      });
 
       const data = await response.json();
 

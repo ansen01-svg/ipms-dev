@@ -381,7 +381,6 @@ export function MBTable({
                 </TableRow>
               ) : (
                 displayedMBs.map((mb, index) => {
-                  console.log(mb);
                   return (
                     <TableRow key={mb._id} className="h-16 hover:bg-gray-50">
                       <TableCell className="px-6 font-medium">
@@ -394,10 +393,10 @@ export function MBTable({
                       <TableCell className="w-64 px-6">
                         <div className="flex flex-col items-start justify-center gap-1">
                           <div className="font-medium text-gray-900 text-sm">
-                            {mb.project?._id || "No Project ID"}
+                            {mb.project?.projectName || "No Project Name"}
                           </div>
                           <div className="text-xs text-gray-500">
-                            {mb.project?.projectName || "No Project Name"}
+                            ID - {mb.project?._id || "No Project ID"}
                           </div>
                         </div>
                       </TableCell>

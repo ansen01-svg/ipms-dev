@@ -34,7 +34,6 @@ function ViewerActions({ projectId }: ViewerActionsProps) {
             queryCategory: formData.queryCategory,
             priority: formData.priority,
             expectedResolutionDate: formData.expectedResolutionDate,
-            assignedTo: formData.assignedTo || undefined,
           }),
         }
       );

@@ -175,7 +175,7 @@ export function ProjectsContainer() {
       <ProjectsTable projects={projects} onViewProject={handleViewProject} />
 
       {/* Empty state */}
-      {projects.length === 0 && !loading && !error && (
+      {/* {projects.length === 0 && !loading && !error && (
         <div className="text-center py-12">
           <div className="text-gray-500 text-lg mb-2">No projects found</div>
           <div className="text-gray-400 text-sm mb-4">
@@ -193,7 +193,7 @@ export function ProjectsContainer() {
             </Button>
           )}
         </div>
-      )}
+      )} */}
     </FilterProvider>
   );
 }

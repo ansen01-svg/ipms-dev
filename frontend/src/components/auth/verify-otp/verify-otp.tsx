@@ -17,8 +17,8 @@ import { useEffect, useRef, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 
-const apiUrl = process.env.NEXT_PUBLIC_PROD_API_URL;
-// const apiUrl = process.env.NEXT_PUBLIC_DEV_API_URL;
+const API_URL = process.env.NEXT_PUBLIC_PROD_API_URL;
+// const API_URL = process.env.NEXT_PUBLIC_DEV_API_URL;
 
 export default function VerifyOTPForm() {
   const { login } = useAuth();
@@ -101,7 +101,7 @@ export default function VerifyOTPForm() {
     setVerificationStatus("idle");
 
     try {
-      const response = await fetch(`${apiUrl}/auth/verify-otp`, {
+      const response = await fetch(`${API_URL}/auth/verify-otp`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -228,7 +228,7 @@ export default function VerifyOTPForm() {
     setVerificationStatus("idle");
 
     try {
-      const response = await fetch(`${apiUrl}/auth/resend-otp`, {
+      const response = await fetch(`${API_URL}/auth/resend-otp`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
