@@ -3,19 +3,21 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { DbProject } from "@/types/projects.types";
+import { DbArchiveProject } from "@/types/archive-projects.types";
 import {
-  DocumentInfo,
-  downloadDocument,
-  formatDate,
-  formatDateTime,
-  getCategoryColor,
-  getFileTypeColor,
-  getProjectDocuments,
-  previewDocument,
-  ProjectDocumentsResponse,
-} from "@/utils/projects/documents";
+  ArchiveDocumentInfo,
+  ArchiveProjectDocumentsResponse,
+  downloadArchiveDocument,
+  formatArchiveDate,
+  formatArchiveDateTime,
+  getArchiveCategoryColor,
+  getArchiveFileTypeColor,
+  getArchiveProjectDocuments,
+  getArchiveSubcategoryColor,
+  previewArchiveDocument,
+} from "@/utils/archive-projects/documents";
 import {
+  Archive,
   Download,
   Eye,
   FileIcon,
@@ -32,8 +34,8 @@ import {
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 
-interface DocumentsTabProps {
-  project: DbProject;
+interface ArchiveDocumentsTabProps {
+  project: DbArchiveProject;
 }
 
 // Helper function to get file type icon
@@ -71,9 +73,11 @@ const getCategoryIcon = (category: string) => {
   }
 };
 
-export default function DocumentsTab({ project }: DocumentsTabProps) {
+export default function ArchiveDocumentsTab({
+  project,
+}: ArchiveDocumentsTabProps) {
   const [documentsData, setDocumentsData] =
-    useState<ProjectDocumentsResponse | null>(null);
+    useState<ArchiveProjectDocumentsResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -82,17 +86,14 @@ export default function DocumentsTab({ project }: DocumentsTabProps) {
     try {
       setLoading(true);
       setError(null);
-
-      const refinedProjectId = project.projectId.replace("%20", " ");
-      console.log("Fetching documents for project ID:", refinedProjectId);
-      const response = await getProjectDocuments(refinedProjectId);
+      const response = await getArchiveProjectDocuments(project.projectId);
       setDocumentsData(response);
     } catch (error) {
-      console.error("Error fetching project documents:", error);
+      console.error("Error fetching archive project documents:", error);
       setError(
         error instanceof Error ? error.message : "Failed to fetch documents"
       );
-      toast.error("Failed to fetch project documents");
+      toast.error("Failed to fetch archive project documents");
     } finally {
       setLoading(false);
     }
@@ -103,9 +104,12 @@ export default function DocumentsTab({ project }: DocumentsTabProps) {
   }, [fetchDocuments]);
 
   // Handle document download
-  const handleDownload = useCallback(async (document: DocumentInfo) => {
+  const handleDownload = useCallback(async (document: ArchiveDocumentInfo) => {
     try {
-      await downloadDocument(document.downloadURL, document.originalName);
+      await downloadArchiveDocument(
+        document.downloadURL,
+        document.originalName
+      );
       toast.success(`Downloading ${document.originalName}`);
     } catch (error) {
       console.error("Error downloading document:", error);
@@ -114,9 +118,9 @@ export default function DocumentsTab({ project }: DocumentsTabProps) {
   }, []);
 
   // Handle document preview
-  const handlePreview = useCallback(async (document: DocumentInfo) => {
+  const handlePreview = useCallback(async (document: ArchiveDocumentInfo) => {
     try {
-      await previewDocument(
+      await previewArchiveDocument(
         document.downloadURL,
         document.originalName,
         document.fileExtension
@@ -132,7 +136,12 @@ export default function DocumentsTab({ project }: DocumentsTabProps) {
     return (
       <div className="space-y-8">
         <div className="flex items-center justify-between">
-          <h3 className="text-xl font-bold text-gray-900">Project Documents</h3>
+          <div className="flex items-center gap-3">
+            <Archive className="h-6 w-6 text-blue-600" />
+            <h3 className="text-xl font-bold text-gray-900">
+              Archive Project Documents
+            </h3>
+          </div>
           <div className="animate-pulse">
             <div className="h-6 w-24 bg-blue-200 rounded-full"></div>
           </div>
@@ -180,7 +189,12 @@ export default function DocumentsTab({ project }: DocumentsTabProps) {
     return (
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <h3 className="text-xl font-bold text-gray-900">Project Documents</h3>
+          <div className="flex items-center gap-3">
+            <Archive className="h-6 w-6 text-blue-600" />
+            <h3 className="text-xl font-bold text-gray-900">
+              Archive Project Documents
+            </h3>
+          </div>
         </div>
 
         <Card className="border-2 border-dashed border-red-300 bg-red-50">
@@ -213,7 +227,12 @@ export default function DocumentsTab({ project }: DocumentsTabProps) {
   return (
     <div className="space-y-8 pb-8">
       <div className="flex items-center justify-between mb-6">
-        <h3 className="text-xl font-bold text-gray-900">Project Documents</h3>
+        <div className="flex items-center gap-3">
+          <Archive className="h-6 w-6 text-blue-600" />
+          <h3 className="text-xl font-bold text-gray-900">
+            Archive Project Documents
+          </h3>
+        </div>
         <div className="flex gap-3">
           <Badge className="bg-blue-50 text-blue-700 border-blue-200 text-sm font-medium px-3 py-1">
             {summary.totalDocuments} Total Files
@@ -221,6 +240,9 @@ export default function DocumentsTab({ project }: DocumentsTabProps) {
           <Badge className="bg-purple-50 text-purple-700 border-purple-200 text-sm font-medium px-3 py-1">
             <HardDrive className="h-3 w-3 mr-1" />
             {summary.formattedTotalFileSize}
+          </Badge>
+          <Badge className="bg-green-50 text-green-700 border-green-200 text-sm font-medium px-3 py-1">
+            {documentsData.data.projectInfo.financialYear}
           </Badge>
         </div>
       </div>
@@ -357,15 +379,15 @@ export default function DocumentsTab({ project }: DocumentsTabProps) {
         <Card className="border-2 border-dashed border-gray-300 bg-gray-50">
           <CardContent className="text-center py-12">
             <div className="p-4 bg-gray-100 rounded-full w-16 h-16 mx-auto mb-6 flex items-center justify-center">
-              <FileIcon className="h-8 w-8 text-gray-400" />
+              <Archive className="h-8 w-8 text-gray-400" />
             </div>
             <h4 className="text-xl font-semibold text-gray-900 mb-3">
               No Documents Found
             </h4>
             <p className="text-gray-600 max-w-md mx-auto mb-4">
-              No documents have been uploaded for this project yet. Documents
-              will appear here as they are added to different parts of the
-              project.
+              No documents have been uploaded for this archive project yet.
+              Documents will appear here as they are added to different parts of
+              the project.
             </p>
           </CardContent>
         </Card>
@@ -373,150 +395,56 @@ export default function DocumentsTab({ project }: DocumentsTabProps) {
         <div className="space-y-8">
           {/* General Project Documents */}
           {documentGroups.projectDocuments.count > 0 && (
-            <div>
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-3">
-                  {getCategoryIcon("Project Document")}
-                  <div>
-                    <h4 className="text-lg font-semibold text-gray-900">
-                      {documentGroups.projectDocuments.label}
-                    </h4>
-                    <p className="text-sm text-gray-600">
-                      {documentGroups.projectDocuments.description}
-                    </p>
-                  </div>
-                </div>
-                <Badge
-                  className={`${getCategoryColor(
-                    "Project Document"
-                  )} text-sm font-medium px-3 py-1`}
-                >
-                  {documentGroups.projectDocuments.count} files
-                </Badge>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {documentGroups.projectDocuments.documents.map((doc) => (
-                  <DocumentCard
-                    key={doc.id}
-                    document={doc}
-                    onDownload={handleDownload}
-                    onPreview={handlePreview}
-                  />
-                ))}
-              </div>
-            </div>
+            <DocumentSection
+              title={documentGroups.projectDocuments.label}
+              description={documentGroups.projectDocuments.description}
+              count={documentGroups.projectDocuments.count}
+              documents={documentGroups.projectDocuments.documents}
+              category="Project Document"
+              onDownload={handleDownload}
+              onPreview={handlePreview}
+            />
           )}
 
           {/* Physical Progress Documents */}
           {documentGroups.physicalProgressDocuments.count > 0 && (
-            <div>
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-3">
-                  {getCategoryIcon("Progress Document")}
-                  <div>
-                    <h4 className="text-lg font-semibold text-gray-900">
-                      {documentGroups.physicalProgressDocuments.label}
-                    </h4>
-                    <p className="text-sm text-gray-600">
-                      {documentGroups.physicalProgressDocuments.description}
-                    </p>
-                  </div>
-                </div>
-                <Badge
-                  className={`${getCategoryColor(
-                    "Progress Document"
-                  )} text-sm font-medium px-3 py-1`}
-                >
-                  {documentGroups.physicalProgressDocuments.count} files
-                </Badge>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {documentGroups.physicalProgressDocuments.documents.map(
-                  (doc) => (
-                    <DocumentCard
-                      key={doc.id}
-                      document={doc}
-                      onDownload={handleDownload}
-                      onPreview={handlePreview}
-                    />
-                  )
-                )}
-              </div>
-            </div>
+            <DocumentSection
+              title={documentGroups.physicalProgressDocuments.label}
+              description={documentGroups.physicalProgressDocuments.description}
+              count={documentGroups.physicalProgressDocuments.count}
+              documents={documentGroups.physicalProgressDocuments.documents}
+              category="Progress Document"
+              onDownload={handleDownload}
+              onPreview={handlePreview}
+            />
           )}
 
           {/* Financial Progress Documents */}
           {documentGroups.financialProgressDocuments.count > 0 && (
-            <div>
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-3">
-                  {getCategoryIcon("Progress Document")}
-                  <div>
-                    <h4 className="text-lg font-semibold text-gray-900">
-                      {documentGroups.financialProgressDocuments.label}
-                    </h4>
-                    <p className="text-sm text-gray-600">
-                      {documentGroups.financialProgressDocuments.description}
-                    </p>
-                  </div>
-                </div>
-                <Badge
-                  className={`${getCategoryColor(
-                    "Progress Document"
-                  )} text-sm font-medium px-3 py-1`}
-                >
-                  {documentGroups.financialProgressDocuments.count} files
-                </Badge>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {documentGroups.financialProgressDocuments.documents.map(
-                  (doc) => (
-                    <DocumentCard
-                      key={doc.id}
-                      document={doc}
-                      onDownload={handleDownload}
-                      onPreview={handlePreview}
-                    />
-                  )
-                )}
-              </div>
-            </div>
+            <DocumentSection
+              title={documentGroups.financialProgressDocuments.label}
+              description={
+                documentGroups.financialProgressDocuments.description
+              }
+              count={documentGroups.financialProgressDocuments.count}
+              documents={documentGroups.financialProgressDocuments.documents}
+              category="Progress Document"
+              onDownload={handleDownload}
+              onPreview={handlePreview}
+            />
           )}
 
           {/* Query Documents */}
           {documentGroups.queryDocuments.count > 0 && (
-            <div>
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-3">
-                  {getCategoryIcon("Query Document")}
-                  <div>
-                    <h4 className="text-lg font-semibold text-gray-900">
-                      {documentGroups.queryDocuments.label}
-                    </h4>
-                    <p className="text-sm text-gray-600">
-                      {documentGroups.queryDocuments.description}
-                    </p>
-                  </div>
-                </div>
-                <Badge
-                  className={`${getCategoryColor(
-                    "Query Document"
-                  )} text-sm font-medium px-3 py-1`}
-                >
-                  {documentGroups.queryDocuments.count} files
-                </Badge>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {documentGroups.queryDocuments.documents.map((doc) => (
-                  <DocumentCard
-                    key={doc.id}
-                    document={doc}
-                    onDownload={handleDownload}
-                    onPreview={handlePreview}
-                  />
-                ))}
-              </div>
-            </div>
+            <DocumentSection
+              title={documentGroups.queryDocuments.label}
+              description={documentGroups.queryDocuments.description}
+              count={documentGroups.queryDocuments.count}
+              documents={documentGroups.queryDocuments.documents}
+              category="Query Document"
+              onDownload={handleDownload}
+              onPreview={handlePreview}
+            />
           )}
         </div>
       )}
@@ -524,14 +452,70 @@ export default function DocumentsTab({ project }: DocumentsTabProps) {
   );
 }
 
-// Document Card Component
-interface DocumentCardProps {
-  document: DocumentInfo;
-  onDownload: (document: DocumentInfo) => void;
-  onPreview: (document: DocumentInfo) => void;
+// Document Section Component
+interface DocumentSectionProps {
+  title: string;
+  description: string;
+  count: number;
+  documents: ArchiveDocumentInfo[];
+  category: string;
+  onDownload: (document: ArchiveDocumentInfo) => void;
+  onPreview: (document: ArchiveDocumentInfo) => void;
 }
 
-function DocumentCard({ document, onDownload, onPreview }: DocumentCardProps) {
+function DocumentSection({
+  title,
+  description,
+  count,
+  documents,
+  category,
+  onDownload,
+  onPreview,
+}: DocumentSectionProps) {
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-3">
+          {getCategoryIcon(category)}
+          <div>
+            <h4 className="text-lg font-semibold text-gray-900">{title}</h4>
+            <p className="text-sm text-gray-600">{description}</p>
+          </div>
+        </div>
+        <Badge
+          className={`${getArchiveCategoryColor(
+            category
+          )} text-sm font-medium px-3 py-1`}
+        >
+          {count} files
+        </Badge>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {documents.map((doc) => (
+          <ArchiveDocumentCard
+            key={doc.id}
+            document={doc}
+            onDownload={onDownload}
+            onPreview={onPreview}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// Archive Document Card Component
+interface ArchiveDocumentCardProps {
+  document: ArchiveDocumentInfo;
+  onDownload: (document: ArchiveDocumentInfo) => void;
+  onPreview: (document: ArchiveDocumentInfo) => void;
+}
+
+function ArchiveDocumentCard({
+  document,
+  onDownload,
+  onPreview,
+}: ArchiveDocumentCardProps) {
   const [isDownloading, setIsDownloading] = useState(false);
   const [isPreviewing, setIsPreviewing] = useState(false);
 
@@ -569,11 +553,17 @@ function DocumentCard({ document, onDownload, onPreview }: DocumentCardProps) {
 
         <div className="flex items-center gap-2 mb-3 flex-wrap">
           <Badge
-            className={`text-xs ${getFileTypeColor(document.fileExtension)}`}
+            className={`text-xs ${getArchiveFileTypeColor(
+              document.fileExtension
+            )}`}
           >
             {document.fileExtension.toUpperCase()}
           </Badge>
-          <Badge className={`text-xs ${getCategoryColor(document.category)}`}>
+          <Badge
+            className={`text-xs ${getArchiveSubcategoryColor(
+              document.subcategory
+            )}`}
+          >
             {document.subcategory}
           </Badge>
           <span className="text-xs text-gray-500">
@@ -586,30 +576,11 @@ function DocumentCard({ document, onDownload, onPreview }: DocumentCardProps) {
             Uploaded by:{" "}
             {document.uploadedBy?.name ||
               document.uploadedBy?.userName ||
-              "Unknown"}
+              "System"}
           </div>
-          <div title={formatDateTime(document.uploadedAt)}>
-            {formatDate(document.uploadedAt)}
+          <div title={formatArchiveDateTime(document.uploadedAt)}>
+            {formatArchiveDate(document.uploadedAt)}
           </div>
-          {/* {document.additionalInfo &&
-            Object.keys(document.additionalInfo).length > 0 && (
-              <div className="text-xs text-blue-600 font-medium">
-                {document.category === "Progress Document" &&
-                  document.subcategory === "Physical Progress" &&
-                  document.additionalInfo.newProgress &&
-                  `Progress: ${document.additionalInfo.newProgress}%`}
-                {document.category === "Progress Document" &&
-                  document.subcategory === "Financial Progress" &&
-                  document.additionalInfo.newBillAmount &&
-                  `Amount: ₹${document.additionalInfo.newBillAmount.toLocaleString()}`}
-                {document.category === "Query Document" &&
-                  document.additionalInfo.queryTitle &&
-                  `Query: ${document.additionalInfo.queryTitle.substring(
-                    0,
-                    30
-                  )}...`}
-              </div>
-            )} */}
         </div>
 
         <div className="flex gap-2">

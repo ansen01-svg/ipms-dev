@@ -13,6 +13,7 @@ import {
 import { useEffect, useRef, useState } from "react";
 import ProjectQueriesTab from "../project-details/tabs/queries";
 import ArchiveContractorTab from "./tabs/contractor";
+import DocumentsTab from "./tabs/documents";
 import ArchiveFinancialTab from "./tabs/financial";
 import ArchiveOverviewTab from "./tabs/overview";
 import ArchiveProgressTab from "./tabs/progress";
@@ -35,6 +36,7 @@ const tabs: TabConfig[] = [
   { id: "progress", label: "Progress", icon: BarChart },
   { id: "financial", label: "Financial", icon: DollarSign },
   { id: "contractor", label: "Contractor", icon: Users },
+  { id: "documents", label: "Documents", icon: FileText },
   { id: "timeline", label: "Timeline", icon: Clock },
   { id: "queries", label: "Queries", icon: TrendingUp },
 ];
@@ -70,6 +72,8 @@ export function ArchiveProjectTabs({
         return <ArchiveFinancialTab project={project} />;
       case "contractor":
         return <ArchiveContractorTab project={project} />;
+      case "documents":
+        return <DocumentsTab project={project} />;
       case "timeline":
         return <ArchiveTimelineTab project={project} />;
       case "queries":
