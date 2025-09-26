@@ -134,7 +134,11 @@ export function ArchiveProjectHeader({ project }: ArchiveProjectHeaderProps) {
         <div className="flex items-start justify-between mb-6">
           <div className="flex-1">
             <div className="flex items-center gap-3 mb-2">
-              <h1 className="text-lg sm:text-xl font-semibold text-white">
+              <h1
+                className={`text-lg sm:text-xl ${
+                  project.nameOfWork.length >= 60 ? "sm:text-lg" : "sm:text-xl"
+                } font-semibold text-white`}
+              >
                 {project.nameOfWork}
               </h1>
             </div>
@@ -225,7 +229,11 @@ export function ArchiveProjectHeader({ project }: ArchiveProjectHeaderProps) {
           </div>
 
           <div className="bg-green-100 rounded-lg p-4">
-            <div className="text-3xl font-bold text-gray-900 mb-2">
+            <div
+              className={`font-bold text-gray-900 mb-2 ${
+                project.location.length >= 30 ? "text-lg" : "text-3xl"
+              }`}
+            >
               {project.location}
             </div>
             <div className="flex items-center gap-2 mb-1">
