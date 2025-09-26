@@ -61,19 +61,36 @@ export function FinancialProgressUpdateModal({
     }
   }, [isOpen, project.billSubmittedAmount]);
 
+  // Calculate if this is a financial completion
+  const isFinancialCompletion =
+    Math.abs(formData.newBillAmount - project.workValue) < 0.01;
+  const newFinancialProgress =
+    project.workValue > 0
+      ? Math.round((formData.newBillAmount / project.workValue) * 100)
+      : 0;
+
   const validateForm = useCallback(() => {
-    const validationErrors = validateFinancialProgressUpdate(
+    const baseValidationErrors = validateFinancialProgressUpdate(
       project.billSubmittedAmount || 0,
       formData.newBillAmount,
       project.workValue,
       files
     );
-    return validationErrors;
+
+    // Add bill number validation for financial completion
+    if (isFinancialCompletion && !formData.billDetails?.billNumber?.trim()) {
+      baseValidationErrors.billNumber =
+        "Bill number is required for financial completion";
+    }
+
+    return baseValidationErrors;
   }, [
     formData.newBillAmount,
+    formData.billDetails?.billNumber,
     files,
     project.billSubmittedAmount,
     project.workValue,
+    isFinancialCompletion,
   ]);
 
   const handleBillAmountChange = (value: string) => {
@@ -97,6 +114,11 @@ export function FinancialProgressUpdateModal({
         [field]: value,
       },
     }));
+
+    // Clear bill number error when user types
+    if (field === "billNumber") {
+      setErrors((prev) => ({ ...prev, billNumber: "", submit: "" }));
+    }
   };
 
   const handleFilesChange = (newFiles: File[]) => {
@@ -146,11 +168,6 @@ export function FinancialProgressUpdateModal({
   const billAmountDifference = formData.newBillAmount - currentBillAmount;
   const hasBillAmountChange = Math.abs(billAmountDifference) >= 0.01; // At least 1 paise change
 
-  // Calculate new financial progress percentage
-  const newFinancialProgress =
-    project.workValue > 0
-      ? Math.round((formData.newBillAmount / project.workValue) * 100)
-      : 0;
   const currentFinancialProgress = project.financialProgress || 0;
   const financialProgressDiff = newFinancialProgress - currentFinancialProgress;
 
@@ -198,6 +215,39 @@ export function FinancialProgressUpdateModal({
             </div>
           )}
 
+          {/* Financial Completion Notice */}
+          {isFinancialCompletion && (
+            <div className="bg-gradient-to-r from-emerald-50 to-green-50 border-2 border-emerald-200 rounded-lg p-4">
+              <div className="flex items-start gap-3">
+                <div className="flex-1">
+                  <h4 className="font-semibold text-emerald-900 mb-2">
+                    Financial Completion Notice
+                  </h4>
+                  <p className="text-emerald-800 text-sm mb-3">
+                    You are submitting the final bill that matches the work
+                    value. This will:
+                  </p>
+                  <div className="space-y-2 text-sm text-emerald-700">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
+                      <span>Set financial progress to 100%</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
+                      <span className="font-medium">
+                        Require bill number for proper documentation
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
+                      <span>Mark this project as financially complete</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Current Status */}
           <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
             <h4 className="font-medium text-gray-900 mb-3 flex items-center gap-2">
@@ -238,13 +288,15 @@ export function FinancialProgressUpdateModal({
                   type="number"
                   min="0"
                   max={project.workValue}
-                  step="0.01"
+                  step="1"
                   value={formData.newBillAmount}
                   onChange={(e) => handleBillAmountChange(e.target.value)}
                   onBlur={handleValidation}
                   className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg font-semibold ${
                     errors.newBillAmount || currentErrors.newBillAmount
                       ? "border-red-500 bg-red-50"
+                      : isFinancialCompletion
+                      ? "border-emerald-500 bg-emerald-50"
                       : "border-gray-300"
                   }`}
                   placeholder={`Enter amount (Max: ${formatCurrency(
@@ -262,9 +314,22 @@ export function FinancialProgressUpdateModal({
 
               {/* Financial Progress Preview */}
               {hasBillAmountChange && (
-                <div className="bg-white border border-gray-200 rounded-lg p-4">
-                  <h5 className="text-sm font-medium text-gray-700 mb-3">
+                <div
+                  className={`border rounded-lg p-4 ${
+                    isFinancialCompletion
+                      ? "bg-emerald-50 border-emerald-200"
+                      : "bg-white border-gray-200"
+                  }`}
+                >
+                  <h5
+                    className={`text-sm font-medium mb-3 ${
+                      isFinancialCompletion
+                        ? "text-emerald-700"
+                        : "text-gray-700"
+                    }`}
+                  >
                     Financial Progress Preview
+                    {isFinancialCompletion}
                   </h5>
                   <div className="space-y-2">
                     <div className="flex justify-between text-sm">
@@ -277,7 +342,11 @@ export function FinancialProgressUpdateModal({
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-3">
                       <div
-                        className="bg-blue-500 h-3 rounded-full transition-all duration-500"
+                        className={`h-3 rounded-full transition-all duration-500 ${
+                          isFinancialCompletion
+                            ? "bg-gradient-to-r from-emerald-500 to-green-600"
+                            : "bg-blue-500"
+                        }`}
                         style={{
                           width: `${Math.min(newFinancialProgress, 100)}%`,
                         }}
@@ -286,7 +355,9 @@ export function FinancialProgressUpdateModal({
                     <div className="text-center">
                       <span
                         className={`text-sm font-medium ${
-                          financialProgressDiff > 0
+                          isFinancialCompletion
+                            ? "text-emerald-600"
+                            : financialProgressDiff > 0
                             ? "text-green-600"
                             : financialProgressDiff < 0
                             ? "text-orange-600"
@@ -298,6 +369,7 @@ export function FinancialProgressUpdateModal({
                           formData.newBillAmount,
                           project.workValue
                         )}
+                        {isFinancialCompletion}
                       </span>
                     </div>
                   </div>
@@ -307,12 +379,18 @@ export function FinancialProgressUpdateModal({
               {/* Bill Details */}
               <div className="space-y-4">
                 <h5 className="text-sm font-medium text-gray-700">
-                  Bill Details (Optional)
+                  Bill Details{" "}
+                  {isFinancialCompletion
+                    ? "(Required for Completion)"
+                    : "(Optional)"}
                 </h5>
 
                 <div className="space-y-2">
                   <label className="block text-xs font-medium text-gray-600">
                     Bill Number
+                    {isFinancialCompletion && (
+                      <span className="text-red-500 ml-1">*</span>
+                    )}
                   </label>
                   <input
                     type="text"
@@ -320,10 +398,26 @@ export function FinancialProgressUpdateModal({
                     onChange={(e) =>
                       handleBillDetailsChange("billNumber", e.target.value)
                     }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Enter bill number"
+                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                      errors.billNumber || currentErrors.billNumber
+                        ? "border-red-500 bg-red-50"
+                        : isFinancialCompletion
+                        ? "border-emerald-500 bg-emerald-50"
+                        : "border-gray-300"
+                    }`}
+                    placeholder={
+                      isFinancialCompletion
+                        ? "Enter final bill number (required)"
+                        : "Enter bill number"
+                    }
                     disabled={isSubmitting}
                   />
+                  {(errors.billNumber || currentErrors.billNumber) && (
+                    <div className="flex items-center gap-2 text-red-600 text-sm">
+                      <AlertCircle className="h-4 w-4" />
+                      {errors.billNumber || currentErrors.billNumber}
+                    </div>
+                  )}
                 </div>
 
                 <div className="space-y-2">
@@ -354,7 +448,11 @@ export function FinancialProgressUpdateModal({
                     maxLength={200}
                     rows={3}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-                    placeholder="Brief description of the bill"
+                    placeholder={
+                      isFinancialCompletion
+                        ? "Describe the final bill for project completion"
+                        : "Brief description of the bill"
+                    }
                     disabled={isSubmitting}
                   />
                   <div className="text-xs text-gray-500 text-right">
@@ -367,7 +465,7 @@ export function FinancialProgressUpdateModal({
               {/* Remarks */}
               <div className="space-y-2">
                 <label className="block text-sm font-medium text-gray-700">
-                  Remarks (Optional)
+                  Remarks {isFinancialCompletion && "(Final Summary)"}
                 </label>
                 <textarea
                   value={formData.remarks}
@@ -380,7 +478,11 @@ export function FinancialProgressUpdateModal({
                   maxLength={500}
                   rows={4}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-                  placeholder="Add any comments about this financial progress update..."
+                  placeholder={
+                    isFinancialCompletion
+                      ? "Add final remarks about the financial completion of this project..."
+                      : "Add any comments about this financial progress update..."
+                  }
                   disabled={isSubmitting}
                 />
                 <div className="text-xs text-gray-500 text-right">
@@ -410,32 +512,76 @@ export function FinancialProgressUpdateModal({
               </div>
 
               {/* Validation Rules Info */}
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <h5 className="text-sm font-medium text-blue-900 mb-3">
-                  Financial Update Rules
+              <div
+                className={`border rounded-lg p-4 ${
+                  isFinancialCompletion
+                    ? "bg-emerald-50 border-emerald-200"
+                    : "bg-blue-50 border-blue-200"
+                }`}
+              >
+                <h5
+                  className={`text-sm font-medium mb-3 ${
+                    isFinancialCompletion ? "text-emerald-900" : "text-blue-900"
+                  }`}
+                >
+                  {isFinancialCompletion
+                    ? "Completion Requirements"
+                    : "Financial Update Rules"}
                 </h5>
-                <div className="space-y-2 text-xs text-blue-700">
+                <div
+                  className={`space-y-2 text-xs ${
+                    isFinancialCompletion ? "text-emerald-700" : "text-blue-700"
+                  }`}
+                >
                   <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
+                    <div
+                      className={`w-2 h-2 rounded-full ${
+                        isFinancialCompletion ? "bg-emerald-400" : "bg-blue-400"
+                      }`}
+                    ></div>
                     <span>Amount cannot exceed work value</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
+                    <div
+                      className={`w-2 h-2 rounded-full ${
+                        isFinancialCompletion ? "bg-emerald-400" : "bg-blue-400"
+                      }`}
+                    ></div>
                     <span>Maximum 5% decrease allowed (for corrections)</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
+                    <div
+                      className={`w-2 h-2 rounded-full ${
+                        isFinancialCompletion ? "bg-emerald-400" : "bg-blue-400"
+                      }`}
+                    ></div>
                     <span>Maximum 50% of work value increase per update</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
-                    <span>
+                    <div
+                      className={`w-2 h-2 rounded-full ${
+                        isFinancialCompletion ? "bg-emerald-400" : "bg-blue-400"
+                      }`}
+                    ></div>
+                    <span
+                      className={isFinancialCompletion ? "font-semibold" : ""}
+                    >
                       Financial completion requires supporting documents
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
-                    <span>Only Junior Engineers can update progress</span>
+                    <div
+                      className={`w-2 h-2 rounded-full ${
+                        isFinancialCompletion ? "bg-emerald-400" : "bg-blue-400"
+                      }`}
+                    ></div>
+                    <span
+                      className={isFinancialCompletion ? "font-semibold" : ""}
+                    >
+                      {isFinancialCompletion
+                        ? "Bill number is required for completion"
+                        : "Only Junior Engineers can update progress"}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -460,12 +606,18 @@ export function FinancialProgressUpdateModal({
             <Button
               onClick={handleSubmit}
               disabled={isSubmitting || !isFormValid}
-              className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              className={`flex-1 disabled:opacity-50 disabled:cursor-not-allowed ${
+                isFinancialCompletion
+                  ? "bg-emerald-600 hover:bg-emerald-700"
+                  : "bg-blue-600 hover:bg-blue-700"
+              }`}
             >
               {isSubmitting ? (
                 <>
                   <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full mr-2"></div>
-                  Updating Financial Progress...
+                  {isFinancialCompletion
+                    ? "Completing Financially..."
+                    : "Updating Financial Progress..."}
                 </>
               ) : showSuccess ? (
                 <>
@@ -474,8 +626,14 @@ export function FinancialProgressUpdateModal({
                 </>
               ) : (
                 <>
-                  <IndianRupee className="h-4 w-4 mr-2" />
-                  Update Financial Progress
+                  {isFinancialCompletion ? (
+                    <IndianRupee className="h-4 w-4 mr-2" />
+                  ) : (
+                    <IndianRupee className="h-4 w-4 mr-2" />
+                  )}
+                  {isFinancialCompletion
+                    ? "Complete Financially"
+                    : "Update Financial Progress"}
                 </>
               )}
             </Button>

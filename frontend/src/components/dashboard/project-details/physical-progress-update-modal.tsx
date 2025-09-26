@@ -4,7 +4,14 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DbProject } from "@/types/projects.types";
 import { updateProjectProgress } from "@/utils/projects/progress";
-import { AlertCircle, CheckCircle, Info, X } from "lucide-react";
+import {
+  AlertCircle,
+  AlertTriangle,
+  CheckCircle,
+  Info,
+  Trophy,
+  X,
+} from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 
 interface ProgressUpdateRequest {
@@ -195,7 +202,11 @@ function ProgressIndicator({
       <div className="relative">
         <div className="w-full bg-gray-200 rounded-full h-3">
           <div
-            className="bg-blue-500 h-3 rounded-full transition-all duration-500"
+            className={`h-3 rounded-full transition-all duration-500 ${
+              target === 100
+                ? "bg-gradient-to-r from-green-500 to-emerald-600"
+                : "bg-blue-500"
+            }`}
             style={{ width: `${current}%` }}
           />
         </div>
@@ -203,7 +214,11 @@ function ProgressIndicator({
         {difference !== 0 && (
           <div
             className={`absolute top-0 h-3 w-1 ${
-              isIncrease ? "bg-green-500" : "bg-orange-500"
+              target === 100
+                ? "bg-emerald-600"
+                : isIncrease
+                ? "bg-green-500"
+                : "bg-orange-500"
             } transition-all duration-500`}
             style={{ left: `${Math.min(target, 100)}%` }}
           />
@@ -213,7 +228,9 @@ function ProgressIndicator({
       {difference !== 0 && (
         <div
           className={`text-xs ${
-            isIncrease
+            target === 100
+              ? "text-emerald-600 font-semibold"
+              : isIncrease
               ? "text-green-600"
               : difference < 0
               ? "text-orange-600"
@@ -222,6 +239,7 @@ function ProgressIndicator({
         >
           {isIncrease ? "+" : ""}
           {difference.toFixed(1)}% change
+          {target === 100}
         </div>
       )}
     </div>
@@ -233,6 +251,16 @@ interface ProgressUpdateModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: (updatedProject: DbProject) => void;
+}
+
+interface SuccessResponse {
+  data?: {
+    project?: DbProject;
+    statusChange?: {
+      occurred?: boolean;
+      message?: string;
+    };
+  };
 }
 
 export function ProgressUpdateModal({
@@ -250,6 +278,9 @@ export function ProgressUpdateModal({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
 
+  const [successResponse, setSuccessResponse] =
+    useState<SuccessResponse | null>(null);
+
   // Reset form when modal opens/closes
   useEffect(() => {
     if (isOpen) {
@@ -260,6 +291,7 @@ export function ProgressUpdateModal({
       setFiles([]);
       setErrors({});
       setShowSuccess(false);
+      setSuccessResponse(null);
     }
   }, [isOpen, project.progressPercentage]);
 
@@ -316,13 +348,14 @@ export function ProgressUpdateModal({
         supportingFiles: files,
       });
 
+      setSuccessResponse(response);
       setShowSuccess(true);
 
       // Wait a bit before closing to show success state
       setTimeout(() => {
         onSuccess(response.data.project);
         onClose();
-      }, 1500);
+      }, 2500);
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : "Failed to update progress";
@@ -335,6 +368,8 @@ export function ProgressUpdateModal({
   const progressDifference =
     formData.progress - (project.progressPercentage || 0);
   const hasProgressChange = Math.abs(progressDifference) >= 0.1;
+  const isCompletingProject = formData.progress === 100;
+  const willChangeStatus = isCompletingProject && project.status === "Ongoing";
 
   const currentErrors = validateProgressUpdate();
   const isFormValid =
@@ -365,16 +400,50 @@ export function ProgressUpdateModal({
 
         <CardContent className="p-6 space-y-6">
           {showSuccess && (
-            <div className="bg-green-50 border border-green-200 rounded-lg p-4 flex items-center gap-3">
-              <CheckCircle className="h-5 w-5 text-green-600" />
-              <div>
-                <p className="text-green-800 font-medium">
-                  Progress Updated Successfully!
-                </p>
-                <p className="text-green-700 text-sm">
-                  The project progress has been saved.
-                </p>
+            <div className="bg-green-50 border border-green-200 rounded-lg p-4 space-y-3">
+              <div className="flex items-center gap-3">
+                <CheckCircle className="h-5 w-5 text-green-600" />
+                <div>
+                  <p className="text-green-800 font-medium">
+                    Progress Updated Successfully!
+                  </p>
+                  <p className="text-green-700 text-sm">
+                    The project progress has been saved.
+                  </p>
+                </div>
               </div>
+
+              {/* Show status change information if it occurred */}
+              {successResponse?.data?.statusChange?.occurred && (
+                <div className="bg-emerald-100 border border-emerald-200 rounded-lg p-3 mt-3">
+                  <div className="flex items-center gap-2">
+                    <Trophy className="h-4 w-4 text-emerald-600" />
+                    <p className="text-emerald-800 font-medium text-sm">
+                      {`Project Status Changed to "Completed"!`}
+                    </p>
+                  </div>
+                  <p className="text-emerald-700 text-xs mt-1">
+                    {successResponse.data.statusChange.message}
+                  </p>
+                </div>
+              )}
+
+              {/* Show warning if status couldn't be changed */}
+              {successResponse?.data?.statusChange?.message &&
+                !successResponse?.data?.statusChange?.occurred &&
+                isCompletingProject && (
+                  <div className="bg-yellow-100 border border-yellow-200 rounded-lg p-3 mt-3">
+                    <div className="flex items-center gap-2">
+                      <AlertTriangle className="h-4 w-4 text-yellow-600" />
+                      <p className="text-yellow-800 font-medium text-sm">
+                        Status Change Notice
+                      </p>
+                    </div>
+                    <p className="text-yellow-700 text-xs mt-1">
+                      {successResponse.data.statusChange.message}
+                    </p>
+                  </div>
+                )}
             </div>
           )}
 
@@ -405,6 +474,52 @@ export function ProgressUpdateModal({
             </div>
           </div>
 
+          {/* Project Completion Warning */}
+          {isCompletingProject && (
+            <div className="bg-gradient-to-r from-emerald-50 to-green-50 border-2 border-emerald-200 rounded-lg p-4">
+              <div className="flex items-start gap-3">
+                <div className="flex-1">
+                  <h4 className="font-semibold text-emerald-900 mb-2">
+                    Project Completion Notice
+                  </h4>
+                  <p className="text-emerald-800 text-sm mb-3">
+                    You are marking this project as 100% complete. This will:
+                  </p>
+                  <div className="space-y-2 text-sm text-emerald-700">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
+                      <span>Update the physical progress to 100%</span>
+                    </div>
+                    {willChangeStatus && (
+                      <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
+                        <span className="font-medium">
+                          {`Automatically change project status from "
+                          ${project.status}" to "Completed"`}
+                        </span>
+                      </div>
+                    )}
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
+                      <span>Record completion timestamp and user details</span>
+                    </div>
+                  </div>
+                  {!willChangeStatus && project.status !== "Completed" && (
+                    <div className="mt-3 p-3 bg-yellow-100 border border-yellow-200 rounded-lg">
+                      <div className="flex items-center gap-2 text-yellow-800">
+                        <AlertTriangle className="h-4 w-4" />
+                        <span className="text-xs font-medium">
+                          {`Note: Project status is currently "${project.status}".
+                          Status will only auto-change if currently "Ongoing".`}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div className="space-y-4">
               <div className="space-y-2">
@@ -415,13 +530,15 @@ export function ProgressUpdateModal({
                   type="number"
                   min="0"
                   max="100"
-                  step="0.1"
+                  step="1"
                   value={formData.progress}
                   onChange={(e) => handleProgressChange(e.target.value)}
                   onBlur={handleValidation}
                   className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-lg font-semibold ${
                     errors.progress || currentErrors.progress
                       ? "border-red-500 bg-red-50"
+                      : isCompletingProject
+                      ? "border-emerald-500 bg-emerald-50"
                       : "border-gray-300"
                   }`}
                   placeholder="Enter progress percentage (0-100)"
@@ -436,9 +553,20 @@ export function ProgressUpdateModal({
               </div>
 
               {hasProgressChange && (
-                <div className="bg-white border border-gray-200 rounded-lg p-4">
-                  <h5 className="text-sm font-medium text-gray-700 mb-3">
+                <div
+                  className={`border rounded-lg p-4 ${
+                    isCompletingProject
+                      ? "bg-emerald-50 border-emerald-200"
+                      : "bg-white border-gray-200"
+                  }`}
+                >
+                  <h5
+                    className={`text-sm font-medium mb-3 ${
+                      isCompletingProject ? "text-emerald-700" : "text-gray-700"
+                    }`}
+                  >
                     Progress Change Preview
+                    {isCompletingProject}
                   </h5>
                   <ProgressIndicator
                     current={project.progressPercentage || 0}
@@ -449,7 +577,7 @@ export function ProgressUpdateModal({
 
               <div className="space-y-2">
                 <label className="block text-sm font-medium text-gray-700">
-                  Remarks (Optional)
+                  Remarks {isCompletingProject && "(Completion Summary)"}
                 </label>
                 <textarea
                   value={formData.remarks}
@@ -462,7 +590,11 @@ export function ProgressUpdateModal({
                   maxLength={500}
                   rows={4}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 resize-none"
-                  placeholder="Add any comments about this progress update..."
+                  placeholder={
+                    isCompletingProject
+                      ? "Describe the completion of this project, any final notes, or achievements..."
+                      : "Add any comments about this progress update..."
+                  }
                   disabled={isSubmitting}
                 />
                 <div className="text-xs text-gray-500 text-right">
@@ -490,23 +622,63 @@ export function ProgressUpdateModal({
                 />
               </div>
 
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <h5 className="text-sm font-medium text-blue-900 mb-3">
-                  Progress Update Rules
+              <div
+                className={`border rounded-lg p-4 ${
+                  isCompletingProject
+                    ? "bg-emerald-50 border-emerald-200"
+                    : "bg-blue-50 border-blue-200"
+                }`}
+              >
+                <h5
+                  className={`text-sm font-medium mb-3 ${
+                    isCompletingProject ? "text-emerald-900" : "text-blue-900"
+                  }`}
+                >
+                  {isCompletingProject
+                    ? "Completion Requirements"
+                    : "Progress Update Rules"}
                 </h5>
-                <div className="space-y-2 text-xs text-blue-700">
+                <div
+                  className={`space-y-2 text-xs ${
+                    isCompletingProject ? "text-emerald-700" : "text-blue-700"
+                  }`}
+                >
                   <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
+                    <div
+                      className={`w-2 h-2 rounded-full ${
+                        isCompletingProject ? "bg-emerald-400" : "bg-blue-400"
+                      }`}
+                    ></div>
                     <span>Maximum 5% decrease allowed (for corrections)</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
+                    <div
+                      className={`w-2 h-2 rounded-full ${
+                        isCompletingProject ? "bg-emerald-400" : "bg-blue-400"
+                      }`}
+                    ></div>
                     <span>Maximum 50% increase per single update</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
-                    <span>Completion (100%) requires supporting documents</span>
+                    <div
+                      className={`w-2 h-2 rounded-full ${
+                        isCompletingProject ? "bg-emerald-400" : "bg-blue-400"
+                      }`}
+                    ></div>
+                    <span
+                      className={isCompletingProject ? "font-semibold" : ""}
+                    >
+                      Completion (100%) requires supporting documents
+                    </span>
                   </div>
+                  {isCompletingProject && willChangeStatus && (
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 bg-emerald-400 rounded-full"></div>
+                      <span className="font-semibold">
+                        {`Status will automatically change to "Completed"`}
+                      </span>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -528,20 +700,31 @@ export function ProgressUpdateModal({
             <Button
               onClick={handleSubmit}
               disabled={isSubmitting || !isFormValid}
-              className="flex-1 bg-teal-600 hover:bg-teal-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              className={`flex-1 disabled:opacity-50 disabled:cursor-not-allowed ${
+                isCompletingProject
+                  ? "bg-emerald-600 hover:bg-emerald-700"
+                  : "bg-teal-600 hover:bg-teal-700"
+              }`}
             >
               {isSubmitting ? (
                 <>
                   <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full mr-2"></div>
-                  Updating Progress...
+                  {isCompletingProject
+                    ? "Completing Project..."
+                    : "Updating Progress..."}
                 </>
               ) : showSuccess ? (
                 <>
                   <CheckCircle className="h-4 w-4 mr-2" />
-                  Updated Successfully!
+                  {isCompletingProject
+                    ? "Project Completed!"
+                    : "Updated Successfully!"}
                 </>
               ) : (
-                "Update Progress"
+                <>
+                  {isCompletingProject}
+                  {isCompletingProject ? "Complete Project" : "Update Progress"}
+                </>
               )}
             </Button>
             <Button

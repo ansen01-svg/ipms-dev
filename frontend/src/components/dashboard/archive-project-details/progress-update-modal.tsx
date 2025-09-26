@@ -1,4 +1,3 @@
-// components/dashboard/archive-project-details/progress-update-modal.tsx
 "use client";
 
 import { Button } from "@/components/ui/button";
@@ -201,7 +200,7 @@ export function ProgressUpdateModal({
                   type="number"
                   min="0"
                   max="100"
-                  step="0.1"
+                  step="1"
                   value={formData.progress}
                   onChange={(e) => handleProgressChange(e.target.value)}
                   onBlur={handleValidation}

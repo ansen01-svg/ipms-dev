@@ -79,8 +79,8 @@ export interface ProjectDocumentsResponse {
   };
 }
 
-// const API_URL = process.env.NEXT_PUBLIC_PROD_API_URL;
-const API_URL = process.env.NEXT_PUBLIC_DEV_API_URL;
+const API_URL = process.env.NEXT_PUBLIC_PROD_API_URL;
+// const API_URL = process.env.NEXT_PUBLIC_DEV_API_URL;
 
 /**
  * Fetch all documents for a specific project

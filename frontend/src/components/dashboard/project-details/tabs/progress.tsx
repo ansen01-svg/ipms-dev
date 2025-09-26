@@ -270,7 +270,7 @@ export default function ProgressTab({ project }: ProgressTabProps) {
                       >
                         {(project.financialProgress || 0) > 10 && (
                           <span className="text-white text-xs font-medium">
-                            {project.financialProgress || 0}%
+                            {project.financialProgress.toFixed(1) || 0}%
                           </span>
                         )}
                       </div>
