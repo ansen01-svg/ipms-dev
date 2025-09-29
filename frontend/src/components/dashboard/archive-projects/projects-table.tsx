@@ -683,7 +683,7 @@ export function ArchiveProjectsTable({
                     </TableCell>
 
                     <TableCell className="px-4">
-                      <div className="text-sm text-gray-900">
+                      <div className="text-sm text-gray-900 leading-tight line-clamp-3">
                         {project.location}
                       </div>
                     </TableCell>

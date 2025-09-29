@@ -5,7 +5,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { SupportingDocument } from "@/types/projects.types";
 import { formatFileSize } from "@/utils/projects/format-helpers";
 import { Download, Eye, FileText, ImageIcon, X } from "lucide-react";
-import Image from "next/image";
 import { useState } from "react";
 
 interface DocumentViewerProps {
@@ -43,17 +42,17 @@ export function DocumentViewer({
     return "bg-green-50 border-green-200 text-green-700";
   };
 
-  // Use Firebase Storage downloadURL directly
+  // Fixed download handler
   const handleDownload = async (document: SupportingDocument) => {
     try {
-      if (!document.downloadURL) {
+      const downloadUrl = document.downloadURL;
+
+      if (!downloadUrl) {
         throw new Error("Download URL not available");
       }
 
-      // For Firebase Storage, we can directly use the downloadURL
-      const response = await fetch(document.downloadURL, {
-        method: "GET",
-      });
+      // Fetch the file as blob
+      const response = await fetch(downloadUrl);
 
       if (!response.ok) {
         throw new Error("Download failed");
@@ -63,7 +62,7 @@ export function DocumentViewer({
       const url = window.URL.createObjectURL(blob);
       const a = window.document.createElement("a");
       a.href = url;
-      a.download = document.originalName;
+      a.download = document.originalName || document.fileName;
       window.document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
@@ -87,7 +86,7 @@ export function DocumentViewer({
     <div className={`space-y-2 ${className}`}>
       {documents.map((doc, index) => (
         <Card
-          key={doc.originalName || index}
+          key={doc.originalName || doc.fileName || index}
           className="border border-gray-200"
         >
           <CardContent className="p-3">
@@ -96,7 +95,7 @@ export function DocumentViewer({
 
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-gray-900 truncate">
-                  {doc.originalName}
+                  {doc.originalName || doc.fileName}
                 </p>
                 <div className="flex items-center gap-2 mt-1">
                   <span
@@ -104,14 +103,16 @@ export function DocumentViewer({
                       doc.mimeType
                     )}`}
                   >
-                    {doc.fileType.toUpperCase()}
+                    {(doc.fileType || doc.mimeType.split("/")[1]).toUpperCase()}
                   </span>
                   <span className="text-xs text-gray-500">
                     {formatFileSize(doc.fileSize)}
                   </span>
-                  <span className="text-xs text-gray-400">
-                    {new Date(doc.uploadedAt).toLocaleDateString("en-IN")}
-                  </span>
+                  {doc.uploadedAt && (
+                    <span className="text-xs text-gray-400">
+                      {new Date(doc.uploadedAt).toLocaleDateString("en-IN")}
+                    </span>
+                  )}
                 </div>
               </div>
 
@@ -151,26 +152,31 @@ export function DocumentViewer({
             setPreviewOpen(false);
             setSelectedDocument(null);
           }}
+          onDownload={handleDownload}
         />
       )}
     </div>
   );
 }
 
-// Document Preview Modal Component for Firebase Storage
+// Document Preview Modal Component
 interface DocumentPreviewModalProps {
   document: SupportingDocument;
   onClose: () => void;
+  onDownload: (doc: SupportingDocument) => void;
 }
 
 function DocumentPreviewModal({
   document,
   onClose,
+  onDownload,
 }: DocumentPreviewModalProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Use Firebase Storage downloadURL directly
+  console.log(document);
+
+  // Get preview URL from either downloadURL or fileUrl
   const getPreviewUrl = () => {
     return document.downloadURL;
   };
@@ -184,25 +190,10 @@ function DocumentPreviewModal({
     setError("Failed to load image");
   };
 
-  // Direct download using Firebase Storage URL
-  const handleDirectDownload = () => {
-    if (!document.downloadURL) {
-      alert("Download URL not available");
-      return;
-    }
+  const previewUrl = getPreviewUrl();
 
-    const link = window.document.createElement("a");
-    link.href = document.downloadURL;
-    link.download = document.originalName;
-    link.target = "_blank";
-    link.rel = "noopener noreferrer";
-    window.document.body.appendChild(link);
-    link.click();
-    window.document.body.removeChild(link);
-  };
-
-  // Validate that downloadURL exists
-  if (!document.downloadURL) {
+  // Validate that URL exists
+  if (!previewUrl) {
     return (
       <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
         <div className="bg-white rounded-lg max-w-md w-full p-6">
@@ -222,9 +213,6 @@ function DocumentPreviewModal({
             <p className="text-red-600">
               Download URL not available for this document
             </p>
-            <p className="text-sm text-gray-500 mt-2">
-              This may be due to a storage configuration issue.
-            </p>
           </div>
         </div>
       </div>
@@ -233,9 +221,9 @@ function DocumentPreviewModal({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg max-w-4xl max-h-[90vh] w-full overflow-hidden">
+      <div className="bg-white rounded-lg max-w-6xl w-full h-[90vh] flex flex-col overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b">
+        <div className="flex items-center justify-between p-4 border-b flex-shrink-0">
           <div className="flex items-center gap-3">
             {document.mimeType.startsWith("image/") ? (
               <ImageIcon className="h-5 w-5 text-blue-500" />
@@ -244,19 +232,16 @@ function DocumentPreviewModal({
             )}
             <div>
               <h3 className="font-medium text-gray-900">
-                {document.originalName}
+                {document.originalName || document.fileName}
               </h3>
               <p className="text-sm text-gray-500">
                 {formatFileSize(document.fileSize)} • {document.mimeType}
-              </p>
-              <p className="text-xs text-gray-400">
-                Stored in Firebase Storage
               </p>
             </div>
           </div>
           <div className="flex items-center gap-2">
             <Button
-              onClick={handleDirectDownload}
+              onClick={() => onDownload(document)}
               variant="outline"
               size="sm"
               className="h-8"
@@ -275,47 +260,50 @@ function DocumentPreviewModal({
           </div>
         </div>
 
-        {/* Preview Content */}
-        <div className="p-4 overflow-auto max-h-[calc(90vh-120px)]">
+        {/* Preview Content - Increased height */}
+        <div className="flex-1 overflow-auto bg-gray-50 p-4">
           {document.mimeType.startsWith("image/") && (
-            <div className="text-center">
-              {loading && (
-                <div className="animate-pulse bg-gray-200 rounded h-64 w-full mb-4"></div>
+            <div className="h-full flex items-center justify-center">
+              {loading && !error && (
+                <div className="animate-pulse bg-gray-200 rounded h-96 w-full"></div>
               )}
-              {error && (
-                <div className="text-red-600 p-8">
-                  <FileText className="h-12 w-12 mx-auto mb-4" />
-                  <p>{error}</p>
+              {error ? (
+                <div className="text-center text-red-600 p-8">
+                  <FileText className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+                  <p className="mb-4">{error}</p>
                   <Button
-                    onClick={handleDirectDownload}
-                    className="mt-4 bg-blue-600 hover:bg-blue-700"
+                    onClick={() => onDownload(document)}
+                    className="bg-blue-600 hover:bg-blue-700"
                   >
                     <Download className="h-4 w-4 mr-2" />
                     Download Instead
                   </Button>
                 </div>
+              ) : (
+                // Using regular img tag instead of Next.js Image to avoid width/height requirements
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={previewUrl}
+                  alt={
+                    document.originalName ||
+                    document.fileName ||
+                    "Document preview"
+                  }
+                  onLoad={handleImageLoad}
+                  onError={handleImageError}
+                  style={{ display: loading ? "none" : "block" }}
+                  className="max-w-full max-h-full object-contain rounded-lg shadow-lg"
+                />
               )}
-              <Image
-                src={getPreviewUrl()}
-                alt={document.originalName}
-                width={800}
-                height={600}
-                onLoad={handleImageLoad}
-                onError={handleImageError}
-                className={`max-w-full h-auto rounded-lg shadow-lg mx-auto ${
-                  loading || error ? "hidden" : ""
-                }`}
-                unoptimized
-              />
             </div>
           )}
 
           {document.mimeType === "application/pdf" && (
-            <div className="w-full h-96">
+            <div className="h-full min-h-[75vh]">
               <iframe
-                src={`${getPreviewUrl()}#toolbar=1&navpanes=0&scrollbar=1`}
+                src={`${previewUrl}#toolbar=1&navpanes=0&scrollbar=1`}
                 className="w-full h-full border-0 rounded"
-                title={document.originalName}
+                title={document.originalName || document.fileName}
                 onLoad={() => setLoading(false)}
                 onError={() => {
                   setLoading(false);
@@ -323,7 +311,7 @@ function DocumentPreviewModal({
                 }}
               />
               {loading && (
-                <div className="animate-pulse bg-gray-200 rounded h-96 w-full flex items-center justify-center">
+                <div className="animate-pulse bg-gray-200 rounded h-full w-full flex items-center justify-center">
                   <p className="text-gray-500">Loading PDF...</p>
                 </div>
               )}
@@ -332,7 +320,7 @@ function DocumentPreviewModal({
                   <FileText className="h-16 w-16 text-gray-400 mx-auto mb-4" />
                   <p className="text-red-600 mb-4">{error}</p>
                   <Button
-                    onClick={handleDirectDownload}
+                    onClick={() => onDownload(document)}
                     className="bg-blue-600 hover:bg-blue-700"
                   >
                     <Download className="h-4 w-4 mr-2" />
@@ -355,7 +343,7 @@ function DocumentPreviewModal({
                   files
                 </p>
                 <Button
-                  onClick={handleDirectDownload}
+                  onClick={() => onDownload(document)}
                   className="bg-blue-600 hover:bg-blue-700"
                 >
                   <Download className="h-4 w-4 mr-2" />
