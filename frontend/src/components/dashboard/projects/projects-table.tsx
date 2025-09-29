@@ -95,10 +95,11 @@ const generateCsvContent = (projects: DbProject[]): string => {
     "Status",
     "Progress %",
     "Estimated Cost",
+    "Contractor",
+    "Engineer",
     "Executing Department",
     "Sanctioning Department",
     "Created At",
-    "Created By",
     "Updated At",
   ];
 
@@ -108,16 +109,17 @@ const generateCsvContent = (projects: DbProject[]): string => {
       [
         formatCsvValue(index + 1),
         formatCsvValue(project.projectName),
-        formatCsvValue(project._id),
+        formatCsvValue(project.projectId),
         formatCsvValue(project.district),
         formatCsvValue(project.typeOfWork),
         formatCsvValue(project.status),
         formatCsvValue(`${project.progressPercentage || 0}%`),
         formatCsvValue(formatCurrencyForCsv(project.estimatedCost)),
+        formatCsvValue(project.contractorName || "Not Assigned"),
+        formatCsvValue((project.createdBy as ProjectUser)?.name || "Unknown"),
         formatCsvValue(project.executingDepartment),
         formatCsvValue(project.sanctioningDepartment),
         formatCsvValue(formatDateForCsv(project.createdAt)),
-        formatCsvValue((project.createdBy as ProjectUser)?.name || "Unknown"),
         formatCsvValue(formatDateForCsv(project.updatedAt)),
       ].join(",")
     ),
@@ -188,7 +190,7 @@ export function ProjectsTable({ projects, onViewProject }: ProjectsTableProps) {
   // Selection state
   const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set());
 
-  const ITEMS_PER_PAGE = 5;
+  const ITEMS_PER_PAGE = 8;
 
   // Filter, search, and sort projects
   const processedProjects = useMemo(() => {
@@ -218,6 +220,17 @@ export function ProjectsTable({ projects, onViewProject }: ProjectsTableProps) {
           project.sanctioningDepartment === filters.sanctioningDepartment
       );
     }
+    if (filters.contractor && filters.contractor !== "all") {
+      result = result.filter(
+        (project) => project.contractorName === filters.contractor
+      );
+    }
+    if (filters.engineer && filters.engineer !== "all") {
+      result = result.filter(
+        (project) =>
+          (project.createdBy as ProjectUser)?.name === filters.engineer
+      );
+    }
 
     // Apply search
     if (searchQuery.trim()) {
@@ -237,6 +250,9 @@ export function ProjectsTable({ projects, onViewProject }: ProjectsTableProps) {
             .toLowerCase()
             .includes(searchQuery.toLowerCase()) ||
           (project.sanctioningDepartment || "")
+            .toLowerCase()
+            .includes(searchQuery.toLowerCase()) ||
+          (project.contractorName || "")
             .toLowerCase()
             .includes(searchQuery.toLowerCase()) ||
           (project.createdBy?.name || "")
@@ -398,9 +414,11 @@ export function ProjectsTable({ projects, onViewProject }: ProjectsTableProps) {
     <>
       {/* Selection Summary and Export Controls */}
       {processedProjects.length > 0 && (
-        <div className="flex items-center justify-between bg-gray-50 border border-gray-200 rounded-lg p-4 mb-4">
-          <div className="flex items-center space-x-4">
-            <div className="text-sm text-gray-700">
+        <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 sm:p-4 mb-4">
+          {/* Mobile Layout */}
+          <div className="flex flex-col space-y-3 sm:hidden">
+            {/* Selection Info */}
+            <div className="text-sm text-gray-700 text-center">
               {selectedRows.size > 0 ? (
                 <span className="font-medium">
                   {selectedRows.size} of {processedProjects.length} projects
@@ -410,37 +428,83 @@ export function ProjectsTable({ projects, onViewProject }: ProjectsTableProps) {
                 <span>Select projects to export data</span>
               )}
             </div>
-            {selectedRows.size > 0 && (
+
+            {/* Buttons Row */}
+            <div className="flex flex-col space-y-2">
+              {selectedRows.size > 0 && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setSelectedRows(new Set())}
+                  className="w-full text-gray-600 hover:text-gray-800"
+                >
+                  Clear Selection
+                </Button>
+              )}
               <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setSelectedRows(new Set())}
-                className="text-gray-600 hover:text-gray-800"
+                onClick={handleExportCsv}
+                disabled={selectedRows.size === 0}
+                className={cn(
+                  "flex items-center justify-center space-x-2 w-full",
+                  selectedRows.size === 0
+                    ? "bg-gradient-to-r from-teal-400 to-teal-500 text-white shadow-sm cursor-not-allowed"
+                    : "bg-gradient-to-r from-teal-500 to-teal-600 text-white shadow-sm hover:from-teal-700 hover:to-teal-800"
+                )}
               >
-                Clear Selection
+                <Download className="w-4 h-4" />
+                <span>Export CSV ({selectedRows.size})</span>
               </Button>
-            )}
+            </div>
           </div>
-          <Button
-            onClick={handleExportCsv}
-            disabled={selectedRows.size === 0}
-            className={cn(
-              "flex items-center space-x-2",
-              selectedRows.size === 0
-                ? "bg-gradient-to-r from-teal-400 to-teal-500 text-white shadow-sm  cursor-not-allowed"
-                : "bg-gradient-to-r from-teal-500 to-teal-600 text-white shadow-sm hover:from-teal-700 hover:to-teal-800"
-            )}
-          >
-            <Download className="w-4 h-4" />
-            <span>Export CSV ({selectedRows.size})</span>
-          </Button>
+
+          {/* Tablet and Desktop Layout */}
+          <div className="hidden sm:flex sm:flex-col md:flex-row md:items-center md:justify-between space-y-3 md:space-y-0">
+            {/* Left Section */}
+            <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
+              <div className="text-sm text-gray-700">
+                {selectedRows.size > 0 ? (
+                  <span className="font-medium">
+                    {selectedRows.size} of {processedProjects.length} projects
+                    selected
+                  </span>
+                ) : (
+                  <span>Select projects to export data</span>
+                )}
+              </div>
+              {selectedRows.size > 0 && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setSelectedRows(new Set())}
+                  className="text-gray-600 hover:text-gray-800 w-full sm:w-auto"
+                >
+                  Clear Selection
+                </Button>
+              )}
+            </div>
+
+            {/* Right Section - Export Button */}
+            <Button
+              onClick={handleExportCsv}
+              disabled={selectedRows.size === 0}
+              className={cn(
+                "flex items-center justify-center space-x-2 w-full sm:w-auto",
+                selectedRows.size === 0
+                  ? "bg-gradient-to-r from-teal-400 to-teal-500 text-white shadow-sm cursor-not-allowed"
+                  : "bg-gradient-to-r from-teal-500 to-teal-600 text-white shadow-sm hover:from-teal-700 hover:to-teal-800"
+              )}
+            >
+              <Download className="w-4 h-4" />
+              <span>Export CSV ({selectedRows.size})</span>
+            </Button>
+          </div>
         </div>
       )}
 
       {/* Projects Table - Desktop */}
       <div className="hidden lg:block rounded-xl border border-gray-200">
         <div className="overflow-x-auto">
-          <Table className="min-w-[1600px]">
+          <Table className="min-w-[1800px]">
             <TableHeader className="sticky top-0 bg-white z-10">
               <TableRow className="h-16">
                 <TableHead className="px-4 w-12">
@@ -516,6 +580,22 @@ export function ProjectsTable({ projects, onViewProject }: ProjectsTableProps) {
                   Budget (₹L)
                 </SortableTableHead>
                 <SortableTableHead
+                  sortKey="contractorName"
+                  sortConfig={sortConfig}
+                  onSort={handleSort}
+                  className="w-36 px-4"
+                >
+                  Contractor
+                </SortableTableHead>
+                <SortableTableHead
+                  sortKey="createdBy"
+                  sortConfig={sortConfig}
+                  onSort={handleSort}
+                  className="w-32 px-4"
+                >
+                  Engineer
+                </SortableTableHead>
+                <SortableTableHead
                   sortKey="executingDepartment"
                   sortConfig={sortConfig}
                   onSort={handleSort}
@@ -532,7 +612,7 @@ export function ProjectsTable({ projects, onViewProject }: ProjectsTableProps) {
               {paginatedProjects.length === 0 ? (
                 <TableRow>
                   <TableCell
-                    colSpan={11}
+                    colSpan={13}
                     className="text-center py-12 text-gray-500"
                   >
                     <div className="flex flex-col items-center space-y-2">
@@ -591,10 +671,6 @@ export function ProjectsTable({ projects, onViewProject }: ProjectsTableProps) {
                       <div className="text-sm text-gray-900 whitespace-nowrap">
                         {formatDate(project.createdAt)}
                       </div>
-                      <div className="text-xs text-gray-500 whitespace-nowrap">
-                        by{" "}
-                        {(project.createdBy as ProjectUser)?.name || "Unknown"}
-                      </div>
                     </TableCell>
 
                     <TableCell className="px-4">
@@ -633,6 +709,18 @@ export function ProjectsTable({ projects, onViewProject }: ProjectsTableProps) {
 
                     <TableCell className="px-4">
                       <div className="text-sm text-gray-900">
+                        {project.contractorName || "Not Assigned"}
+                      </div>
+                    </TableCell>
+
+                    <TableCell className="px-4">
+                      <div className="text-sm text-gray-900">
+                        {(project.createdBy as ProjectUser)?.name || "Unknown"}
+                      </div>
+                    </TableCell>
+
+                    <TableCell className="px-4">
+                      <div className="text-sm text-gray-900">
                         {project.executingDepartment}
                       </div>
                     </TableCell>
@@ -659,7 +747,7 @@ export function ProjectsTable({ projects, onViewProject }: ProjectsTableProps) {
       {/* Projects Table - Mobile & Tablet */}
       <div className="lg:hidden rounded-lg border border-gray-200 bg-white">
         <div className="overflow-x-auto">
-          <Table className="min-w-[1400px]">
+          <Table className="min-w-[1600px]">
             <TableHeader className="sticky top-0 bg-white z-10">
               <TableRow className="h-14">
                 <TableHead className="px-3 w-12">
@@ -695,6 +783,12 @@ export function ProjectsTable({ projects, onViewProject }: ProjectsTableProps) {
                 <TableHead className="px-3 font-semibold text-gray-900 min-w-[100px] whitespace-nowrap">
                   Budget (₹L)
                 </TableHead>
+                <TableHead className="px-3 font-semibold text-gray-900 min-w-[140px]">
+                  Contractor
+                </TableHead>
+                <TableHead className="px-3 font-semibold text-gray-900 min-w-[120px]">
+                  Engineer
+                </TableHead>
                 <TableHead className="px-3 font-semibold text-gray-900 min-w-[180px] whitespace-nowrap">
                   Created At
                 </TableHead>
@@ -710,7 +804,7 @@ export function ProjectsTable({ projects, onViewProject }: ProjectsTableProps) {
               {paginatedProjects.length === 0 ? (
                 <TableRow>
                   <TableCell
-                    colSpan={11}
+                    colSpan={13}
                     className="text-center py-12 text-gray-500"
                   >
                     <div className="flex flex-col items-center space-y-2">
@@ -788,13 +882,17 @@ export function ProjectsTable({ projects, onViewProject }: ProjectsTableProps) {
                       ₹{formatToLakhsWithSuffix(project.estimatedCost)}
                     </TableCell>
 
+                    <TableCell className="px-3 text-xs">
+                      {project.contractorName || "Not Assigned"}
+                    </TableCell>
+
+                    <TableCell className="px-3 text-xs">
+                      {(project.createdBy as ProjectUser)?.name || "Unknown"}
+                    </TableCell>
+
                     <TableCell className="px-3">
                       <div className="text-xs font-medium text-gray-900 whitespace-nowrap">
                         {formatDate(project.createdAt)}
-                      </div>
-                      <div className="text-xs text-gray-500 whitespace-nowrap">
-                        by{" "}
-                        {(project.createdBy as ProjectUser)?.name || "Unknown"}
                       </div>
                     </TableCell>
 

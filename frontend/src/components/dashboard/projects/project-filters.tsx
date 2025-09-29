@@ -30,12 +30,14 @@ interface ProjectFiltersProps {
   projects?: DbProject[];
 }
 
-// Filter config interface - Updated with new filters
+// Filter config interface - Updated with contractor and engineer filters
 export interface FilterConfig {
   status: string;
   district: string;
   createdBy: string;
   sanctioningDepartment: string;
+  contractor: string;
+  engineer: string;
 }
 
 const FilterContext = createContext<FilterContextType | undefined>(undefined);
@@ -56,6 +58,8 @@ export function FilterProvider({ children }: FilterProviderProps) {
     district: "all",
     createdBy: "all",
     sanctioningDepartment: "all",
+    contractor: "all",
+    engineer: "all",
   });
 
   const clearFilters = () => {
@@ -64,6 +68,8 @@ export function FilterProvider({ children }: FilterProviderProps) {
       district: "all",
       createdBy: "all",
       sanctioningDepartment: "all",
+      contractor: "all",
+      engineer: "all",
     });
     setSearchQuery("");
   };
@@ -113,6 +119,22 @@ const getFilterOptions = (projects: DbProject[]) => {
     sanctioningDepartments: Array.from(
       new Set(projects.map((p) => p.sanctioningDepartment).filter(Boolean))
     ).sort(),
+    contractors: Array.from(
+      new Set(projects.map((p) => p.contractorName).filter(Boolean))
+    ).sort(),
+    engineers: Array.from(
+      new Set(
+        projects
+          .map((p) =>
+            typeof p.createdBy === "object" &&
+            p.createdBy !== null &&
+            "name" in p.createdBy
+              ? (p.createdBy as { name: string }).name
+              : undefined
+          )
+          .filter(Boolean)
+      )
+    ).sort(),
   };
 };
 
@@ -152,7 +174,7 @@ export function ProjectFilters({ projects = [] }: ProjectFiltersProps) {
           <span>Filters:</span>
         </div>
 
-        {/* Filter Grid - 2x2 on tablet, 1 column on mobile */}
+        {/* Filter Grid - 2x3 on tablet, 1 column on mobile */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <Select
             value={filters.status}
@@ -193,25 +215,49 @@ export function ProjectFilters({ projects = [] }: ProjectFiltersProps) {
           </Select>
 
           <Select
-            value={filters.createdBy}
+            value={filters.contractor}
             onValueChange={(value) =>
-              setFilters((prev) => ({ ...prev, createdBy: value }))
+              setFilters((prev) => ({ ...prev, contractor: value }))
             }
           >
             <SelectTrigger className="h-9">
-              <SelectValue placeholder="All JE" />
+              <SelectValue placeholder="All Contractors" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All JE</SelectItem>
-              {filterOptions.createdByOptions
-                .filter((je): je is string => typeof je === "string")
-                .map((je) => (
-                  <SelectItem key={je} value={je}>
-                    {je}
-                  </SelectItem>
-                ))}
+              <SelectItem value="all">All Contractors</SelectItem>
+              {filterOptions.contractors.map((contractor) => (
+                <SelectItem key={contractor} value={contractor}>
+                  {contractor}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
+
+          {user?.role !== "JE" && (
+            <Select
+              value={filters.engineer}
+              onValueChange={(value) =>
+                setFilters((prev) => ({ ...prev, engineer: value }))
+              }
+            >
+              <SelectTrigger className="h-9">
+                <SelectValue placeholder="All Engineers" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Engineers</SelectItem>
+                {filterOptions.engineers
+                  .filter(
+                    (engineer): engineer is string =>
+                      typeof engineer === "string"
+                  )
+                  .map((engineer) => (
+                    <SelectItem key={engineer} value={engineer}>
+                      {engineer}
+                    </SelectItem>
+                  ))}
+              </SelectContent>
+            </Select>
+          )}
 
           <Select
             value={filters.sanctioningDepartment}
@@ -293,23 +339,45 @@ export function ProjectFilters({ projects = [] }: ProjectFiltersProps) {
               </SelectContent>
             </Select>
 
+            <Select
+              value={filters.contractor}
+              onValueChange={(value) =>
+                setFilters((prev) => ({ ...prev, contractor: value }))
+              }
+            >
+              <SelectTrigger className="w-[160px] h-9">
+                <SelectValue placeholder="Contractor" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Contractors</SelectItem>
+                {filterOptions.contractors.map((contractor) => (
+                  <SelectItem key={contractor} value={contractor}>
+                    {contractor}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
             {user?.role !== "JE" && (
               <Select
-                value={filters.createdBy}
+                value={filters.engineer}
                 onValueChange={(value) =>
-                  setFilters((prev) => ({ ...prev, createdBy: value }))
+                  setFilters((prev) => ({ ...prev, engineer: value }))
                 }
               >
-                <SelectTrigger className="w-[120px] h-9">
-                  <SelectValue placeholder="JE" />
+                <SelectTrigger className="w-[140px] h-9">
+                  <SelectValue placeholder="Engineer" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All JE</SelectItem>
-                  {filterOptions.createdByOptions
-                    .filter((je): je is string => typeof je === "string")
-                    .map((je) => (
-                      <SelectItem key={je} value={je}>
-                        {je}
+                  <SelectItem value="all">All Engineers</SelectItem>
+                  {filterOptions.engineers
+                    .filter(
+                      (engineer): engineer is string =>
+                        typeof engineer === "string"
+                    )
+                    .map((engineer) => (
+                      <SelectItem key={engineer} value={engineer}>
+                        {engineer}
                       </SelectItem>
                     ))}
                 </SelectContent>
