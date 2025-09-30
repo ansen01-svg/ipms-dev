@@ -58,7 +58,6 @@ import {
   Loader2,
   MapPin,
   Navigation,
-  Phone,
   Plus,
   RefreshCw,
   Upload,
@@ -85,6 +84,9 @@ interface FormLabelWithTooltipProps {
 }
 
 type FormStep = "form" | "review" | "submit";
+
+const apiUrl = process.env.NEXT_PUBLIC_PROD_API_URL;
+// const apiUrl = process.env.NEXT_PUBLIC_DEV_API_URL;
 
 // ============= TOOLTIPS AND LABELS =============
 const Tooltip = ({ content, children }: TooltipProps) => {
@@ -1056,9 +1058,6 @@ export default function CreateProjectForm() {
         status: "Created",
       };
 
-      const apiUrl = process.env.NEXT_PUBLIC_PROD_API_URL;
-      // const apiUrl = process.env.NEXT_PUBLIC_DEV_API_URL;
-
       if (!apiUrl) {
         throw new Error("API configuration is missing");
       }
@@ -1442,7 +1441,6 @@ export default function CreateProjectForm() {
                       <Card>
                         <CardHeader>
                           <CardTitle className="flex items-center gap-2">
-                            <User className="w-5 h-5" />
                             Contractor Information
                           </CardTitle>
                           <CardDescription>
@@ -1485,7 +1483,6 @@ export default function CreateProjectForm() {
                                   tooltip="Enter a valid Indian phone number (10 digits starting with 6-9)"
                                   required
                                 >
-                                  <Phone className="w-4 h-4 inline mr-1" />
                                   Phone Number
                                 </FormLabelWithTooltip>
                                 <FormControl>
@@ -1873,7 +1870,6 @@ export default function CreateProjectForm() {
                       <Card>
                         <CardHeader>
                           <CardTitle className="flex items-center gap-2">
-                            <MapPin className="w-5 h-5" />
                             Location Details
                           </CardTitle>
                           <CardDescription>
