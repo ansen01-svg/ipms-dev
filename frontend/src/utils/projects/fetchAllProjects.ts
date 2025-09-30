@@ -224,6 +224,8 @@ interface BackendProject {
 
   createdAt: string;
   updatedAt: string;
+
+  isProjectEditable: boolean;
 }
 
 // Add only frontend-calculated fields to backend project data

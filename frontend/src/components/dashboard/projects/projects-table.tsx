@@ -31,6 +31,11 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useFilters } from "./project-filters";
 import { StatusBadge } from "./status-badge";
 
+import { updateProjectEditableStatus } from "@/utils/projects/editable-status-change";
+import { Lock, LockOpen } from "lucide-react";
+import { toast } from "sonner";
+import { EditableStatusModal } from "./editable-status-modal";
+
 // Define type for createdBy if not already present
 interface ProjectUser {
   name?: string;
@@ -46,6 +51,8 @@ export interface SortConfig {
 interface ProjectsTableProps {
   projects: DbProject[];
   onViewProject: (project: DbProject) => void;
+  currentUserRole?: string;
+  onProjectUpdate?: () => void;
 }
 
 interface SortableTableHeadProps {
@@ -179,7 +186,12 @@ function SortableTableHead({
 }
 
 // Main Table Component
-export function ProjectsTable({ projects, onViewProject }: ProjectsTableProps) {
+export function ProjectsTable({
+  projects,
+  onViewProject,
+  currentUserRole = "",
+  onProjectUpdate,
+}: ProjectsTableProps) {
   const { searchQuery, filters, hasActiveFilters } = useFilters();
   const [currentPage, setCurrentPage] = useState(1);
   const [sortConfig, setSortConfig] = useState<SortConfig>({
@@ -190,7 +202,13 @@ export function ProjectsTable({ projects, onViewProject }: ProjectsTableProps) {
   // Selection state
   const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set());
 
+  const [editableModalOpen, setEditableModalOpen] = useState(false);
+  const [selectedProjectForEdit, setSelectedProjectForEdit] =
+    useState<DbProject | null>(null);
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
+
   const ITEMS_PER_PAGE = 8;
+  const isAdmin = currentUserRole === "ADMIN";
 
   // Filter, search, and sort projects
   const processedProjects = useMemo(() => {
@@ -400,6 +418,45 @@ export function ProjectsTable({ projects, onViewProject }: ProjectsTableProps) {
     });
   };
 
+  // Handle editable status toggle
+  const handleToggleEditableStatus = (project: DbProject) => {
+    setSelectedProjectForEdit(project);
+    setEditableModalOpen(true);
+  };
+
+  // Confirm editable status change
+  const handleConfirmEditableStatusChange = async (reason: string) => {
+    if (!selectedProjectForEdit) return;
+
+    setIsUpdatingStatus(true);
+
+    try {
+      const newStatus = !selectedProjectForEdit.isProjectEditable;
+
+      const response = await updateProjectEditableStatus(
+        selectedProjectForEdit._id as string,
+        newStatus,
+        reason
+      );
+
+      toast.success(response.message);
+
+      // Close modal
+      setEditableModalOpen(false);
+      setSelectedProjectForEdit(null);
+
+      // Refresh projects list
+      if (onProjectUpdate) {
+        onProjectUpdate();
+      }
+    } catch (error) {
+      console.log(error);
+      toast.error("Failed to update project status");
+    } finally {
+      setIsUpdatingStatus(false);
+    }
+  };
+
   // Reset to first page when filters/search changes
   useEffect(() => {
     setCurrentPage(1);
@@ -606,6 +663,11 @@ export function ProjectsTable({ projects, onViewProject }: ProjectsTableProps) {
                 <TableHead className="px-4 font-semibold text-gray-900 w-24">
                   Actions
                 </TableHead>
+                {isAdmin && (
+                  <TableHead className="px-4 font-semibold text-gray-900 w-32">
+                    Edit Control
+                  </TableHead>
+                )}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -736,6 +798,33 @@ export function ProjectsTable({ projects, onViewProject }: ProjectsTableProps) {
                         View
                       </Button>
                     </TableCell>
+
+                    {isAdmin && (
+                      <TableCell className="px-4">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleToggleEditableStatus(project)}
+                          className={
+                            project.isProjectEditable
+                              ? "text-red-600 border-red-300 hover:bg-red-50"
+                              : "text-green-600 border-green-300 hover:bg-green-50"
+                          }
+                        >
+                          {project.isProjectEditable ? (
+                            <>
+                              <Lock className="w-4 h-4 mr-1" />
+                              Lock
+                            </>
+                          ) : (
+                            <>
+                              <LockOpen className="w-4 h-4 mr-1" />
+                              Unlock
+                            </>
+                          )}
+                        </Button>
+                      </TableCell>
+                    )}
                   </TableRow>
                 ))
               )}
@@ -969,6 +1058,21 @@ export function ProjectsTable({ projects, onViewProject }: ProjectsTableProps) {
             </PaginationContent>
           </Pagination>
         </div>
+      )}
+
+      {/* Editable Status Modal */}
+      {selectedProjectForEdit && (
+        <EditableStatusModal
+          isOpen={editableModalOpen}
+          onClose={() => {
+            setEditableModalOpen(false);
+            setSelectedProjectForEdit(null);
+          }}
+          onConfirm={handleConfirmEditableStatusChange}
+          currentStatus={selectedProjectForEdit.isProjectEditable || false}
+          projectName={selectedProjectForEdit.projectName}
+          isLoading={isUpdatingStatus}
+        />
       )}
     </>
   );

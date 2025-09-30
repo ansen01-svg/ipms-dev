@@ -161,13 +161,6 @@ export const updateProjectStatus = async (
   projectId: string,
   statusData: StatusUpdateRequest
 ): Promise<StatusUpdateResponse> => {
-  console.log("Updating project status:", {
-    projectId,
-    newStatus: statusData.newStatus,
-    hasRemarks: !!statusData.remarks,
-    hasRejectionReason: !!statusData.rejectionReason,
-  });
-
   const response = await makeAuthenticatedRequest(
     `${API_BASE_URL}/project/${projectId}/status`,
     {

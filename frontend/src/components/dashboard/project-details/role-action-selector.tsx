@@ -20,19 +20,10 @@ export function RoleActionSelector({
       {user.role === "JE" && (
         <JEActions project={project} onProjectUpdate={onProjectUpdate} />
       )}
-      {user.role === "AEE" && (
+      {(user.role === "MD" || user.role === "CE" || user.role === "AEE") && (
         <HigherAuthorityActions project={project} role={user.role} />
       )}
-      {user.role === "CE" && (
-        <HigherAuthorityActions project={project} role={user.role} />
-      )}
-      {user.role === "MD" && (
-        <HigherAuthorityActions project={project} role={user.role} />
-      )}
-      {user.role === "VIEWER" && (
-        <ViewerActions project={project} role={user.role} />
-      )}
-      {user.role === "ADMIN" && (
+      {(user.role === "VIEWER" || user.role === "ADMIN") && (
         <ViewerActions project={project} role={user.role} />
       )}
     </div>

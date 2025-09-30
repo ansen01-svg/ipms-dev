@@ -5,7 +5,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { DbProject } from "@/types/projects.types";
-import { AlertTriangle, CheckCircle, Info, Loader2, X, XCircle } from "lucide-react";
+import {
+  AlertTriangle,
+  CheckCircle,
+  Info,
+  Loader2,
+  X,
+  XCircle,
+} from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -142,18 +149,24 @@ export function StatusUpdateModal({
   if (!action || !isOpen) return null;
 
   const actionDetails = getActionDetails();
-  const isFormValid = action === "approve" || (action === "reject" && rejectionReason.length >= 10);
+  const isFormValid =
+    action === "approve" ||
+    (action === "reject" && rejectionReason.length >= 10);
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <Card className="w-full max-w-4xl max-h-[95vh] overflow-y-auto">
-        <CardHeader className={`flex flex-row items-center justify-between space-y-0 pb-4 bg-gradient-to-r ${actionDetails.headerColor} text-white`}>
+        <CardHeader
+          className={`flex flex-row items-center justify-between space-y-0 pb-4 bg-gradient-to-r ${actionDetails.headerColor} text-white`}
+        >
           <div>
             <CardTitle className="text-xl font-semibold flex items-center gap-3">
               {actionDetails.icon}
               {actionDetails.title}
             </CardTitle>
-            <p className="text-white/90 mt-1 text-sm">{actionDetails.description}</p>
+            <p className="text-white/90 mt-1 text-sm">
+              {actionDetails.description}
+            </p>
           </div>
           <Button
             onClick={handleClose}
@@ -208,7 +221,9 @@ export function StatusUpdateModal({
               </div>
               <div className="col-span-full">
                 <span className="text-gray-600">Project Name:</span>
-                <div className="font-medium text-gray-900 mt-1">{project.projectName}</div>
+                <div className="font-medium text-gray-900 mt-1">
+                  {project.projectName}
+                </div>
               </div>
             </div>
           </div>
@@ -216,14 +231,18 @@ export function StatusUpdateModal({
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div className="space-y-4">
               {/* Status Change Preview */}
-              <div className={`p-4 rounded-lg border ${
-                action === "approve"
-                  ? "bg-green-50 border-green-200"
-                  : "bg-red-50 border-red-200"
-              }`}>
-                <h4 className={`font-semibold mb-3 ${
-                  action === "approve" ? "text-green-900" : "text-red-900"
-                }`}>
+              <div
+                className={`p-4 rounded-lg border ${
+                  action === "approve"
+                    ? "bg-green-50 border-green-200"
+                    : "bg-red-50 border-red-200"
+                }`}
+              >
+                <h4
+                  className={`font-semibold mb-3 ${
+                    action === "approve" ? "text-green-900" : "text-red-900"
+                  }`}
+                >
                   Status Change Preview
                 </h4>
                 <div className="flex items-center gap-2 text-sm">
@@ -232,11 +251,13 @@ export function StatusUpdateModal({
                     {project.status}
                   </span>
                   <span className="text-gray-400">→</span>
-                  <span className={`px-3 py-1 rounded-full font-medium ${
-                    action === "approve"
-                      ? "bg-green-200 text-green-800"
-                      : "bg-red-200 text-red-800"
-                  }`}>
+                  <span
+                    className={`px-3 py-1 rounded-full font-medium ${
+                      action === "approve"
+                        ? "bg-green-200 text-green-800"
+                        : "bg-red-200 text-red-800"
+                    }`}
+                  >
                     {actionDetails.newStatus}
                   </span>
                 </div>
@@ -244,7 +265,10 @@ export function StatusUpdateModal({
 
               {/* Remarks Field */}
               <div className="space-y-2">
-                <Label htmlFor="remarks" className="block text-sm font-medium text-gray-700">
+                <Label
+                  htmlFor="remarks"
+                  className="block text-sm font-medium text-gray-700"
+                >
                   Remarks (Optional)
                 </Label>
                 <Textarea
@@ -293,36 +317,50 @@ export function StatusUpdateModal({
                     required
                   />
                   <div className="text-xs text-gray-500 text-right">
-                    {rejectionReason.length}/1000 characters (minimum 10 required)
+                    {rejectionReason.length}/1000 characters (minimum 10
+                    required)
                   </div>
-                  {rejectionReason.length > 0 && rejectionReason.length < 10 && (
-                    <div className="flex items-center gap-2 text-red-600 text-sm">
-                      <AlertTriangle className="h-4 w-4" />
-                      Please provide at least {10 - rejectionReason.length} more characters
-                    </div>
-                  )}
+                  {rejectionReason.length > 0 &&
+                    rejectionReason.length < 10 && (
+                      <div className="flex items-center gap-2 text-red-600 text-sm">
+                        <AlertTriangle className="h-4 w-4" />
+                        Please provide at least {10 -
+                          rejectionReason.length}{" "}
+                        more characters
+                      </div>
+                    )}
                 </div>
               )}
 
               {/* Warning/Info Box */}
-              <div className={`rounded-lg p-4 ${
-                action === "reject"
-                  ? "bg-amber-50 border border-amber-200"
-                  : "bg-blue-50 border border-blue-200"
-              }`}>
-                <h5 className={`text-sm font-medium mb-3 ${
-                  action === "reject" ? "text-amber-900" : "text-blue-900"
-                }`}>
-                  {action === "reject" ? "Important Notice" : "Approval Guidelines"}
+              <div
+                className={`rounded-lg p-4 ${
+                  action === "reject"
+                    ? "bg-amber-50 border border-amber-200"
+                    : "bg-blue-50 border border-blue-200"
+                }`}
+              >
+                <h5
+                  className={`text-sm font-medium mb-3 ${
+                    action === "reject" ? "text-amber-900" : "text-blue-900"
+                  }`}
+                >
+                  {action === "reject"
+                    ? "Important Notice"
+                    : "Approval Guidelines"}
                 </h5>
-                <div className={`space-y-2 text-xs ${
-                  action === "reject" ? "text-amber-700" : "text-blue-700"
-                }`}>
+                <div
+                  className={`space-y-2 text-xs ${
+                    action === "reject" ? "text-amber-700" : "text-blue-700"
+                  }`}
+                >
                   {action === "reject" ? (
                     <>
                       <div className="flex items-center gap-2">
                         <div className="w-2 h-2 bg-amber-400 rounded-full"></div>
-                        <span>Rejecting requires the submitter to address concerns</span>
+                        <span>
+                          Rejecting requires the submitter to address concerns
+                        </span>
                       </div>
                       <div className="flex items-center gap-2">
                         <div className="w-2 h-2 bg-amber-400 rounded-full"></div>
@@ -359,7 +397,9 @@ export function StatusUpdateModal({
             <div className="flex items-center gap-3 p-4 bg-red-50 border border-red-200 rounded-lg">
               <AlertTriangle className="h-5 w-5 text-red-600 flex-shrink-0" />
               <div>
-                <p className="text-sm font-medium text-red-800">Update Failed</p>
+                <p className="text-sm font-medium text-red-800">
+                  Update Failed
+                </p>
                 <p className="text-sm text-red-700">{error}</p>
               </div>
             </div>
@@ -402,12 +442,15 @@ export function StatusUpdateModal({
             </Button>
           </div>
 
-          {action === "reject" && rejectionReason.length < 10 && !isSubmitting && (
-            <div className="text-xs text-gray-500 text-center bg-gray-50 rounded p-2">
-              <Info className="h-3 w-3 inline mr-1" />
-              Provide at least 10 characters for rejection reason to enable submit
-            </div>
-          )}
+          {action === "reject" &&
+            rejectionReason.length < 10 &&
+            !isSubmitting && (
+              <div className="text-xs text-gray-500 text-center bg-gray-50 rounded p-2">
+                <Info className="h-3 w-3 inline mr-1" />
+                Provide at least 10 characters for rejection reason to enable
+                submit
+              </div>
+            )}
         </CardContent>
       </Card>
     </div>

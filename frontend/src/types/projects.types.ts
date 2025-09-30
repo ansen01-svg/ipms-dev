@@ -242,6 +242,23 @@ export interface DbProject {
   progressUpdatesEnabled: boolean;
   financialProgressUpdatesEnabled: boolean;
 
+  // Editable status field
+  isProjectEditable?: boolean;
+
+  // Editable status history
+  editableStatusHistory?: {
+    previousStatus: boolean;
+    newStatus: boolean;
+    changedBy: {
+      userId: string;
+      name: string;
+      role: string;
+    };
+    reason: string;
+    changedAt: string;
+    _id: string;
+  }[];
+
   // Timestamps
   createdAt: string;
   updatedAt: string;

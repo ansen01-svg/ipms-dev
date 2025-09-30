@@ -50,6 +50,17 @@ export function ProjectsContainer() {
     }
   };
 
+  // Function to refresh projects without full loading state
+  const refreshProjects = async () => {
+    try {
+      const projectsData = await fetchAllProjects();
+      setProjects(projectsData);
+      console.log(`Refreshed ${projectsData.length} projects successfully`);
+    } catch (err) {
+      console.error("Error refreshing projects:", err);
+    }
+  };
+
   // Load projects on component mount
   useEffect(() => {
     loadProjects();
@@ -172,7 +183,12 @@ export function ProjectsContainer() {
       <ProjectFilters projects={projects} />
 
       {/* Projects Table */}
-      <ProjectsTable projects={projects} onViewProject={handleViewProject} />
+      <ProjectsTable
+        projects={projects}
+        onViewProject={handleViewProject}
+        currentUserRole={user?.role}
+        onProjectUpdate={refreshProjects}
+      />
 
       {/* Empty state */}
       {/* {projects.length === 0 && !loading && !error && (

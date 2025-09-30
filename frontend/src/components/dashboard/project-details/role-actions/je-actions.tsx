@@ -54,8 +54,7 @@ export function JEActions({ project, onProjectUpdate }: JEActionsProps) {
     ((project as DbProject).billSubmittedAmount || 0) < project.estimatedCost &&
     isProjectCreator;
 
-  const canEditProject =
-    project.status.includes("Rejected") && isProjectCreator;
+  const canEditProject = project.isProjectEditable && isProjectCreator;
 
   // Get current values for display
   const currentBillAmount = (project as DbProject).billSubmittedAmount || 0;
@@ -186,16 +185,14 @@ export function JEActions({ project, onProjectUpdate }: JEActionsProps) {
 
         {/* Project Edit Information */}
         {canEditProject && (
-          <div className="mt-4 bg-orange-50 border border-orange-200 rounded-lg p-3">
-            <div className="flex items-center gap-2 text-orange-700">
+          <div className="mt-4 bg-blue-50 border border-blue-200 rounded-lg p-3">
+            <div className="flex items-center gap-2 text-blue-700">
               <Edit className="w-4 h-4" />
-              <span className="text-sm font-medium">
-                Project Rejected - Edit Required
-              </span>
+              <span className="text-sm font-medium">Project Editable</span>
             </div>
-            <div className="text-xs text-orange-600 mt-1">
-              {`This project has been rejected and can be edited to address the
-              feedback. Click "Edit Project" to make changes and resubmit.`}
+            <div className="text-xs text-blue-600 mt-1">
+              This project is currently editable. You can make changes and
+              resubmit for approval.
             </div>
           </div>
         )}

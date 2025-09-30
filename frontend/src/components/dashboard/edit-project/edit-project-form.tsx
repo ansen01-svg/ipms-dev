@@ -88,6 +88,9 @@ interface EditProjectFormProps {
 
 type FormStep = "form" | "review" | "submit";
 
+const apiUrl = process.env.NEXT_PUBLIC_PROD_API_URL;
+// const apiUrl = process.env.NEXT_PUBLIC_DEV_API_URL;
+
 // ============= TOOLTIPS AND LABELS =============
 const Tooltip = ({ content, children }: TooltipProps) => {
   const [isVisible, setIsVisible] = useState(false);
@@ -774,8 +777,6 @@ export default function EditProjectForm({ projectId }: EditProjectFormProps) {
     }
   }, [projectId, populateForm]);
 
-  console.log(projectId, existingProject);
-
   // Watch for fund changes to populate sub funds
   const selectedFund = form.watch("fund");
   const selectedSubFund = form.watch("subFund");
@@ -1174,9 +1175,6 @@ export default function EditProjectForm({ projectId }: EditProjectFormProps) {
           formData.append("projectFiles", file);
         });
       }
-
-      const apiUrl = process.env.NEXT_PUBLIC_PROD_API_URL;
-      // const apiUrl = process.env.NEXT_PUBLIC_DEV_API_URL;
 
       if (!apiUrl) {
         throw new Error("API configuration is missing");
