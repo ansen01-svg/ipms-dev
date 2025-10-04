@@ -46,11 +46,13 @@ export function JEActions({ project, onProjectUpdate }: JEActionsProps) {
 
   const canUpdatePhysicalProgress =
     project.status === PROJECT_STATUSES.ONGOING &&
+    !project.isProjectEditable &&
     (project.progressPercentage || 0) < 100 &&
     isProjectCreator;
 
   const canUpdateFinancialProgress =
     project.status === PROJECT_STATUSES.ONGOING &&
+    !project.isProjectEditable &&
     ((project as DbProject).billSubmittedAmount || 0) < project.estimatedCost &&
     isProjectCreator;
 

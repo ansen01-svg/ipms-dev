@@ -6,25 +6,30 @@ import { ActionItemsWidget } from "@/components/dashboard/dashboard-page/widgets
 import DistrictAnalyticsStackedBarChart from "@/components/dashboard/dashboard-page/widgets/district-analytics-widget";
 import { RecentActivityWidget } from "@/components/dashboard/dashboard-page/widgets/recent-activity-widget";
 import { WorkloadDistributionWidget } from "@/components/dashboard/dashboard-page/widgets/workload-distribution-widget";
-// import { useDashboardKPIs } from "@/hooks/useDashboardData";
+import { useDashboardKPIs } from "@/hooks/useDashboardData";
 import React from "react";
 
 const ExecutiveDashboard: React.FC = () => {
-  // const { data } = useDashboardKPIs();
+  const { data } = useDashboardKPIs();
 
-  // const progressData = {
-  //   completed: data?.data?.projectOverview?.completed || 0,
-  //   inProgress: data?.data?.projectOverview?.ongoing || 0,
-  //   overdue: data?.data?.projectOverview?.overdue || 0,
-  //   total: data?.data?.projectOverview?.totalProjects || 0,
-  // };
+  const dbProgressData = {
+    completed: data?.data?.projectOverview?.completed || 0,
+    inProgress: data?.data?.projectOverview?.ongoing || 0,
+    overdue: data?.data?.projectOverview?.overdue || 0,
+    total: data?.data?.projectOverview?.totalProjects || 0,
+  };
 
-  const progressData = {
+  const mockedProgressData = {
     completed: 54,
     inProgress: 26,
     overdue: 14,
     total: 94,
   };
+
+  const progressData =
+    data?.data?.projectOverview?.totalProjects >= 5
+      ? dbProgressData
+      : mockedProgressData;
 
   return (
     <div className="space-y-6 mb-5">

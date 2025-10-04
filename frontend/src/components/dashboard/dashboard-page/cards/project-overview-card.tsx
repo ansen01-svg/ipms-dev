@@ -4,8 +4,8 @@ import {
   Archive,
   CheckCircle,
   Clock,
-  DollarSign,
   FolderOpen,
+  IndianRupee,
   Target,
 } from "lucide-react";
 import React, { useMemo, useState } from "react";
@@ -99,7 +99,7 @@ export const ProjectOverviewCards: React.FC = () => {
         value={`₹${((archiveOverview?.totalValue || 0) / 10000000).toFixed(
           1
         )}Cr`}
-        icon={DollarSign}
+        icon={IndianRupee}
         colorScheme="blue"
         subtitle="Total project value"
       />
