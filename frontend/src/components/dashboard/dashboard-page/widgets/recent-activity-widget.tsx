@@ -5,9 +5,9 @@ import {
   Activity,
   CheckCircle,
   Clock,
-  DollarSign,
   FileText,
   FolderPlus,
+  IndianRupee,
 } from "lucide-react";
 import React from "react";
 
@@ -18,7 +18,7 @@ const getActivityIcon = (type: string) => {
     case "progress_update":
       return <Activity className="h-4 w-4" />;
     case "financial_update":
-      return <DollarSign className="h-4 w-4" />;
+      return <IndianRupee className="h-4 w-4" />;
     case "project_created":
       return <FolderPlus className="h-4 w-4" />;
     default:

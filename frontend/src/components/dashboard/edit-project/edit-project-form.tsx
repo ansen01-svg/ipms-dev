@@ -34,9 +34,9 @@ import { Toaster } from "@/components/ui/sonner";
 import { Textarea } from "@/components/ui/textarea";
 import { getAuthToken } from "@/lib/rbac-config/auth-local";
 import {
-  CreateProjectFormValues,
-  createProjectSchema,
-} from "@/schema/create-project/create-projects.schema";
+  EditProjectFormValues,
+  editProjectSchema,
+} from "@/schema/edit-project/edit-project.schema";
 import { DbProject, SubProject } from "@/types/projects.types";
 import {
   getCurrentPosition,
@@ -56,7 +56,6 @@ import {
   Loader2,
   MapPin,
   Navigation,
-  Phone,
   Plus,
   RefreshCw,
   Save,
@@ -198,7 +197,7 @@ const ProjectEditPreview = ({
   existingFiles,
   onEdit,
 }: {
-  formData: CreateProjectFormValues;
+  formData: EditProjectFormValues;
   uploadedFiles: File[];
   existingFiles: { fileName: string; fileSize: number }[];
   onEdit: () => void;
@@ -617,8 +616,8 @@ export default function EditProjectForm({ projectId }: EditProjectFormProps) {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const form = useForm<CreateProjectFormValues>({
-    resolver: zodResolver(createProjectSchema),
+  const form = useForm<EditProjectFormValues>({
+    resolver: zodResolver(editProjectSchema),
     defaultValues: {
       dateOfIssueOfWorkOrder: new Date().toISOString().split("T")[0],
       projectName: "",
@@ -1109,7 +1108,7 @@ export default function EditProjectForm({ projectId }: EditProjectFormProps) {
     setCurrentStep("form");
   };
 
-  const onSubmit = async (values: CreateProjectFormValues) => {
+  const onSubmit = async (values: EditProjectFormValues) => {
     try {
       setIsSubmittingForm(true);
       const token = getAuthToken();
@@ -1143,7 +1142,7 @@ export default function EditProjectForm({ projectId }: EditProjectFormProps) {
       ];
 
       fieldsToUpdate.forEach((field) => {
-        const value = values[field as keyof CreateProjectFormValues];
+        const value = values[field as keyof EditProjectFormValues];
         if (value !== undefined && value !== null) {
           if (field === "hasSubProjects") {
             formData.append(field, value.toString());
@@ -1540,7 +1539,6 @@ export default function EditProjectForm({ projectId }: EditProjectFormProps) {
                   <Card>
                     <CardHeader>
                       <CardTitle className="flex items-center gap-2">
-                        <User className="w-5 h-5" />
                         Contractor Information
                       </CardTitle>
                       <CardDescription>
@@ -1582,7 +1580,6 @@ export default function EditProjectForm({ projectId }: EditProjectFormProps) {
                               tooltip="Enter a valid Indian phone number (10 digits starting with 6-9)"
                               required
                             >
-                              <Phone className="w-4 h-4 inline mr-1" />
                               Phone Number
                             </FormLabelWithTooltip>
                             <FormControl>
@@ -1969,7 +1966,6 @@ export default function EditProjectForm({ projectId }: EditProjectFormProps) {
                   <Card>
                     <CardHeader>
                       <CardTitle className="flex items-center gap-2">
-                        <MapPin className="w-5 h-5" />
                         Location Details
                       </CardTitle>
                       <CardDescription>
