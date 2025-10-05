@@ -7,7 +7,7 @@ export const designation = [
   "CE",
   "MD",
   "VIEWER",
-  "EXECUTOR",
+  "OPERATOR",
 ];
 
 const createuserFormSchema = z.object({

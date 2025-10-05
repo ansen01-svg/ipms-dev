@@ -4,7 +4,7 @@ export const USER_ROLES = {
   AEE: "AEE",
   CE: "CE",
   MD: "MD",
-  EXECUTOR: "EXECUTOR",
+  OPERATOR: "OPERATOR",
   VIEWER: "VIEWER",
 } as const;
 
@@ -16,7 +16,7 @@ export const ROLE_LABELS = {
   AEE: "Assistant Executive Engineer",
   CE: "Chief Engineer",
   MD: "Managing Director",
-  EXECUTOR: "Executor",
+  OPERATOR: "Operator",
   VIEWER: "Viewer",
 } as const;
 
@@ -26,7 +26,7 @@ export const ROLE_DASHBOARD_PATHS = {
   AEE: "/dashboard/aee",
   CE: "/dashboard/ce",
   MD: "/dashboard/md",
-  EXECUTOR: "/dashboard/executor",
+  OPERATOR: "/dashboard/operator",
   VIEWER: "/dashboard/viewer",
 } as const;
 
@@ -36,6 +36,6 @@ export const ROLE_NAVIGATION_LABELS = {
   AEE: "Projects",
   CE: "Approval Queue",
   MD: "Sanction Queue",
-  EXECUTOR: "Implementation",
+  OPERATOR: "Projects",
   VIEWER: "All Projects",
 } as const;

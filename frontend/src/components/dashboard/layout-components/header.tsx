@@ -98,7 +98,9 @@ export default function Header({
           {/* User profile with dropdown */}
           <div className="flex items-center justify-center space-x-5 pl-3">
             <div className="hidden sm:block text-right">
-              <p className="text-sm font-medium text-gray-900">{user.name}</p>
+              <p className="text-sm font-medium leading-none text-gray-900">
+                {user?.name || "User"}
+              </p>
               <p className="text-xs text-gray-500">{user.role}</p>
             </div>
 
@@ -112,7 +114,7 @@ export default function Header({
                   <Avatar className="h-10 w-10">
                     <AvatarImage src={user.avatar} alt={user.name} />
                     <AvatarFallback className="bg-gradient-to-r from-blue-500 to-purple-600 text-white">
-                      {user.name
+                      {(user?.name || "User")
                         .split(" ")
                         .map((n) => n[0])
                         .join("")}
@@ -129,8 +131,8 @@ export default function Header({
                 {/* User info header */}
                 <DropdownMenuLabel className="font-normal py-[10px]">
                   <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium leading-none text-gray-900">
-                      {user.name}
+                    <p className="text-sm font-medium text-gray-900">
+                      {user?.name || "User"}
                     </p>
                     <p className="text-xs leading-none text-gray-500">
                       {user.role}

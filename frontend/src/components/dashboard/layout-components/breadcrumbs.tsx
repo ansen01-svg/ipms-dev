@@ -67,7 +67,11 @@ export default function Breadcrumbs({ navigationItems }: BreadcrumbsProps) {
 
     // If we're on the root path, return just Dashboard
     if (pathname === "/" || pathname === "/dashboard") {
-      breadcrumbs[0].isLast = true;
+      breadcrumbs.push({
+        label: "Dashboard",
+        href: "/dashboard",
+        isLast: true,
+      });
       return breadcrumbs;
     }
 
