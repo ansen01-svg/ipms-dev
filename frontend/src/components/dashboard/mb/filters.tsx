@@ -7,7 +7,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { MBFilterConfig, MeasurementBook } from "@/types/mb.types";
+import { DbMeasurementBook } from "@/types/mb.types";
 import { Search, X } from "lucide-react";
 import {
   createContext,
@@ -19,18 +19,12 @@ import {
 
 // Types and Interfaces
 interface FilterContextType {
-  searchQuery: string;
   projectIdSearch: string;
   selectedCreator: string;
-  selectedApprovalStatus: string;
-  selectedFileType: string;
-  filters: MBFilterConfig;
-  setSearchQuery: (query: string) => void;
+  selectedProjectType: string;
   setProjectIdSearch: (projectId: string) => void;
   setSelectedCreator: (creator: string) => void;
-  setSelectedApprovalStatus: (status: string) => void;
-  setSelectedFileType: (fileType: string) => void;
-  setFilters: React.Dispatch<React.SetStateAction<MBFilterConfig>>;
+  setSelectedProjectType: (type: string) => void;
   clearFilters: () => void;
   hasActiveFilters: boolean;
 }
@@ -40,7 +34,7 @@ interface FilterProviderProps {
 }
 
 interface MBFiltersProps {
-  measurementBooks?: MeasurementBook[];
+  measurementBooks?: DbMeasurementBook[];
   onProjectIdSearch?: (projectId: string) => void;
   isSearching?: boolean;
 }
@@ -57,67 +51,33 @@ export const useMBFilters = () => {
 
 // Filter Provider
 export function MBFilterProvider({ children }: FilterProviderProps) {
-  const [searchQuery, setSearchQuery] = useState("");
   const [projectIdSearch, setProjectIdSearch] = useState("");
   const [selectedCreator, setSelectedCreator] = useState("all");
-  const [selectedApprovalStatus, setSelectedApprovalStatus] = useState("all");
-  const [selectedFileType, setSelectedFileType] = useState("all");
-  const [filters, setFilters] = useState<MBFilterConfig>(() => ({
-    search: "",
-    dateFrom: "",
-    dateTo: "",
-    hasRemarks: "all",
-    isApproved: "all",
-    fileType: "all",
-  }));
+  const [selectedProjectType, setSelectedProjectType] = useState("all");
 
   const clearFilters = useCallback(() => {
-    setFilters({
-      search: "",
-      dateFrom: "",
-      dateTo: "",
-      hasRemarks: "all",
-      isApproved: "all",
-      fileType: "all",
-    });
-    setSearchQuery("");
     setProjectIdSearch("");
     setSelectedCreator("all");
-    setSelectedApprovalStatus("all");
-    setSelectedFileType("all");
+    setSelectedProjectType("all");
   }, []);
 
   const hasActiveFilters = useMemo(() => {
     return (
-      searchQuery !== "" ||
       projectIdSearch !== "" ||
       selectedCreator !== "all" ||
-      selectedApprovalStatus !== "all" ||
-      selectedFileType !== "all"
+      selectedProjectType !== "all"
     );
-  }, [
-    searchQuery,
-    projectIdSearch,
-    selectedCreator,
-    selectedApprovalStatus,
-    selectedFileType,
-  ]);
+  }, [projectIdSearch, selectedCreator, selectedProjectType]);
 
   return (
     <FilterContext.Provider
       value={{
-        searchQuery,
         projectIdSearch,
         selectedCreator,
-        selectedApprovalStatus,
-        selectedFileType,
-        filters,
-        setSearchQuery,
+        selectedProjectType,
         setProjectIdSearch,
         setSelectedCreator,
-        setSelectedApprovalStatus,
-        setSelectedFileType,
-        setFilters,
+        setSelectedProjectType,
         clearFilters,
         hasActiveFilters,
       }}
@@ -128,7 +88,7 @@ export function MBFilterProvider({ children }: FilterProviderProps) {
 }
 
 // Get unique creators from measurement books
-const getCreators = (measurementBooks: MeasurementBook[]) => {
+const getCreators = (measurementBooks: DbMeasurementBook[]) => {
   const creators = Array.from(
     new Map(
       measurementBooks
@@ -138,6 +98,7 @@ const getCreators = (measurementBooks: MeasurementBook[]) => {
           {
             id: mb.createdBy.userId,
             name: mb.createdBy.name,
+            role: mb.createdBy.role,
           },
         ])
     ).values()
@@ -155,10 +116,10 @@ export function MBFilters({
   const {
     projectIdSearch,
     selectedCreator,
-    selectedFileType,
+    selectedProjectType,
     setProjectIdSearch,
     setSelectedCreator,
-    setSelectedFileType,
+    setSelectedProjectType,
     clearFilters,
     hasActiveFilters,
   } = useMBFilters();
@@ -216,10 +177,10 @@ export function MBFilters({
         </div>
       </div>
 
-      {/* Search and Filters in Same Line */}
+      {/* Filters Row */}
       <div className="flex flex-col lg:flex-row gap-4 lg:items-center lg:justify-between">
-        {/* Filters */}
         <div className="flex flex-wrap gap-3 items-center">
+          {/* Creator Filter */}
           <Select value={selectedCreator} onValueChange={setSelectedCreator}>
             <SelectTrigger className="w-[160px] h-9">
               <SelectValue placeholder="Created By" />
@@ -234,17 +195,22 @@ export function MBFilters({
             </SelectContent>
           </Select>
 
-          <Select value={selectedFileType} onValueChange={setSelectedFileType}>
-            <SelectTrigger className="w-[120px] h-9">
-              <SelectValue placeholder="File Type" />
+          {/* Project Type Filter */}
+          <Select
+            value={selectedProjectType}
+            onValueChange={setSelectedProjectType}
+          >
+            <SelectTrigger className="w-[160px] h-9">
+              <SelectValue placeholder="Project Type" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Types</SelectItem>
-              <SelectItem value="document">Document</SelectItem>
-              <SelectItem value="image">Image</SelectItem>
+              <SelectItem value="Project">Project</SelectItem>
+              <SelectItem value="ArchiveProject">Archive Project</SelectItem>
             </SelectContent>
           </Select>
 
+          {/* Clear Filters Button */}
           {hasActiveFilters && (
             <Button
               variant="outline"

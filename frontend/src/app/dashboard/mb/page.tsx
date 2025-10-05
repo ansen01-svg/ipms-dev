@@ -2,47 +2,47 @@
 
 import { MBFilterProvider, MBFilters } from "@/components/dashboard/mb/filters";
 import { MBTable } from "@/components/dashboard/mb/table";
+import { MBDetailDialog } from "@/components/dashboard/mb/view-mb-dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { useAuth } from "@/contexts/auth-context";
-import { MBPaginationData, MeasurementBook } from "@/types/mb.types";
+import { DbMeasurementBook, MBListResponse } from "@/types/mb.types";
 import { mbApiService } from "@/utils/mb/api-service";
-import { AlertTriangle, Download, Plus, RefreshCw } from "lucide-react";
+import { generateMBCSV, generateMBPDF } from "@/utils/mb/pdf-csv-helpers";
+import {
+  AlertTriangle,
+  Archive,
+  FileText,
+  FolderOpen,
+  Plus,
+  RefreshCw,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 
 export default function MeasurementBooksPage() {
   const router = useRouter();
-  const [measurementBooks, setMeasurementBooks] = useState<MeasurementBook[]>(
+  const [measurementBooks, setMeasurementBooks] = useState<DbMeasurementBook[]>(
     []
   );
   const [pagination, setPagination] = useState<
-    MBPaginationData["pagination"] | null
+    MBListResponse["data"]["pagination"] | null
+  >(null);
+  const [summary, setSummary] = useState<
+    MBListResponse["data"]["summary"] | null
   >(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
-
-  // Project search states
-  const [searchingProject, setSearchingProject] = useState(false);
   const [currentProjectId, setCurrentProjectId] = useState<string>("");
-
-  // Detail view states
+  const [searchingProject, setSearchingProject] = useState(false);
   const [showDetailDialog, setShowDetailDialog] = useState(false);
-  const [selectedMB, setSelectedMB] = useState<MeasurementBook | null>(null);
+  const [selectedMB, setSelectedMB] = useState<DbMeasurementBook | null>(null);
 
   const { user } = useAuth();
 
-  // Load all measurement books initially
   const loadAllMeasurementBooks = useCallback(
     async (isRefresh = false, page = 1) => {
       try {
@@ -53,16 +53,16 @@ export default function MeasurementBooksPage() {
         }
         setError(null);
 
-        const data: MBPaginationData = await mbApiService.getAllMBs({
+        const data = await mbApiService.getAllMBs({
           page,
           limit: 20,
           sortBy: "createdAt",
           sortOrder: "desc",
         });
 
-        // Safely set data with fallbacks
         setMeasurementBooks(data.measurementBooks || []);
         setPagination(data.pagination || null);
+        setSummary(data.summary || null);
         setCurrentProjectId("");
       } catch (err) {
         console.error("Error loading measurement books:", err);
@@ -72,10 +72,9 @@ export default function MeasurementBooksPage() {
             : "Failed to load measurement books";
         setError(errorMessage);
         toast.error(errorMessage);
-
-        // Reset data on error
         setMeasurementBooks([]);
         setPagination(null);
+        setSummary(null);
       } finally {
         setLoading(false);
         setRefreshing(false);
@@ -84,26 +83,22 @@ export default function MeasurementBooksPage() {
     []
   );
 
-  // Load measurement books for a specific project
   const loadProjectMeasurementBooks = useCallback(
     async (projectId: string, page = 1) => {
       try {
         setSearchingProject(true);
         setError(null);
 
-        const data: MBPaginationData = await mbApiService.getMBsForProject(
-          projectId,
-          {
-            page,
-            limit: 20,
-            sortBy: "createdAt",
-            sortOrder: "desc",
-          }
-        );
+        const data = await mbApiService.getMBsByProject(projectId, {
+          page,
+          limit: 20,
+          sortBy: "createdAt",
+          sortOrder: "desc",
+        });
 
-        // Safely set data with fallbacks
         setMeasurementBooks(data.measurementBooks || []);
         setPagination(data.pagination || null);
+        setSummary(data.summary || null);
         setCurrentProjectId(projectId);
         setCurrentPage(1);
 
@@ -122,16 +117,15 @@ export default function MeasurementBooksPage() {
         setError(errorMessage);
         toast.error(errorMessage);
 
-        // If project not found or error, fall back to all MBs
         if (
           err instanceof Error &&
           (err.message.includes("not found") || err.message.includes("Invalid"))
         ) {
           loadAllMeasurementBooks();
         } else {
-          // Reset data on other errors
           setMeasurementBooks([]);
           setPagination(null);
+          setSummary(null);
         }
       } finally {
         setSearchingProject(false);
@@ -140,12 +134,10 @@ export default function MeasurementBooksPage() {
     [loadAllMeasurementBooks]
   );
 
-  // Initial load
   useEffect(() => {
     loadAllMeasurementBooks();
   }, [loadAllMeasurementBooks]);
 
-  // Handle project search
   const handleProjectSearch = useCallback(
     (projectId: string) => {
       if (projectId.trim()) {
@@ -155,7 +147,6 @@ export default function MeasurementBooksPage() {
     [loadProjectMeasurementBooks]
   );
 
-  // Handle page change
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
     if (currentProjectId) {
@@ -165,13 +156,29 @@ export default function MeasurementBooksPage() {
     }
   };
 
-  // Handle view MB details
-  const handleViewMB = (mb: MeasurementBook) => {
+  const handleViewMB = (mb: DbMeasurementBook) => {
     setSelectedMB(mb);
     setShowDetailDialog(true);
   };
 
-  // Handle refresh
+  const handleDownloadMB = async (
+    mb: DbMeasurementBook,
+    format: "pdf" | "csv"
+  ) => {
+    try {
+      if (format === "pdf") {
+        await generateMBPDF(mb);
+        toast.success("PDF downloaded successfully");
+      } else {
+        generateMBCSV(mb);
+        toast.success("CSV downloaded successfully");
+      }
+    } catch (error) {
+      console.error("Error downloading MB:", error);
+      toast.error(`Failed to download ${format.toUpperCase()}`);
+    }
+  };
+
   const handleRefresh = () => {
     if (currentProjectId) {
       loadProjectMeasurementBooks(currentProjectId, currentPage);
@@ -180,53 +187,18 @@ export default function MeasurementBooksPage() {
     }
   };
 
-  // Reset to show all MBs
   const handleShowAllMBs = () => {
     loadAllMeasurementBooks();
     setCurrentPage(1);
   };
 
-  // Navigate to new MB page
   const handleNewMB = () => {
     router.push("/dashboard/mb/new");
   };
 
-  // Download file helper
-  const handleDownloadFile = useCallback((mb: MeasurementBook) => {
-    try {
-      if (!mb || !mb.uploadedFile || !mb.uploadedFile.downloadURL) {
-        toast.error("File download URL not available");
-        return;
-      }
-
-      const downloadUrl = mb.uploadedFile.downloadURL;
-      const fileName =
-        mb.uploadedFile.originalName || mb.uploadedFile.fileName || "download";
-
-      const link = document.createElement("a");
-      link.href = downloadUrl;
-      link.download = fileName;
-      link.target = "_blank";
-      link.rel = "noopener noreferrer";
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    } catch (error) {
-      console.error("Error downloading file:", error);
-      toast.error("Failed to download file");
-    }
-  }, []);
-
-  // Format date helper
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-IN", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
+  const totalMBs = summary?.total || 0;
+  const projectMBs = summary?.byProjectType?.Project || 0;
+  const archiveMBs = summary?.byProjectType?.ArchiveProject || 0;
 
   return (
     <div className="w-full mb-5 space-y-4 sm:space-y-6 bg-white p-4 sm:p-6 rounded-xl shadow">
@@ -251,16 +223,63 @@ export default function MeasurementBooksPage() {
         )}
       </div>
 
+      {/* Summary Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Total MBs</p>
+                <p className="text-3xl font-bold text-gray-900 mt-2">
+                  {totalMBs}
+                </p>
+              </div>
+              <div className="h-12 w-12 bg-blue-100 rounded-full flex items-center justify-center">
+                <FileText className="h-6 w-6 text-blue-600" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Project MBs</p>
+                <p className="text-3xl font-bold text-gray-900 mt-2">
+                  {projectMBs}
+                </p>
+              </div>
+              <div className="h-12 w-12 bg-green-100 rounded-full flex items-center justify-center">
+                <FolderOpen className="h-6 w-6 text-green-600" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Archive MBs</p>
+                <p className="text-3xl font-bold text-gray-900 mt-2">
+                  {archiveMBs}
+                </p>
+              </div>
+              <div className="h-12 w-12 bg-yellow-100 rounded-full flex items-center justify-center">
+                <Archive className="h-6 w-6 text-yellow-600" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
       {/* Main Content */}
       <MBFilterProvider>
         <div className="w-full space-y-4 sm:space-y-6">
           {/* Action Bar */}
           <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
             <div className="flex items-center gap-2">
-              <h2 className="text-lg font-semibold text-gray-900">
-                Measurement Books (
-                {pagination?.totalCount || measurementBooks.length})
-              </h2>
               {currentProjectId && (
                 <span className="text-sm text-blue-600 bg-blue-50 px-2 py-1 rounded">
                   Project: {currentProjectId}
@@ -318,7 +337,8 @@ export default function MeasurementBooksPage() {
             <MBTable
               measurementBooks={measurementBooks}
               onViewMB={handleViewMB}
-              // pagination={pagination}
+              onDownloadMB={handleDownloadMB}
+              pagination={pagination ?? undefined}
               onPageChange={handlePageChange}
               isLoading={loading}
             />
@@ -328,167 +348,11 @@ export default function MeasurementBooksPage() {
 
       {/* Detail View Dialog */}
       {showDetailDialog && selectedMB && (
-        <Dialog open={showDetailDialog} onOpenChange={setShowDetailDialog}>
-          <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Measurement Book Details</DialogTitle>
-              <DialogDescription>
-                Detailed information about the measurement book
-              </DialogDescription>
-            </DialogHeader>
-
-            <div className="space-y-6">
-              {/* Project Information */}
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <h4 className="font-medium text-gray-900 mb-2">
-                  Project Information
-                </h4>
-                {selectedMB.project ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                    <div>
-                      <span className="font-medium text-gray-600">
-                        Project Name:
-                      </span>
-                      <div className="mt-1">
-                        {selectedMB.project.projectName}
-                      </div>
-                    </div>
-                    <div>
-                      <span className="font-medium text-gray-600">
-                        Work Order:
-                      </span>
-                      <div className="mt-1">
-                        {selectedMB.project.workOrderNumber}
-                      </div>
-                    </div>
-                    <div>
-                      <span className="font-medium text-gray-600">
-                        District:
-                      </span>
-                      <div className="mt-1">{selectedMB.project.district}</div>
-                    </div>
-                    {selectedMB.project.state && (
-                      <div>
-                        <span className="font-medium text-gray-600">
-                          State:
-                        </span>
-                        <div className="mt-1">{selectedMB.project.state}</div>
-                      </div>
-                    )}
-                    <div>
-                      <span className="font-medium text-gray-600">
-                        Estimated Cost:
-                      </span>
-                      <div className="mt-1">
-                        ₹
-                        {selectedMB.project.estimatedCost?.toLocaleString() ||
-                          "N/A"}
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="text-sm text-gray-500 p-3 bg-yellow-50 rounded-lg">
-                    Project information is not available for this measurement
-                    book.
-                  </div>
-                )}
-              </div>
-
-              {/* MB Details */}
-              <div>
-                <h4 className="font-medium text-gray-900 mb-3">Description</h4>
-                <div className="p-3 bg-gray-50 rounded-lg text-sm">
-                  {selectedMB.description}
-                </div>
-              </div>
-
-              {selectedMB.remarks && (
-                <div>
-                  <h4 className="font-medium text-gray-900 mb-3">Remarks</h4>
-                  <div className="p-3 bg-yellow-50 rounded-lg text-sm">
-                    {selectedMB.remarks}
-                  </div>
-                </div>
-              )}
-
-              {/* File Information */}
-              <div>
-                <h4 className="font-medium text-gray-900 mb-3">
-                  File Information
-                </h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <span className="font-medium text-gray-600">
-                      File Name:
-                    </span>
-                    <div className="mt-1">
-                      {selectedMB.uploadedFile.originalName}
-                    </div>
-                  </div>
-                  <div>
-                    <span className="font-medium text-gray-600">
-                      File Type:
-                    </span>
-                    <div className="mt-1 capitalize">
-                      {selectedMB.uploadedFile.fileType}
-                    </div>
-                  </div>
-                  <div>
-                    <span className="font-medium text-gray-600">
-                      MIME Type:
-                    </span>
-                    <div className="mt-1">
-                      {selectedMB.uploadedFile.mimeType}
-                    </div>
-                  </div>
-                  <div>
-                    <span className="font-medium text-gray-600">
-                      File Size:
-                    </span>
-                    <div className="mt-1">
-                      {selectedMB.humanReadableFileSize ||
-                        `${(
-                          selectedMB.uploadedFile.fileSize /
-                          (1024 * 1024)
-                        ).toFixed(2)} MB`}
-                    </div>
-                  </div>
-                  <div>
-                    <span className="font-medium text-gray-600">Uploaded:</span>
-                    <div className="mt-1">
-                      {formatDate(selectedMB.uploadedFile.uploadedAt)}
-                    </div>
-                  </div>
-                </div>
-                <div className="mt-3">
-                  <Button
-                    onClick={() => handleDownloadFile(selectedMB)}
-                    className="bg-teal-600 hover:bg-teal-700"
-                    disabled={!selectedMB.uploadedFile.downloadURL}
-                  >
-                    <Download className="w-4 h-4 mr-2" />
-                    Download File
-                  </Button>
-                </div>
-              </div>
-
-              {/* Creation Information */}
-              <div className="pt-4 border-t text-xs text-gray-500">
-                <div>
-                  Created by {selectedMB.createdBy.name} (
-                  {selectedMB.createdBy.role}) on{" "}
-                  {formatDate(selectedMB.createdAt)}
-                </div>
-                {selectedMB.lastModifiedBy && (
-                  <div className="mt-1">
-                    Last modified by {selectedMB.lastModifiedBy.name} on{" "}
-                    {formatDate(selectedMB.lastModifiedBy.modifiedAt)}
-                  </div>
-                )}
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
+        <MBDetailDialog
+          mb={selectedMB}
+          open={showDetailDialog}
+          onOpenChange={setShowDetailDialog}
+        />
       )}
     </div>
   );

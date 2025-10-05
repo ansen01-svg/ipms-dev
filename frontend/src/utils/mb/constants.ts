@@ -1,7 +1,7 @@
 import {
-  MeasurementBookError,
-  MeasurementBookResponse,
-  MeasurementBooksListResponse,
+  MBErrorResponse,
+  MBListResponse,
+  MBSingleResponse,
 } from "@/types/mb.types";
 
 // Constants
@@ -24,36 +24,34 @@ export type MBFileType = (typeof MB_FILE_TYPES)[number];
 // Helper type guards
 export const isMeasurementBookError = (
   response: unknown
-): response is MeasurementBookError => {
+): response is MBErrorResponse => {
   return (
     typeof response === "object" &&
     response !== null &&
-    (response as MeasurementBookError).success === false
+    (response as MBErrorResponse).success === false
   );
 };
 
 export const isMeasurementBookResponse = (
   response: unknown
-): response is MeasurementBookResponse => {
+): response is MBSingleResponse => {
   return (
     typeof response === "object" &&
     response !== null &&
-    (response as MeasurementBookResponse).success === true &&
-    (response as MeasurementBookResponse).data &&
-    !Array.isArray((response as MeasurementBookResponse).data)
+    (response as MBSingleResponse).success === true &&
+    (response as MBSingleResponse).data &&
+    !Array.isArray((response as MBSingleResponse).data)
   );
 };
 
 export const isMeasurementBooksListResponse = (
   response: unknown
-): response is MeasurementBooksListResponse => {
+): response is MBListResponse => {
   return (
     typeof response === "object" &&
     response !== null &&
-    (response as MeasurementBooksListResponse).success === true &&
-    (response as MeasurementBooksListResponse).data !== undefined &&
-    Array.isArray(
-      (response as MeasurementBooksListResponse).data.measurementBooks
-    )
+    (response as MBListResponse).success === true &&
+    (response as MBListResponse).data !== undefined &&
+    Array.isArray((response as MBListResponse).data.measurementBooks)
   );
 };
