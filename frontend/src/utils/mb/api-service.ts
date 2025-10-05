@@ -1,25 +1,24 @@
 import { getAuthToken } from "@/lib/rbac-config/auth-local";
 import {
-  CreateMBData,
-  MBPaginationData,
-  MeasurementBook,
-  UpdateMBData,
+  DbMeasurementBook,
+  MBFilters,
+  MBListResponse,
+  MBSingleResponse,
+  UpdateMBRequest,
 } from "@/types/mb.types";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_PROD_API_URL;
 // const API_BASE_URL = process.env.NEXT_PUBLIC_DEV_API_URL;
 
-class MeasurementBookApiService {
+class MBApiService {
   private getHeaders(includeAuth = true) {
     const headers: Record<string, string> = {};
-
     if (includeAuth) {
       const token = getAuthToken();
       if (token) {
         headers.Authorization = `Bearer ${token}`;
       }
     }
-
     return headers;
   }
 
@@ -36,172 +35,123 @@ class MeasurementBookApiService {
       throw new Error(data.message || "Operation failed");
     }
 
-    return data.data;
+    return data.data || data;
   }
 
   /**
-   * Create a new measurement book
+   * Get all measurement books with filters
    */
-  async createMB(mbData: CreateMBData): Promise<MeasurementBook> {
-    const formData = new FormData();
+  async getAllMBs(filters: MBFilters = {}): Promise<MBListResponse["data"]> {
+    const params = new URLSearchParams();
 
-    // Append form fields to match backend expectations
-    formData.append("project", mbData.project);
-    formData.append("description", mbData.description);
+    if (filters.page) params.append("page", filters.page.toString());
+    if (filters.limit) params.append("limit", filters.limit.toString());
+    if (filters.sortBy) params.append("sortBy", filters.sortBy);
+    if (filters.sortOrder)
+      params.append("sortOrder", filters.sortOrder.toString());
+    if (filters.projectType) params.append("projectType", filters.projectType);
+    if (filters.mbId) params.append("mbId", filters.mbId);
+    if (filters.mbNo) params.append("mbNo", filters.mbNo);
+    if (filters.contractor) params.append("contractor", filters.contractor);
+    if (filters.location) params.append("location", filters.location);
+    if (filters.search) params.append("search", filters.search);
+    if (filters.createdBy) params.append("createdBy", filters.createdBy);
 
-    if (mbData.remarks) {
-      formData.append("remarks", mbData.remarks);
-    }
+    const response = await fetch(
+      `${API_BASE_URL}/mb/all?${params.toString()}`,
+      {
+        method: "GET",
+        headers: this.getHeaders(),
+      }
+    );
 
-    // Append file with the correct field name expected by backend
-    formData.append("mbFile", mbData.mbFile);
-
-    const response = await fetch(`${API_BASE_URL}/mb`, {
-      method: "POST",
-      headers: this.getHeaders(true),
-      body: formData,
-    });
-
-    return this.handleResponse<MeasurementBook>(response);
-  }
-
-  /**
-   * Get all measurement books across all projects with filters
-   */
-  async getAllMBs(
-    params: {
-      page?: number;
-      limit?: number;
-      sortBy?: string;
-      sortOrder?: "asc" | "desc";
-      search?: string;
-      dateFrom?: string;
-      dateTo?: string;
-      hasRemarks?: string;
-      isApproved?: string;
-      projectId?: string;
-    } = {}
-  ): Promise<MBPaginationData> {
-    const searchParams = new URLSearchParams();
-
-    if (params.page) searchParams.append("page", params.page.toString());
-    if (params.limit) searchParams.append("limit", params.limit.toString());
-    if (params.sortBy) searchParams.append("sortBy", params.sortBy);
-    if (params.sortOrder) searchParams.append("sortOrder", params.sortOrder);
-    if (params.search) searchParams.append("search", params.search);
-    if (params.dateFrom) searchParams.append("dateFrom", params.dateFrom);
-    if (params.dateTo) searchParams.append("dateTo", params.dateTo);
-    if (params.hasRemarks && params.hasRemarks !== "all") {
-      searchParams.append("hasRemarks", params.hasRemarks);
-    }
-    if (params.isApproved && params.isApproved !== "all") {
-      searchParams.append("isApproved", params.isApproved);
-    }
-    if (params.projectId) searchParams.append("projectId", params.projectId);
-
-    const url = `${API_BASE_URL}/mb/all?${searchParams.toString()}`;
-
-    const response = await fetch(url, {
-      method: "GET",
-      headers: this.getHeaders(true),
-    });
-
-    return this.handleResponse<MBPaginationData>(response);
+    return this.handleResponse<MBListResponse["data"]>(response);
   }
 
   /**
    * Get measurement books for a specific project
    */
-  async getMBsForProject(
+  async getMBsByProject(
     projectId: string,
-    params: {
-      page?: number;
-      limit?: number;
-      sortBy?: string;
-      sortOrder?: "asc" | "desc";
-      search?: string;
-      dateFrom?: string;
-      dateTo?: string;
-      hasRemarks?: string;
-      isApproved?: string;
-    } = {}
-  ): Promise<MBPaginationData> {
-    const searchParams = new URLSearchParams();
+    filters: MBFilters = {}
+  ): Promise<MBListResponse["data"]> {
+    const params = new URLSearchParams();
 
-    if (params.page) searchParams.append("page", params.page.toString());
-    if (params.limit) searchParams.append("limit", params.limit.toString());
-    if (params.sortBy) searchParams.append("sortBy", params.sortBy);
-    if (params.sortOrder) searchParams.append("sortOrder", params.sortOrder);
-    if (params.search) searchParams.append("search", params.search);
-    if (params.dateFrom) searchParams.append("dateFrom", params.dateFrom);
-    if (params.dateTo) searchParams.append("dateTo", params.dateTo);
-    if (params.hasRemarks && params.hasRemarks !== "all") {
-      searchParams.append("hasRemarks", params.hasRemarks);
-    }
-    if (params.isApproved && params.isApproved !== "all") {
-      searchParams.append("isApproved", params.isApproved);
-    }
+    if (filters.page) params.append("page", filters.page.toString());
+    if (filters.limit) params.append("limit", filters.limit.toString());
+    if (filters.sortBy) params.append("sortBy", filters.sortBy);
+    if (filters.sortOrder)
+      params.append("sortOrder", filters.sortOrder.toString());
+    if (filters.mbId) params.append("mbId", filters.mbId);
+    if (filters.mbNo) params.append("mbNo", filters.mbNo);
+    if (filters.contractor) params.append("contractor", filters.contractor);
 
-    const url = `${API_BASE_URL}/mb/project/${projectId}?${searchParams.toString()}`;
+    const response = await fetch(
+      `${API_BASE_URL}/mb/project/${projectId}?${params.toString()}`,
+      {
+        method: "GET",
+        headers: this.getHeaders(),
+      }
+    );
 
-    const response = await fetch(url, {
-      method: "GET",
-      headers: this.getHeaders(true),
-    });
-
-    return this.handleResponse<MBPaginationData>(response);
+    return this.handleResponse<MBListResponse["data"]>(response);
   }
 
   /**
    * Get a single measurement book by ID
    */
-  async getMBById(mbId: string): Promise<MeasurementBook> {
-    const response = await fetch(`${API_BASE_URL}/mb/${mbId}`, {
+  async getMBById(id: string): Promise<DbMeasurementBook> {
+    const response = await fetch(`${API_BASE_URL}/mb/${id}`, {
       method: "GET",
-      headers: this.getHeaders(true),
+      headers: this.getHeaders(),
     });
 
-    return this.handleResponse<MeasurementBook>(response);
+    const data = await this.handleResponse<MBSingleResponse["data"]>(response);
+    return data.measurementBook;
   }
 
   /**
-   * Update a measurement book
+   * Update measurement book basic information
    */
   async updateMB(
-    mbId: string,
-    updateData: UpdateMBData
-  ): Promise<MeasurementBook> {
-    const response = await fetch(`${API_BASE_URL}/mb/${mbId}`, {
-      method: "PUT",
+    id: string,
+    updateData: UpdateMBRequest
+  ): Promise<DbMeasurementBook> {
+    const response = await fetch(`${API_BASE_URL}/mb/${id}`, {
+      method: "PATCH",
       headers: {
-        ...this.getHeaders(true),
+        ...this.getHeaders(),
         "Content-Type": "application/json",
       },
       body: JSON.stringify(updateData),
     });
 
-    return this.handleResponse<MeasurementBook>(response);
+    const data = await this.handleResponse<{
+      measurementBook: DbMeasurementBook;
+    }>(response);
+    return data.measurementBook;
   }
 
   /**
    * Delete a measurement book
    */
-  async deleteMB(mbId: string): Promise<void> {
-    const response = await fetch(`${API_BASE_URL}/mb/${mbId}`, {
+  async deleteMB(id: string): Promise<void> {
+    const response = await fetch(`${API_BASE_URL}/mb/${id}`, {
       method: "DELETE",
-      headers: this.getHeaders(true),
+      headers: this.getHeaders(),
     });
 
     await this.handleResponse(response);
   }
 
   /**
-   * Get Firebase download URL for file
+   * Get Firebase download URL for a measurement file
    */
-  getFileDownloadUrl(mb: MeasurementBook): string {
-    return mb.uploadedFile.downloadURL;
+  getFileDownloadUrl(measurement: {
+    uploadedFile: { downloadURL: string };
+  }): string {
+    return measurement.uploadedFile.downloadURL;
   }
 }
 
-// Export singleton instance
-export const mbApiService = new MeasurementBookApiService();
+export const mbApiService = new MBApiService();
