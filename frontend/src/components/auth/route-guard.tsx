@@ -62,7 +62,7 @@ export default function RouteGuard({
       return;
     }
 
-    // REQUIREMENT 2: JE-only sub-routes within shared routes
+    // REQUIREMENT 2: Role-specific sub-routes within shared routes
     if (user && pathname.startsWith("/dashboard/")) {
       const pathSegments = pathname.split("/");
       const roleInPath = pathSegments[2];
@@ -71,15 +71,23 @@ export default function RouteGuard({
       const isSharedRoute = sharedRoutes.includes(roleInPath);
 
       // JE-only sub-routes
-      const jeOnlyRoutes = [
-        "/dashboard/projects/new",
-        "/dashboard/archived-projects/create",
-        "/dashboard/mb/new",
-      ];
+      const jeOnlyRoutes = ["/dashboard/projects/new", "/dashboard/mb/new"];
       const isJeOnlyRoute = jeOnlyRoutes.includes(pathname);
+
+      // OPERATOR-only sub-routes
+      const operatorOnlyRoutes = ["/dashboard/archived-projects/create"];
+      const isOperatorOnlyRoute = operatorOnlyRoutes.includes(pathname);
 
       // Check if current route is JE-only and user is not JE
       if (isJeOnlyRoute && user.role.toLowerCase() !== "je") {
+        const userDashboardPath =
+          ROLE_DASHBOARD_PATHS[user.role as keyof typeof ROLE_DASHBOARD_PATHS];
+        router.replace(userDashboardPath);
+        return;
+      }
+
+      // Check if current route is OPERATOR-only and user is not OPERATOR
+      if (isOperatorOnlyRoute && user.role.toLowerCase() !== "operator") {
         const userDashboardPath =
           ROLE_DASHBOARD_PATHS[user.role as keyof typeof ROLE_DASHBOARD_PATHS];
         router.replace(userDashboardPath);

@@ -1,4 +1,11 @@
-export type UserRole = "ADMIN" | "JE" | "AEE" | "CE" | "MD" | "VIEWER";
+export type UserRole =
+  | "ADMIN"
+  | "JE"
+  | "AEE"
+  | "CE"
+  | "MD"
+  | "VIEWER"
+  | "OPERATOR";
 
 export interface User {
   userId: string;

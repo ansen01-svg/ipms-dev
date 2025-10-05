@@ -74,6 +74,9 @@ interface ArchiveProjectData {
 
 type FormStep = "form" | "review" | "submit";
 
+const apiUrl = process.env.NEXT_PUBLIC_PROD_API_URL;
+// const apiUrl = process.env.NEXT_PUBLIC_DEV_API_URL;
+
 // ============= TOOLTIPS AND LABELS =============
 const Tooltip = ({ content, children }: TooltipProps) => {
   const [isVisible, setIsVisible] = useState(false);
@@ -614,9 +617,6 @@ export default function CreateArchiveProjectForm() {
     try {
       setIsSubmittingForm(true);
       const token = getAuthToken();
-
-      const apiUrl = process.env.NEXT_PUBLIC_PROD_API_URL;
-      // const apiUrl = process.env.NEXT_PUBLIC_DEV_API_URL;
 
       const response = await fetch(`${apiUrl}/archive-project`, {
         method: "POST",

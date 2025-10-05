@@ -185,7 +185,7 @@ function ArchiveProjectsContainerContent({
         </div>
 
         <div className="flex space-x-2">
-          {user?.role === "JE" && (
+          {user?.role === "OPERATOR" && (
             <Button
               onClick={handleNewArchiveProject}
               className="bg-gradient-to-r from-teal-500 to-teal-600 text-white shadow-sm hover:from-teal-700 hover:to-teal-800 w-full sm:w-auto"

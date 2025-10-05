@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import type { User } from "@/types/user.types";
 import {
   BookOpen,
+  FilePlus,
   FolderOpen,
   LayoutDashboard,
   Package,
@@ -30,11 +31,6 @@ export interface NavigationItem {
 type DashboardLayoutProps = {
   children: React.ReactNode;
   user: User;
-  // title: string;
-  // subtitle?: string;
-  // showRefresh?: boolean;
-  // showExport?: boolean;
-  // onExport?: () => void;
 };
 
 // Function to get navigation items based on user role
@@ -68,6 +64,27 @@ const getNavigationItems = (role: string) => {
     },
   ];
 
+  const operatorNavItems = [
+    {
+      id: "dashboard",
+      label: "Dashboard",
+      href: `/dashboard/${baseRole}`,
+      icon: LayoutDashboard,
+    },
+    {
+      id: "archived-projects",
+      label: "Archived Projects",
+      href: `/dashboard/archived-projects`,
+      icon: Package,
+    },
+    {
+      id: "create-archived-projects",
+      label: "Create Archived Projects",
+      href: `/dashboard/archived-projects/create`,
+      icon: FilePlus,
+    },
+  ];
+
   switch (role) {
     case "JE":
       return [...commonItems];
@@ -81,8 +98,8 @@ const getNavigationItems = (role: string) => {
     case "MD":
       return [...commonItems];
 
-    case "EXECUTOR":
-      return [...commonItems];
+    case "OPERATOR":
+      return [...operatorNavItems];
 
     case "VIEWER":
       return [...commonItems];
