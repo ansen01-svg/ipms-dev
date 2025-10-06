@@ -37,8 +37,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const checkAuth = async () => {
     try {
-      console.log("🔍 AuthContext: Checking authentication...");
-
       // Debug localStorage state
       const token =
         typeof window !== "undefined"
@@ -49,52 +47,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           ? localStorage.getItem("user-data")
           : null;
 
-      console.log("🔍 AuthContext: localStorage state", {
+      console.log({
         hasToken: !!token,
         hasUserData: !!userData,
-        tokenLength: token?.length,
-        userDataLength: userData?.length,
       });
 
       const currentUser = await getCurrentUser();
-      console.log("🔍 AuthContext: getCurrentUser result", {
-        user: !!currentUser,
-      });
-
       setUser(currentUser);
     } catch (error) {
       console.error("❌ AuthContext: Auth check failed:", error);
       setUser(null);
     } finally {
       setLoading(false);
-      console.log("🔍 AuthContext: Auth check completed");
     }
   };
 
   // FIXED: Now properly handles both user and token
   const login = (userData: User, token: string) => {
-    console.log("✅ AuthContext: Login called with:", {
-      user: userData,
-      hasToken: !!token,
-      tokenLength: token?.length,
-    });
-
     try {
       // Store in localStorage with error handling
       setAuthToken(token);
       setUserData(userData);
-
-      // Verify storage immediately
-      const storedToken = localStorage.getItem("auth-token");
-      const storedData = localStorage.getItem("user-data");
-
-      console.log("✅ AuthContext: Storage verification:", {
-        tokenStored: !!storedToken,
-        dataStored: !!storedData,
-        tokensMatch: storedToken === token,
-        dataMatches: storedData === JSON.stringify(userData),
-      });
-
       setUser(userData);
     } catch (error) {
       console.error("❌ AuthContext: Login storage failed:", error);
@@ -102,14 +75,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const logout = () => {
-    console.log("🚪 AuthContext: Logout called");
     clearAuthData();
     setUser(null);
     window.location.replace("/login");
   };
 
   const refreshUser = async () => {
-    console.log("🔄 AuthContext: Refreshing user...");
     const currentUser = await getCurrentUser();
     setUser(currentUser);
   };

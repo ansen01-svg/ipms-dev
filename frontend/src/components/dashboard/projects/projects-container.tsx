@@ -38,8 +38,6 @@ export function ProjectsContainer() {
 
       const projectsData = await fetchAllProjects();
       setProjects(projectsData);
-
-      console.log(`Loaded ${projectsData.length} projects successfully`);
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : "Failed to load projects";
@@ -55,7 +53,6 @@ export function ProjectsContainer() {
     try {
       const projectsData = await fetchAllProjects();
       setProjects(projectsData);
-      console.log(`Refreshed ${projectsData.length} projects successfully`);
     } catch (err) {
       console.error("Error refreshing projects:", err);
     }
@@ -71,7 +68,6 @@ export function ProjectsContainer() {
   };
 
   const handleViewProject = (project: DbProject) => {
-    console.log("Navigating to project:", project);
     router.push(`/dashboard/projects/${project.projectId}`);
   };
 

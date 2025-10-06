@@ -1027,28 +1027,22 @@ export default function CreateProjectForm() {
 
       // Append files - this is the key part for your existing middleware
       if (uploadedFiles && uploadedFiles.length > 0) {
-        console.log(`Appending ${uploadedFiles.length} files to FormData`);
-
-        uploadedFiles.forEach((file, index) => {
+        uploadedFiles.forEach((file) => {
           // Use the field name that matches your existing middleware
           formData.append("projectFiles", file);
-          console.log(
-            `File ${index + 1}: ${file.name} (${file.size} bytes, ${file.type})`
-          );
         });
       } else {
         console.log("No files to upload");
       }
 
       // Log FormData contents for debugging (optional)
-      console.log("FormData contents:");
-      Array.from(formData.entries()).forEach(([key, value]) => {
-        if (value instanceof File) {
-          console.log(`${key}: File - ${value.name} (${value.size} bytes)`);
-        } else {
-          console.log(`${key}: ${value}`);
-        }
-      });
+      // Array.from(formData.entries()).forEach(([key, value]) => {
+      //   if (value instanceof File) {
+      //     console.log(`${key}: File - ${value.name} (${value.size} bytes)`);
+      //   } else {
+      //     console.log(`${key}: ${value}`);
+      //   }
+      // });
 
       // Generate project data for PDF
       const projectData: ProjectPDFData = {
@@ -1061,8 +1055,6 @@ export default function CreateProjectForm() {
       if (!apiUrl) {
         throw new Error("API configuration is missing");
       }
-
-      console.log("Attempting to submit project to API...");
 
       const response = await fetch(`${apiUrl}/project`, {
         method: "POST",
@@ -1095,8 +1087,6 @@ export default function CreateProjectForm() {
       }
 
       const apiResult = await response.json();
-      console.log("API call successful:", apiResult);
-
       // Update project data with actual project ID from API response
       if (apiResult?.data?.projectId) {
         projectData.projectId = apiResult.data.projectId;

@@ -208,7 +208,8 @@ export function ProjectsTable({
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
 
   const ITEMS_PER_PAGE = 8;
-  const isAdmin = currentUserRole === "ADMIN";
+  const hasAuthorityToEdit =
+    currentUserRole === "ADMIN" || currentUserRole === "MD";
 
   // Filter, search, and sort projects
   const processedProjects = useMemo(() => {
@@ -663,7 +664,7 @@ export function ProjectsTable({
                 <TableHead className="px-4 font-semibold text-gray-900 w-24">
                   Actions
                 </TableHead>
-                {isAdmin && (
+                {hasAuthorityToEdit && (
                   <TableHead className="px-4 font-semibold text-gray-900 w-32">
                     Edit Control
                   </TableHead>
@@ -799,11 +800,15 @@ export function ProjectsTable({
                       </Button>
                     </TableCell>
 
-                    {isAdmin && (
+                    {hasAuthorityToEdit && (
                       <TableCell className="px-4">
                         <Button
                           variant="outline"
                           size="sm"
+                          disabled={
+                            project.status === "Submitted for Approval" ||
+                            project.status === "Resubmitted for Approval"
+                          }
                           onClick={() => handleToggleEditableStatus(project)}
                           className={
                             project.isProjectEditable
@@ -887,6 +892,11 @@ export function ProjectsTable({
                 <TableHead className="px-3 font-semibold text-gray-900 min-w-[80px]">
                   Actions
                 </TableHead>
+                {hasAuthorityToEdit && (
+                  <TableHead className="px-3 font-semibold text-gray-900 min-w-[160px]">
+                    Edit Control
+                  </TableHead>
+                )}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -1000,6 +1010,37 @@ export function ProjectsTable({
                         View
                       </Button>
                     </TableCell>
+
+                    {hasAuthorityToEdit && (
+                      <TableCell className="px-3">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          disabled={
+                            project.status === "Submitted for Approval" ||
+                            project.status === "Resubmitted for Approval"
+                          }
+                          onClick={() => handleToggleEditableStatus(project)}
+                          className={
+                            project.isProjectEditable
+                              ? "text-red-600 border-red-300 hover:bg-red-50"
+                              : "text-green-600 border-green-300 hover:bg-green-50"
+                          }
+                        >
+                          {project.isProjectEditable ? (
+                            <>
+                              <Lock className="w-4 h-4 mr-1" />
+                              Lock
+                            </>
+                          ) : (
+                            <>
+                              <LockOpen className="w-4 h-4 mr-1" />
+                              Unlock
+                            </>
+                          )}
+                        </Button>
+                      </TableCell>
+                    )}
                   </TableRow>
                 ))
               )}

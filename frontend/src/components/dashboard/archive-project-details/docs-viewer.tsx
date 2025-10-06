@@ -21,8 +21,6 @@ export function DocumentViewer({
     useState<SupportingDocument | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
 
-  console.log(documents);
-
   if (!documents || documents.length === 0) {
     return (
       <div className="text-center py-4 text-gray-500 text-sm">

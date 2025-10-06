@@ -72,7 +72,6 @@ export default function TimelineTab({ project }: TimelineTabProps) {
           1,
           50
         ); // Get all history
-        console.log(response);
         setStatusHistory(response.data.statusHistory);
       } catch (err) {
         console.error("Error fetching status history:", err);
@@ -153,8 +152,7 @@ export default function TimelineTab({ project }: TimelineTabProps) {
     return "completed";
   };
 
-  const getStepTitle = (newStatus: string, previousStatus: string) => {
-    console.log(previousStatus, "->", newStatus);
+  const getStepTitle = (newStatus: string) => {
     if (newStatus === "Submitted for Approval")
       return "Initial Project Submission";
     if (newStatus === "Resubmitted for Approval") return "Project Resubmission";
@@ -196,10 +194,7 @@ export default function TimelineTab({ project }: TimelineTabProps) {
 
         return {
           id: `step-${index}`,
-          title: getStepTitle(
-            historyItem.newStatus,
-            historyItem.previousStatus
-          ),
+          title: getStepTitle(historyItem.newStatus),
           approver: historyItem.changedBy.name,
           role: historyItem.changedBy.role,
           status: stepStatus,

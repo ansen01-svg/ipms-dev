@@ -75,7 +75,6 @@ export default function ProjectContainer({
       setError(null);
 
       const fetchedProject = await fetchProjectById(projectId);
-      console.log("Fetched project:", projectId, fetchedProject);
 
       if (fetchedProject) {
         // Enrich the project data with calculated fields
@@ -100,14 +99,10 @@ export default function ProjectContainer({
 
   // Handle project updates from child components
   const handleProjectUpdate = useCallback((updatedProject: DbProject) => {
-    console.log("Project updated:", updatedProject);
     // Enrich the updated project data and set it
     const enrichedProject = enrichProjectData(updatedProject);
     setCurrentProject(enrichedProject);
   }, []);
-
-  console.log("id:", projectId);
-  console.log("currentProject:", currentProject);
 
   // Retry function
   const retryLoadProject = () => {

@@ -84,7 +84,6 @@ export default function DocumentsTab({ project }: DocumentsTabProps) {
       setError(null);
 
       const refinedProjectId = project.projectId.replace("%20", " ");
-      console.log("Fetching documents for project ID:", refinedProjectId);
       const response = await getProjectDocuments(refinedProjectId);
       setDocumentsData(response);
     } catch (error) {

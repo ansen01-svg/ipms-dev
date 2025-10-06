@@ -25,7 +25,6 @@ export async function verifyToken(token: string): Promise<User> {
 export function setAuthToken(token: string): void {
   if (typeof window !== "undefined") {
     try {
-      console.log("💾 Setting auth token...", { tokenLength: token?.length });
       localStorage.setItem(AUTH_TOKEN_KEY, token);
 
       // Immediate verification
@@ -33,7 +32,6 @@ export function setAuthToken(token: string): void {
       if (stored !== token) {
         throw new Error("Failed to store token - verification failed");
       }
-      console.log("✅ Auth token stored successfully");
     } catch (error) {
       console.error("❌ Failed to set auth token:", error);
       throw error; // Re-throw to handle in calling code
@@ -45,10 +43,6 @@ export function getAuthToken(): string | null {
   if (typeof window !== "undefined") {
     try {
       const token = localStorage.getItem(AUTH_TOKEN_KEY);
-      console.log("🔍 Getting auth token:", {
-        hasToken: !!token,
-        tokenLength: token?.length,
-      });
       return token;
     } catch (error) {
       console.error("❌ Failed to get auth token:", error);
@@ -62,9 +56,6 @@ export function setUserData(user: User): void {
   if (typeof window !== "undefined") {
     try {
       const userData = JSON.stringify(user);
-      console.log("💾 Setting user data...", {
-        userDataLength: userData.length,
-      });
       localStorage.setItem(USER_DATA_KEY, userData);
 
       // Immediate verification
@@ -72,7 +63,6 @@ export function setUserData(user: User): void {
       if (stored !== userData) {
         throw new Error("Failed to store user data - verification failed");
       }
-      console.log("✅ User data stored successfully");
     } catch (error) {
       console.error("❌ Failed to set user data:", error);
       throw error;
@@ -84,7 +74,6 @@ export function getUserData(): User | null {
   if (typeof window !== "undefined") {
     try {
       const userData = localStorage.getItem(USER_DATA_KEY);
-      console.log("🔍 Getting user data:", { hasUserData: !!userData });
 
       if (userData) {
         const parsed = JSON.parse(userData);
@@ -101,32 +90,25 @@ export function getUserData(): User | null {
 
 export function clearAuthData(): void {
   if (typeof window !== "undefined") {
-    console.log("🧹 Clearing auth data...");
     localStorage.removeItem(AUTH_TOKEN_KEY);
     localStorage.removeItem(USER_DATA_KEY);
     sessionStorage.clear();
-    console.log("✅ Auth data cleared");
   }
 }
 
 // IMPROVED getCurrentUser with better error handling
 export async function getCurrentUser(): Promise<User | null> {
   try {
-    console.log("🔍 getCurrentUser: Starting...");
-
     const token = getAuthToken();
     if (!token) {
-      console.log("❌ getCurrentUser: No token found");
       return null;
     }
 
     // Get cached user data first
     const storedUser = getUserData();
     if (storedUser) {
-      console.log("🔍 getCurrentUser: Found stored user, verifying token...");
       try {
         await verifyToken(token);
-        console.log("✅ getCurrentUser: Token valid, returning stored user");
         return storedUser;
       } catch (error) {
         console.error("❌ getCurrentUser: Token verification failed:", error);
@@ -136,10 +118,8 @@ export async function getCurrentUser(): Promise<User | null> {
     }
 
     // No stored user, extract from token
-    console.log("🔍 getCurrentUser: No stored user, extracting from token...");
     const user = await verifyToken(token);
     setUserData(user);
-    console.log("✅ getCurrentUser: User extracted and cached");
     return user;
   } catch (error) {
     console.error("❌ getCurrentUser: Failed:", error);
@@ -152,10 +132,5 @@ export function isAuthenticated(): boolean {
   const token = getAuthToken();
   const user = getUserData();
   const result = !!(token && user);
-  console.log("🔍 isAuthenticated:", {
-    hasToken: !!token,
-    hasUser: !!user,
-    result,
-  });
   return result;
 }

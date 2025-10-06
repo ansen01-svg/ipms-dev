@@ -132,12 +132,6 @@ export default function VerifyOTPForm() {
         return;
       }
 
-      console.log("OTP verification: API success", {
-        hasUser: !!data.user,
-        hasToken: !!(data.token || data.accessToken),
-        userRole: data.user?.role,
-      });
-
       const token = data.token || data.accessToken;
       if (!token) {
         setVerificationStatus("error");
@@ -164,8 +158,6 @@ export default function VerifyOTPForm() {
             "Failed to store authentication data in localStorage"
           );
         }
-
-        console.log("Login: Storage verification passed");
 
         // Update auth context
         login(data.user, token);
