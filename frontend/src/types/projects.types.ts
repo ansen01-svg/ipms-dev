@@ -171,14 +171,13 @@ export interface ContractorInfo {
 
 // Project status enum/type - matches backend constants
 export type ProjectStatus =
-  | "Submitted to AEE"
-  | "Submitted to CE"
-  | "Submitted to MD"
-  | "Approved"
+  | "Submitted for Approval"
+  | "Resubmitted for Approval"
+  | "Rejected by AEE"
+  | "Rejected by CE"
+  | "Rejected by MD"
   | "Ongoing"
-  | "Completed"
-  | "Rejected"
-  | "On Hold";
+  | "Completed";
 
 // Project progress status
 export type ProgressStatus =

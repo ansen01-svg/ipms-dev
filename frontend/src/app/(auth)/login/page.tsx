@@ -205,10 +205,6 @@ const LoginPage = () => {
         throw new Error(data.error || data.message || "Login failed");
       }
 
-      console.log("Login: API success", {
-        hasEmail: !!data.email,
-      });
-
       // Reset form
       reset();
 

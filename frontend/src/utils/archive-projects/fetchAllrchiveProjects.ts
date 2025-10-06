@@ -240,7 +240,6 @@ export const fetchAllArchiveProjects = async (
     }
 
     const data: ArchiveProjectsResponse = await response.json();
-    console.log("Fetched archive projects data:", data);
     return data;
   } catch (error) {
     console.error("Error fetching archive projects:", error);

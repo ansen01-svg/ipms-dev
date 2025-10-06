@@ -381,8 +381,6 @@ const fetchProjectById = async (projectId: string): Promise<DbProject> => {
       throw new Error("Project not found");
     }
 
-    console.log("Fetched single project:", data.data.project);
-
     const enhancedProject: DbProject = enhanceProjectWithCalculatedFields(
       data.data.project as BackendProject
     );

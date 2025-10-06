@@ -37,8 +37,6 @@ export default function ResetPasswordPage() {
     }));
   };
 
-  console.log("Reset Token:", resetToken); // Debugging line
-
   const onSubmit = async (data: ResetPasswordSchema) => {
     try {
       if (!resetToken) {

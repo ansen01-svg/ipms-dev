@@ -66,7 +66,6 @@ const CreateUserPage = () => {
     setSuccessMsg("");
     const token = getAuthToken();
 
-    console.log("Form submitted with values:", values);
     try {
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_PROD_API_URL}/user`,
@@ -83,7 +82,6 @@ const CreateUserPage = () => {
       );
 
       const data = await res.json();
-      console.log(data);
 
       if (!res.ok) {
         throw new Error(data.message || "Failed to create user.");

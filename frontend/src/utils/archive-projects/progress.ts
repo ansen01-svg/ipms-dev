@@ -62,18 +62,17 @@ export const updateProjectProgress = async (
   }
 
   // Debug FormData contents (remove in production)
-  console.log("Physical Progress FormData contents:");
-  formData.forEach((value, key) => {
-    if (value instanceof File) {
-      console.log(`${key}:`, {
-        name: value.name,
-        size: value.size,
-        type: value.type,
-      });
-    } else {
-      console.log(`${key}:`, value);
-    }
-  });
+  // formData.forEach((value, key) => {
+  //   if (value instanceof File) {
+  //     console.log(`${key}:`, {
+  //       name: value.name,
+  //       size: value.size,
+  //       type: value.type,
+  //     });
+  //   } else {
+  //     console.log(`${key}:`, value);
+  //   }
+  // });
 
   const response = await makeAuthenticatedRequest(
     `${API_BASE_URL}/archive-project/${projectId}/progress`,

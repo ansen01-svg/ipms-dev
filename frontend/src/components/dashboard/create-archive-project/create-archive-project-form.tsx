@@ -661,8 +661,6 @@ export default function CreateArchiveProjectForm() {
       }
 
       const data = await response.json();
-      console.log("Archive project created:", data);
-
       if (!data || !data.data.projectId) {
         throw new Error("Invalid response from server. Missing project ID.");
       }

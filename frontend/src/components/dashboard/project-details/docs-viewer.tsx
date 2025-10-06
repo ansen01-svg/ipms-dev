@@ -174,8 +174,6 @@ function DocumentPreviewModal({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  console.log(document);
-
   // Get preview URL from either downloadURL or fileUrl
   const getPreviewUrl = () => {
     return document.downloadURL;

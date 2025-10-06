@@ -36,20 +36,12 @@ export function ProjectHeader({ project }: ProjectHeaderProps) {
 
   const getStatusColor = (status: string) => {
     const colors = {
-      Draft: "bg-gray-50 text-gray-600 border-gray-200",
-      "Submitted to AEE": "bg-blue-50 text-blue-600 border-blue-200",
+      "Submitted for Approval": "bg-blue-50 text-blue-600 border-blue-200",
+      "Resubmitted for Approval": "bg-blue-50 text-blue-600 border-blue-200",
       "Rejected by AEE": "bg-red-50 text-red-600 border-red-200",
-      "Submitted to CE": "bg-yellow-50 text-yellow-600 border-yellow-200",
       "Rejected by CE": "bg-red-50 text-red-600 border-red-200",
-      "Submitted to MD": "bg-purple-50 text-purple-600 border-purple-200",
       "Rejected by MD": "bg-red-50 text-red-600 border-red-200",
-      "Submitted to Executing Department":
-        "bg-orange-50 text-orange-600 border-orange-200",
-      "Rejected by Executing Department":
-        "bg-red-50 text-red-600 border-red-200",
-      Approved: "bg-green-50 text-green-600 border-green-200",
       Ongoing: "bg-blue-50 text-blue-600 border-blue-200",
-      Pending: "bg-yellow-50 text-yellow-600 border-yellow-200",
       Completed: "bg-green-50 text-green-600 border-green-200",
     };
     return (

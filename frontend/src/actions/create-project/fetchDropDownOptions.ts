@@ -121,7 +121,6 @@ function getFallbackOptions(): DropdownOptions {
       "Land Development",
       "Landscaping",
       "Maintenance Works",
-      "Upgradation Works",
       "Other developments",
     ],
     natureOfWork: [
@@ -242,7 +241,6 @@ export async function fetchDropdownOptions(): Promise<DropdownOptions> {
         );
 
         if (isValidStructure) {
-          console.log("Successfully fetched dropdown options from API");
           return apiData.data;
         } else {
           console.warn(
@@ -269,7 +267,6 @@ export async function fetchDropdownOptions(): Promise<DropdownOptions> {
   }
 
   // Always return fallback options if API fails
-  console.log("Using fallback dropdown options");
   return getFallbackOptions();
 }
 
