@@ -480,12 +480,13 @@ const CreateMBPage = () => {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Auto-populated fields - Always disabled */}
               <div>
                 <Label>(1) Name of Work: *</Label>
                 <Input
                   value={nameOfWork}
                   onChange={(e) => setNameOfWork(e.target.value)}
-                  disabled={!projectDetails}
+                  disabled // Always disabled - auto-populated
                   placeholder="Enter name of work"
                   className="mt-1"
                 />
@@ -495,7 +496,7 @@ const CreateMBPage = () => {
                 <Input
                   value={location}
                   onChange={(e) => setLocation(e.target.value)}
-                  disabled={!projectDetails}
+                  disabled // Always disabled - auto-populated
                   placeholder="Enter location"
                   className="mt-1"
                 />
@@ -505,11 +506,13 @@ const CreateMBPage = () => {
                 <Input
                   value={contractor}
                   onChange={(e) => setContractor(e.target.value)}
-                  disabled={!projectDetails}
+                  disabled // Always disabled - auto-populated
                   placeholder="Enter contractor name"
                   className="mt-1"
                 />
               </div>
+
+              {/* Manual entry fields - Enabled when project is selected */}
               <div>
                 <Label>(4) Tender Agreement:</Label>
                 <Input
@@ -520,16 +523,20 @@ const CreateMBPage = () => {
                   className="mt-1"
                 />
               </div>
+
+              {/* Auto-populated field - Always disabled */}
               <div>
                 <Label>(5) Work Order No:</Label>
                 <Input
                   value={workOrderNo}
                   onChange={(e) => setWorkOrderNo(e.target.value)}
-                  disabled={!projectDetails}
+                  disabled // Always disabled - auto-populated
                   placeholder="Enter work order number"
                   className="mt-1"
                 />
               </div>
+
+              {/* Manual entry fields - Enabled when project is selected */}
               <div>
                 <Label>(6) A.A. or F.S. No. and Date:</Label>
                 <div className="grid grid-cols-2 gap-2 mt-1">
@@ -557,13 +564,15 @@ const CreateMBPage = () => {
                   className="mt-1"
                 />
               </div>
+
+              {/* Auto-populated fields - Always disabled */}
               <div>
                 <Label>(8) Date of Commencement: *</Label>
                 <Input
                   type="date"
                   value={dateOfCommencement}
                   onChange={(e) => setDateOfCommencement(e.target.value)}
-                  disabled={!projectDetails}
+                  disabled // Always disabled - auto-populated
                   className="mt-1"
                 />
               </div>
@@ -573,10 +582,12 @@ const CreateMBPage = () => {
                   type="date"
                   value={dateOfCompletion}
                   onChange={(e) => setDateOfCompletion(e.target.value)}
-                  disabled={!projectDetails}
+                  disabled // Always disabled - auto-populated
                   className="mt-1"
                 />
               </div>
+
+              {/* Manual entry fields - Enabled when project is selected */}
               <div>
                 <Label>(10) Date of Measurement: *</Label>
                 <Input
